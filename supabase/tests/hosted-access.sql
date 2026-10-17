@@ -13,8 +13,8 @@ set local role anon;
 do $$ begin
   if (select count(*) from public.bg3ro_project_status) <> 1 then raise exception 'Public status unavailable'; end if;
   begin
-    perform id from public.bg3ro_bug_reports;
-    raise exception 'Anonymous report read unexpectedly allowed';
+    perform author_id from public.bg3ro_bug_reports;
+    raise exception 'Anonymous private identity read unexpectedly allowed';
   exception when insufficient_privilege then null; end;
 end $$;
 reset role;

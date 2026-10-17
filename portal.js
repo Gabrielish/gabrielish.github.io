@@ -47,7 +47,7 @@
   addEventListener('hashchange', () => { if (ids.includes(location.hash.slice(1))) setTab(location.hash.slice(1)); });
   $('a[href="#confidentialitate"]').addEventListener('click', () => { $('#confidentialitate').open = true; });
 
-  let client = null, user = null, moderator = false, page = 0, reportsLimit = 20;
+  let client = null, user = null, moderator = false, page = 0, reportsLimit = 20, reportsRequest = 0;
   let toastTimer;
   const config = window.BG3RO_CONFIG || {};
   const authEnabled = config.authEnabled !== false;
@@ -91,16 +91,18 @@
   }
   function dateText(value) { return new Intl.DateTimeFormat('ro-RO', { dateStyle: 'medium' }).format(new Date(value)); }
   function syncAuth() {
+    const member = !!user && !user.is_anonymous;
     $$('[data-auth-gate]').forEach(gate => { gate.hidden = !!user || !client || !authEnabled; });
     $$('[data-user-form]').forEach(form => { form.hidden = !user; });
-    $$('[data-auth-open]').forEach(button => { button.hidden = !!user; });
+    $$('[data-auth-open]').forEach(button => { button.hidden = member; });
     $('#sign-out').hidden = !user;
-    $('#my-reports').hidden = !user;
+    $('#sign-out').textContent = user?.is_anonymous ? 'Ieși din modul oaspete' : 'Deconectare';
+    $('#my-reports').hidden = !client;
     $('#admin-tools').hidden = !moderator;
-    $('#reports-heading').textContent = moderator ? 'Rapoartele proiectului' : 'Rapoartele mele';
+    $('#reports-heading').textContent = moderator ? 'Raportări publice și private' : 'Raportări publice';
     $('#discussion-form button[type="submit"]').textContent = 'Publică mesajul';
     $('#discord-login').disabled = !client || !authEnabled;
-    window.dispatchEvent(new CustomEvent('bg3ro:auth', { detail: { client, userId: user?.id || null, moderator } }));
+    window.dispatchEvent(new CustomEvent('bg3ro:auth', { detail: { client, userId: member ? user.id : null, moderator, guest: !!user?.is_anonymous } }));
     if (dialog.open && !user) {
       $('#auth-unavailable').hidden = !!client && authEnabled;
       $('#discord-login-form').hidden = !client || !authEnabled;
@@ -112,6 +114,17 @@
     dialog.showModal();
   }));
   dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
+  $$('[data-guest-start]').forEach(button => button.addEventListener('click', async () => {
+    if (!client || button.disabled) return;
+    button.disabled = true;
+    try {
+      const { data, error } = await client.auth.signInAnonymously();
+      if (error || !data.session) throw error || new Error('Guest session unavailable');
+      await sessionChanged(data.session);
+      $('#'+button.dataset.guestStart+'-name').focus();
+    } catch (_) { toast('Modul oaspete nu a putut fi pornit. Încearcă din nou sau conectează-te cu Discord.'); }
+    finally { button.disabled = false; }
+  }));
   $('#discord-login-form').addEventListener('submit', event => {
     event.preventDefault(); if (!client || !authEnabled) return;
     const form = event.currentTarget;
@@ -128,16 +141,17 @@
     if (error) { toast(readableError(error)); return; }
     user = null; moderator = false; syncAuth(); $('#reports-list').replaceChildren();
     $('#discussion-form').reset(); $('#report-form').reset(); cancelReply();
-    await loadComments(); toast('Te-ai deconectat.');
+    await Promise.all([loadComments(), loadReports()]); toast('Te-ai deconectat.');
   });
   async function sessionChanged(session) {
     user = session?.user || null; moderator = false;
-    if (user) {
+    if (user && !user.is_anonymous) {
       const { data, error } = await client.rpc('bg3ro_is_moderator');
       if (!error) moderator = data === true;
       if (!$('#discussion-name').value) $('#discussion-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
+      if (!$('#report-name').value) $('#report-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
     }
-    if (user && dialog.open) dialog.close();
+    if (user && !user.is_anonymous && dialog.open) dialog.close();
     syncAuth(); await Promise.all([loadComments(), loadReports(), loadProgress()]);
   }
   async function loadProgress() {
@@ -185,7 +199,7 @@
   async function loadComments() {
     const target = $('#discussion-list');
     if (!client) { target.replaceChildren(element('p', 'small', 'Discuțiile vor apărea aici după conectarea comunității.')); return; }
-    const { data, count, error } = await client.from('bg3ro_discussion_posts').select('id,author_id,author_name,title,body,status,parent_id,created_at', { count: 'exact' }).order('created_at', { ascending: false }).order('id', { ascending: false }).range(page * 20, page * 20 + 19);
+    const { data, count, error } = await client.from('bg3ro_discussion_posts').select('id,author_id,author_name,title,body,status,parent_id,created_at,is_guest', { count: 'exact' }).order('created_at', { ascending: false }).order('id', { ascending: false }).range(page * 20, page * 20 + 19);
     if (error) { target.replaceChildren(element('p', 'small', 'Discuțiile nu au putut fi încărcate. Încearcă din nou mai târziu.')); return; }
     if (!data.length && page > 0) { page--; return loadComments(); }
     target.replaceChildren(); $('#discussion-count').textContent = `${count || 0} mesaje vizibile`;
@@ -195,6 +209,7 @@
     data.forEach(post => {
       const article = element('article', 'post'); article.id = `post-${post.id}`;
       const meta = element('div', 'post-meta'); meta.append(element('strong', '', post.author_name), element('time', '', dateText(post.created_at)));
+      if (post.is_guest) meta.append(element('span', 'post-status', 'Oaspete · nume neverificat'));
       if (post.status !== 'approved') meta.append(element('span', 'post-status', statusLabels[post.status]));
       if (post.parent_id) meta.append(element('span', '', 'Răspuns într-o discuție'));
       article.append(meta, element('h3', 'post-title', post.title), element('div', 'post-body', post.body));
@@ -235,22 +250,25 @@
   $('#report-form').addEventListener('submit', event => {
     event.preventDefault(); if (!client || !user) return;
     submit(event.currentTarget, async () => {
-      const form = event.currentTarget, values = Object.fromEntries(new FormData(form)); delete values.website;
+      const form = event.currentTarget, values = Object.fromEntries(new FormData(form)); delete values.website; delete values.public_consent;
       Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
-      const { error } = await client.from('bg3ro_bug_reports').insert({ ...values, author_id: user.id });
+      const { error } = await client.from('bg3ro_bug_reports').insert({ ...values, author_id: user.id, is_public: true });
       if (error) throw error;
-      form.reset(); formStatus(form, 'Raportul a fost trimis. Îl poți urmări mai jos.'); await loadReports();
+      form.reset(); formStatus(form, 'Raportul a fost trimis și este public. Îl poți urmări mai jos.'); await loadReports();
     });
   });
   async function loadReports() {
-    if (!client || !user) return;
+    const request = ++reportsRequest;
+    if (!client) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Rapoartele nu au putut fi încărcate.')); return; }
     target.replaceChildren(); $('#more-reports').hidden = reportsLimit >= count;
     if (!data.length) target.append(element('p', 'small', 'Nu sunt rapoarte trimise.'));
     data.forEach(report => {
       const article = element('article', 'report-item');
+      article.append(element('p', 'small', `${report.author_name || 'Jucător'} · ${report.is_guest ? 'Oaspete · ' : ''}${report.is_public ? 'Raportare publică' : 'Raportare privată — vizibilă doar autorului și moderatorului'}`));
       article.append(element('span', 'post-status', statusLabels[report.status]), element('h3', '', report.title), element('p', 'small', `${dateText(report.created_at)} · ${report.platform} · ${report.mod_version}`), element('p', '', report.body));
       if (report.moderator_reply) article.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
       if (moderator) {
@@ -259,13 +277,19 @@
         const select = element('select'); select.name = 'status'; select.id = label.htmlFor;
         ['new','investigating','resolved','closed'].forEach(value => { const option = element('option', '', statusLabels[value]); option.value = value; option.selected = report.status === value; select.append(option); });
         field.append(label, select);
-        const replyField = element('div', 'field'), replyLabel = element('label', '', 'Răspuns privat pentru autor'), textarea = element('textarea');
+        const replyField = element('div', 'field'), replyLabel = element('label', '', report.is_public ? 'Răspuns public' : 'Răspuns privat pentru autor'), textarea = element('textarea');
         textarea.name = 'reply'; textarea.id = `answer-${report.id}`; replyLabel.htmlFor = textarea.id; textarea.maxLength = 4000; textarea.value = report.moderator_reply || ''; replyField.append(replyLabel, textarea);
         const button = element('button', 'btn secondary small-btn', 'Salvează răspunsul'); button.type = 'submit'; form.append(field, replyField, button, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
         form.addEventListener('submit', event => { event.preventDefault(); submit(form, async () => {
           const { error: updateError } = await client.from('bg3ro_bug_reports').update({ status: select.value, moderator_reply: textarea.value.trim() }).eq('id', report.id);
           if (updateError) throw updateError; toast('Raport actualizat.'); await loadReports();
         }); }); article.append(form);
+        article.append(actionButton('Șterge raportul', async () => {
+          if (!confirm('Ștergi definitiv această raportare?')) return;
+          const result = await client.from('bg3ro_bug_reports').delete().eq('id', report.id);
+          if (result.error) throw result.error;
+          await loadReports();
+        }));
       }
       target.append(article);
     });
@@ -326,7 +350,7 @@
         notice.textContent = 'Autentificarea este temporar dezactivată. Mesajele și rapoartele vor putea fi trimise după reactivare.';
       });
     }
-    syncAuth(); await Promise.all([loadUpdates(), loadComments(), loadProgress()]);
+    syncAuth(); await Promise.all([loadUpdates(), loadComments(), loadReports(), loadProgress()]);
     document.documentElement.classList.add('portal-ready');
   }
   initialize().catch(() => { document.documentElement.classList.add('portal-ready'); toast('Conexiunea la comunitate nu a reușit. Conținutul proiectului rămâne disponibil.'); });

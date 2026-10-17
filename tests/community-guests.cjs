@@ -1,0 +1,27 @@
+// Synthetic browser interactions; database policies are tested separately with ROLLBACK.
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
+const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('reports:[]','reports:window.__qaReports||[]');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const p=await browser.newPage({viewport:{width:390,height:950},reducedMotion:'reduce'}),errors=[];
+ p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.accept());
+ await p.route('https://baldursgate3.game/**',r=>r.abort());
+ await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'public-test'};"}));
+ await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
+ await p.addInitScript(()=>{window.__qaReports=[{id:'public',author_id:'someone',author_name:'Cititor',is_public:true,title:'Raport public de test',body:'Conținut public de test.',status:'new',platform:'windows',mod_version:'test',created_at:'2026-10-18T00:00:00Z'},{id:'private',author_id:'someone',is_public:false,title:'Raport privat de test',body:'Conținut privat.',status:'new',platform:'windows',mod_version:'test',created_at:'2026-10-18T00:00:00Z'}];});
+ await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
+ await p.locator('#tab-erori').click();assert.equal(await p.locator('.report-item').count(),1);assert(!(await p.locator('#reports-list').textContent()).includes('Conținut privat.'));
+ await p.locator('#tab-discutii').click();await p.locator('[data-guest-start=discussion]').click();await p.waitForSelector('#discussion-form',{state:'visible'});
+ await p.locator('#discussion-name').fill('Vizitator');await p.locator('#discussion-title').fill('Întrebare fără cont');await p.locator('#discussion-body').fill('<img src=x onerror=alert(1)> Mesaj anonim de test.');await p.locator('#discussion-form button[type=submit]').click();await p.waitForSelector('#discussion-list .post');
+ assert.equal(await p.evaluate(()=>window.__communityTest.guestCalls),1);assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].is_guest),true);assert((await p.locator('.post-meta').textContent()).includes('Oaspete'));assert.equal(await p.locator('#discussion-list img').count(),0);
+ assert.equal(await p.locator('#admin-tools:visible').count(),0);assert(await p.locator('.topbar [data-auth-open]').isVisible());
+ await p.locator('[data-rating="4"]').click();assert(await p.locator('#auth-dialog').isVisible());await p.keyboard.press('Escape');await p.locator('[data-works=true]').click();assert(await p.locator('#auth-dialog').isVisible());await p.keyboard.press('Escape');
+ await p.locator('#tab-erori').click();await p.locator('#report-name').fill('Vizitator');await p.locator('#report-title').fill('Raportare ca oaspete');await p.locator('#report-version').fill('test');await p.locator('#report-body').fill('Un context de test suficient de lung pentru această raportare.');
+ await p.locator('#report-form button[type=submit]').click();assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),2,'Public consent is required');await p.locator('[name=public_consent]').check();await p.locator('#report-form button[type=submit]').click();await p.waitForFunction(()=>window.__communityTest.reports.length===3);assert.equal(await p.evaluate(()=>window.__communityTest.reports[0].is_public),true);
+ await p.locator('#sign-out').click();await p.waitForSelector('#sign-out',{state:'hidden'});await p.locator('#tab-erori').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
+ await p.evaluate(()=>window.__qaOwner=true);await p.locator('.topbar [data-auth-open]').click();await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===3);
+ await p.locator('.report-item').first().getByRole('button',{name:'Șterge raportul',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
+ await p.locator('#tab-discutii').click();await p.locator('.post').first().getByRole('button',{name:'Șterge',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('#discussion-list .post').length===0);
+ assert.deepEqual(errors,[]);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ console.log('PASS: public reads without login, guest name-only messages/reports, consent, private history hidden, guest rating/vote gating, text safety and moderator deletion. Synthetic SDK.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

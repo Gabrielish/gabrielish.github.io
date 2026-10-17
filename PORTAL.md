@@ -1,5 +1,7 @@
 # Portal BG3RO — lucru în curs
 
+Comunitatea publică, postarea ca oaspete și ștergerea de către moderator sunt documentate în [supabase/COMMUNITY.md](supabase/COMMUNITY.md). Raportările vechi rămân private; cele noi sunt publice cu consimțământ. Ratingurile/voturile necesită Discord.
+
 Fluxul nou de versiuni GitHub, anunțuri legate, drepturi ale proprietarului și încărcare este documentat în [supabase/RELEASES.md](supabase/RELEASES.md). Acesta înlocuiește fluxul anterior exclusiv Nexus pentru descărcarea principală, după prima versiune publicată.
 
 Direcție cerută: portal inspirat de organizarea paginii Lokalizace.net, nu copierea conținutului, codului sau statisticilor sale.
@@ -8,11 +10,11 @@ Direcție cerută: portal inspirat de organizarea paginii Lokalizace.net, nu cop
 - Procente comunicate de proprietar: traducere 80%, corectură 20%, testare 20%. Toate trei au bare separate și se pot modifica din administrare.
 - Conținutul proiectului funcționează static pe GitHub Pages; comunitatea folosește Supabase.
 - Copia anterioară este publicată separat: https://gabrielish.github.io/bg3ro-old/ . Istoricul anterior este păstrat acolo.
-- La cererea proprietarului, interfața nouă este pagina principală /bg3ro/. Comunitatea rămâne dezactivată până la configurarea e-mailurilor.
+- Interfața nouă este pagina principală https://gabrielish.github.io/; /bg3ro/ redirecționează aici. Comunitatea folosește Discord sau sesiuni de oaspete, fără SMTP.
 
 ## Fișiere active
 
-Pagina principală: index.html, portal.css, portal.js, portal-video.js și portal-config.js. portal/index.html redirecționează către rădăcină, păstrând tabul din fragment și parametrii URL. Căile locale ale paginii principale sunt relative la /bg3ro/.
+Pagina principală: index.html, portal.css, portal.js, portal-video.js și portal-config.js. portal/index.html redirecționează către rădăcină, păstrând tabul din fragment și parametrii URL. Căile locale ale paginii principale sunt relative la rădăcină.
 
 portal-config.js conține exclusiv URL-ul și cheia PUBLICĂ Supabase. Nu folosi service_role sau parole aici.
 

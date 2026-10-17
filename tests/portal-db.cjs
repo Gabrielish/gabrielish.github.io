@@ -1,6 +1,6 @@
 // Real PostgreSQL engine (PGlite), with a minimal stand-in for Supabase Auth.
 // This does NOT test hosted Supabase configuration or e-mail delivery.
-const { PGlite } = require('../.qa/db-test/node_modules/@electric-sql/pglite');
+const { PGlite } = require(process.env.BG3RO_PGLITE_PATH || '../.qa/db-test/node_modules/@electric-sql/pglite');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
@@ -13,6 +13,7 @@ const M = '33333333-3333-3333-3333-333333333333';
     await db.exec(`create role anon; create role authenticated; create schema auth;
       create table auth.users(id uuid primary key);
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+      create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb) $$;
       grant usage on schema auth to anon,authenticated;
       grant execute on function auth.uid() to anon,authenticated;
       insert into auth.users values('${A}'),('${B}'),('${M}');`);

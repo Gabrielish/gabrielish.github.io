@@ -1,5 +1,7 @@
 # Conectarea comunității BG3RO
 
+Actualizare: vezi [COMMUNITY.md](COMMUNITY.md) pentru modul oaspete, raportări noi publice, păstrarea istoricului privat și restricțiile rating/vot. Migrarea aferentă este deja aplicată, iar autentificarea anonimă este activată de proprietar.
+
 Configurarea versiunilor, moderatorul confirmat și secretul de încărcare GitHub sunt documentate în [RELEASES.md](RELEASES.md). UUID-ul proprietarului a primit deja rolul de moderator; nu îl atribui automat altui cont pe baza numelui afișat.
 
 Nu publica portalul ca funcțional înainte de verificările de mai jos.
@@ -22,9 +24,9 @@ Testul `tests/hosted-access.sql` a trecut deja pe instanța reală. Creează doa
 
 - Actualizările și progresul se citesc public; doar moderatorii le schimbă.
 - Mesajele și răspunsurile noi sunt publicate imediat, fără aprobare. Autorii le pot șterge; moderatorii le pot ascunde ulterior. Migrarea `20261017210537_instant_discussions.sql` este aplicată în proiectul proprietarului; nu o rula din nou.
-- Rapoartele nu se citesc anonim. Un utilizator vede numai rapoartele proprii; moderatorii le văd pe toate.
+- Rapoartele noi marcate public se citesc fără conectare. Rapoartele vechi private rămân vizibile numai autorului și moderatorului; moderatorul poate șterge ambele tipuri.
 - Utilizatorii nu pot modifica autorul, data, stadiul sau răspunsul moderatorului. Coloanele acceptate la insert/update sunt limitate explicit.
-- Trimiterile sunt limitate în baza de date: minimum 30 secunde între mesaje/rapoarte, maximum 20 pe zi, pe cont și tip. Sunt necesare și protecțiile Auth împotriva abuzului cu multe conturi.
+- Trimiterile sunt limitate în baza de date: minimum 30 secunde între mesaje/rapoarte, maximum 20 pe zi pentru membri sau 5 pentru oaspeți, pe cont și tip. Sunt necesare și protecțiile Auth împotriva abuzului cu multe conturi.
 - Numele public este ales de utilizator și nu este un nume de identitate verificat. E-mailurile sunt păstrate în Supabase Auth, nu în tabelele publice.
 - Conținutul este redat ca text, nu HTML. Nu există upload de fișiere sau salvări în această primă versiune.
 - Sesiunea și verifier-ul PKCE folosesc sessionStorage, nu localStorage. Reîncărcarea în aceeași filă păstrează sesiunea; alte file au stocare separată, iar închiderea filei o încheie de regulă (restaurarea browserului poate restaura sessionStorage). Deconectarea folosește Supabase signOut.
@@ -32,4 +34,4 @@ Testul `tests/hosted-access.sql` a trecut deja pe instanța reală. Creează doa
 
 ## Publicare
 
-GitHub Pages rămâne la /bg3ro/. Copia site-ului anterior este în repository-ul separat Gabrielish/bg3ro-old, publicat la /bg3ro-old/. Nu este necesară mutarea găzduirii web pentru Supabase.
+GitHub Pages este la https://gabrielish.github.io/ în repository-ul Gabrielish/gabrielish.github.io. /bg3ro/ redirecționează către noua rădăcină. Copia site-ului anterior este în repository-ul separat Gabrielish/bg3ro-old, publicat la /bg3ro-old/.
