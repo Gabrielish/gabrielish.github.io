@@ -1,10 +1,10 @@
 {
-  "id": "/bg3ro/",
+  "id": "/",
   "name": "BG3RO — Baldur’s Gate 3 în română",
   "short_name": "BG3RO",
   "lang": "ro",
-  "start_url": "/bg3ro/",
-  "scope": "/bg3ro/",
+  "start_url": "/",
+  "scope": "/",
   "display": "browser",
   "background_color": "#0b0c0f",
   "theme_color": "#0b0c0f",

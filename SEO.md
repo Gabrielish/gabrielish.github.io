@@ -15,9 +15,9 @@ Google decide indexarea, titlul afișat, snippetul, poziția și eventualele ima
 
 ## Pasul care trebuie făcut în contul proprietarului
 
-1. În Google Search Console, adaugă proprietatea URL-prefix `https://gabrielish.github.io/bg3ro/`.
+1. În Google Search Console, adaugă proprietatea URL-prefix `https://gabrielish.github.io/`.
 2. Alege verificarea prin meta-tag sau fișier HTML. Furnizează tagul/fișierul primit pentru a fi instalat exact; nu inventăm o valoare de verificare.
-3. Trimite `https://gabrielish.github.io/bg3ro/sitemap.xml` în Sitemaps.
+3. Trimite `https://gabrielish.github.io/sitemap.xml` în Sitemaps.
 4. Inspectează URL-ul canonic și folosește Request indexing dacă este disponibil.
 
 Nu a fost trimisă o cerere de indexare din acest proiect: nu avem o sesiune autorizată în Search Console. Reindexarea nu este instantanee și poate să nu aibă loc.

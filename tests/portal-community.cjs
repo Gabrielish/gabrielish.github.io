@@ -75,7 +75,7 @@ function syntheticSDK(){
     for(const outcome of ['success','expired','cancelled']){
       const p=await browser.newPage({viewport:{width:390,height:950}});
       await p.route('https://baldursgate3.game/**',r=>r.abort());
-      await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'test-public-key',authEnabled:true,authRedirectUrl:'https://gabrielish.github.io/bg3ro/'};"}));
+      await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'test-public-key',authEnabled:true,authRedirectUrl:'https://gabrielish.github.io/'};"}));
       await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=(_url,_key,options)=>{window.__authOptions=options;return (${syntheticSDK.toString()})();};`}));
       await p.addInitScript(()=>sessionStorage.setItem('bg3ro-return-tab','erori'));
       const url=new URL(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/');

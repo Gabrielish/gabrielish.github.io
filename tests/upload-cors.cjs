@@ -8,7 +8,7 @@ const assert=require('node:assert/strict');
   const page=await browser.newPage();
   const corsErrors=[];
   page.on('console',message=>{if(/blocked by CORS policy/.test(message.text()))corsErrors.push(message.text());});
-  await page.goto('https://gabrielish.github.io/bg3ro/',{waitUntil:'domcontentloaded'});
+  await page.goto('https://gabrielish.github.io/',{waitUntil:'domcontentloaded'});
   const result=await page.evaluate(async()=>{
    const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.118.0');
    const client=createClient('https://gatkiwcyjgbgjwfgvplm.supabase.co','sb_publishable_8wgqYScl0lmXs3-x0feaIw_4z7kr4bd',{auth:{persistSession:false}});

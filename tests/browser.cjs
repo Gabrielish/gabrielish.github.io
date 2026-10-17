@@ -13,7 +13,7 @@ const path = require('node:path');
   await page.evaluate(() => document.fonts.ready);
   assert.equal(await page.title(), 'Baldur’s Gate 3 în română — traducere gratuită | BG3RO');
   assert.equal(await page.locator('html').getAttribute('lang'), 'ro');
-  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://gabrielish.github.io/bg3ro/');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://gabrielish.github.io/');
   assert(!(await page.locator('meta[name="robots"]').getAttribute('content')).includes('noindex'));
   const graph = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent())['@graph'];
   assert(graph.find(item => item['@type'] === 'Brand').logo['@id'].endsWith('#logo'));

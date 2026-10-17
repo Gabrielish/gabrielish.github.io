@@ -14,7 +14,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.waitForURL(url=>url.hostname==='discord.com');const target=new URL(page.url());
  assert.equal(authorizeURL.searchParams.get('code_challenge_method'),'s256');
  assert(authorizeURL.searchParams.get('code_challenge').length>=43);
- assert.equal(authorizeURL.searchParams.get('redirect_to'),'https://gabrielish.github.io/bg3ro/');
+ assert.equal(authorizeURL.searchParams.get('redirect_to'),'https://gabrielish.github.io/');
  assert.equal(target.searchParams.get('client_id'),'1190788174314754161');
  assert.equal(target.searchParams.get('redirect_uri'),'https://gatkiwcyjgbgjwfgvplm.supabase.co/auth/v1/callback');
  assert(target.searchParams.get('scope').includes('identify'));

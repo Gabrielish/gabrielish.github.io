@@ -1,10 +1,12 @@
 # BG3RO — În cuvintele noastre
 
-Portalul nou este pagina principală la https://gabrielish.github.io/bg3ro/ . Detaliile și verificările sunt în [PORTAL.md](PORTAL.md). Adresa /portal/ redirecționează către pagina principală. Autentificarea rămâne în configurare. Copia istorică este la https://gabrielish.github.io/bg3ro-old/ . Restul notelor de mai jos descriu versiunea arhivată.
+Site-ul activ este la https://gabrielish.github.io/ , publicat din acest repository. Vezi [MIGRATION.md](MIGRATION.md) pentru mutarea de la `/bg3ro/`, repository-ul separat al arhivelor și păstrarea autentificării.
+
+Portalul nou este pagina principală la https://gabrielish.github.io/ . Detaliile și verificările sunt în [PORTAL.md](PORTAL.md). Adresa /portal/ redirecționează către pagina principală. Autentificarea rămâne în configurare. Copia istorică este la https://gabrielish.github.io/bg3ro-old/ . Restul notelor de mai jos descriu versiunea arhivată.
 
 One-page de prezentare pentru traducerea română neoficială a Baldur’s Gate 3, de Gabrielish.
 
-Site: https://gabrielish.github.io/bg3ro/
+Site: https://gabrielish.github.io/
 
 Logo tricolor: `assets/logo-d20-romania.png` (1024px, transparent), master în `assets/logo-d20-master.png`, brief și prompt în `assets/logo-brief.md`. Exporturile pentru favicon și navbar pot fi regenerate cu `node assets/export-logo.cjs` (Sharp disponibil în mediul de lucru). SEO și pașii de Search Console sunt documentați în `SEO.md`; nu este promisă indexarea sau o poziție în Google.
 
