@@ -48,7 +48,7 @@ const fs = require('node:fs');
     const page = await browser.newPage({javaScriptEnabled:false,viewport:{width:390,height:844}});
     await page.goto(base,{waitUntil:'networkidle'});
     assert.equal(await page.locator('.tab-panel:visible').count(),5);
-    assert.equal(await page.locator('a[href*="tab=files"]').count(),2);
+    assert.equal(await page.locator('a[href*="tab=files"]').count(),1,'Only the sidebar Nexus download remains without JavaScript');
     await page.close();
     console.log('PASS: five real tab panels, hash/history/keyboard, confirmed progress, download links, honest disconnected community, dialog/privacy, responsive 320–1440px and no-JS.');
   }finally{await browser.close();}
