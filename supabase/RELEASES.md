@@ -22,6 +22,8 @@ Proprietarul creează un fine-grained GitHub token limitat la `Gabrielish/bg3ro`
 
 ## Teste
 
+Erorile GitHub sunt clasificate fără a transmite răspunsul brut sau tokenul: 401 token invalid/expirat/revocat, 403 acces refuzat, 404 acces la repository/destinație, 409 conflict, 422 validare, 429 limitare temporară. Mesajul indică explicit `Gabrielish/bg3ro`, nu repository-ul nou de găzduire. Logul sigur conține doar etapa, codul HTTP și categoria. Un 403 singur nu dovedește dacă tokenul este read-only sau dacă o regulă a ramurii blochează scrierea; proprietarul trebuie să verifice setările tokenului și să reîncerce uploadul real. Nu considera testele simulate drept dovada încărcării arhivei sale.
+
 - `node tests/upload-cors.cjs`: regresie pe serviciul real, din browser fără interceptarea cererilor. Confirmă că SDK-ul trece de preflight și primește JSON 401 pentru un JWT de diagnostic invalid; nu folosește sesiunea proprietarului și nu încarcă fișiere. Corecția CORS permite explicit `x-client-info`, antetele de retry/tracing ale SDK-ului și `x-file-name`, numai pentru originile aprobate.
 
 - `node tests/releases.cjs`: UI desktop/mobil, date sintetice, publicare/editare în ambele taburi și erori de upload.
