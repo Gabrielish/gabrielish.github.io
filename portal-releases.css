@@ -2,6 +2,11 @@
   display: grid;
   gap: 22px;
 }
+/* Empty status/list nodes must not create grid rows and gaps above the release. */
+#release-load-status:empty,
+#translation-releases:empty {
+  display: none;
+}
 .release-head {
   display: flex;
   justify-content: space-between;

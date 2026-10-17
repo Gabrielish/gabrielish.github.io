@@ -31,6 +31,12 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.match(await p.locator('.hero-cta').getAttribute('href'),/github.com.*test-translation.zip/);
       assert.match(await p.locator('#github-quick-download').getAttribute('href'),/test-translation.zip/);
       await p.locator('#tab-descarcari').click();
+      assert.equal(await p.locator('#release-load-status').isVisible(),false,'Empty status must not shift the release');
+      assert.equal(await p.locator('#translation-releases a[href*="nexusmods"]').count(),0,'Nexus download belongs only in the sidebar');
+      if(owner){
+        const left=await p.locator('#translation-releases .release-card').first().boundingBox(),right=await p.locator('.quick-download').boundingBox();
+        assert(Math.abs(left.y-right.y)<=1,'Download release and sidebar must have aligned top borders');
+      }
       assert.match(await p.locator('#translation-releases .release-file').textContent(),/test-translation.zip · 1 MB/);
       assert.equal(await p.locator('.release-edit:visible').count(),0);
       await p.locator('.topbar [data-auth-open]').click();await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#sign-out',{state:'visible'});

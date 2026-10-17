@@ -241,24 +241,16 @@
         target = kind === "translation" ? main : extras;
       if (row) target.append(card(row));
       else {
+        if (kind === "translation") return;
         const placeholder = el("article", "card release-placeholder");
         placeholder.append(
           el("h3", "", title),
           el(
             "p",
             "",
-            kind === "translation"
-              ? "Arhiva nu a fost publicată încă pe GitHub. Versiunea disponibilă poate fi descărcată de pe Nexus Mods."
-              : "Nu este încă publicat un fișier pentru acest modul în site.",
+            "Nu este încă publicat un fișier pentru acest modul în site.",
           ),
         );
-        if (kind === "translation") {
-          const nexus = el("a", "btn secondary", "Descarcă de pe Nexus ↗");
-          nexus.href = "https://www.nexusmods.com/baldursgate3/mods/24379?tab=files";
-          nexus.target = "_blank";
-          nexus.rel = "noopener noreferrer";
-          placeholder.append(nexus);
-        }
         target.append(placeholder);
       }
     });
