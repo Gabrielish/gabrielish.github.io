@@ -9,6 +9,9 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.route('**/rest/v1/rpc/bg3ro_sidebar_stats',async r=>{const state=await page.evaluate(()=>window.__sidebarTest);await r.fulfill({contentType:'application/json',body:JSON.stringify({rating_count:state.rating?1:0,rating_average:state.rating?.rating||null,compatibility_count:state.vote?1:0,works_count:state.vote?.works?1:0,last_update:null,recent:state.vote?[{...state.vote,updated_at:'2026-10-17T10:00:00Z'}]:[]})});});
  await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
  assert.equal(await page.locator('.rating-star').count(),5);assert.equal(await page.locator('.sidebar .author-line').count(),0);
+ assert.equal(await page.locator('.quick-download a').count(),2,'Only the two download links remain');
+ assert(!(await page.locator('.quick-download').textContent()).includes('Fișierele și cerințele actualizate'));
+ assert(!(await page.locator('.quick-download').textContent()).includes('Instrucțiuni de instalare'));
  assert.equal(await page.locator('.compatibility-actions button svg[aria-hidden="true"]').count(),2);
  assert.equal(await page.locator('.compatibility-counts svg').count(),2);
  assert.equal(await page.locator('[data-works="false"] svg.is-down').count(),1);
