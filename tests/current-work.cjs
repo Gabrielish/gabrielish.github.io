@@ -1,3 +1,4 @@
+const {clickNav}=require('./nav-action.cjs');
 const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('node:assert/strict');
 const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
 const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace("if(this.operation==='update')Object.assign(state.status,this.payload);","if(this.operation==='update'){if(state.failWork)return{data:null,error:{message:'Network error'}};Object.assign(state.status,this.payload);}");
@@ -11,7 +12,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await p.goto('http://127.0.0.1:4173/#actualizari',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
   assert.equal(await p.locator('#actualizari > .card-header').count(),0);assert.equal(await p.locator('#actualizari a[href*="tab=logs"]').count(),0);
   assert.equal(await p.locator('#work-editor').isVisible(),false);
-  await p.locator('.topbar [data-auth-open]').click();await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
+  await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
   assert.equal(await p.locator('#work-editor').isVisible(),owner);
   if(owner){
    await p.locator('#work-editor summary').click();assert.equal(await p.locator('#work-title').inputValue(),'La ce lucrez acum');
@@ -22,7 +23,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    assert.equal(await p.locator('#current-work-body img').count(),0);assert.equal(await p.locator('#current-work-note').isVisible(),false);
    await p.locator('#work-note').fill('Notă publică');await p.locator('#work-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#current-work-note').textContent==='Notă publică');
    assert(await p.locator('#current-work-note').isVisible());
-   await p.locator('#sign-out').click();await p.waitForSelector('#work-editor',{state:'hidden'});assert.equal(await p.locator('#current-work-title').textContent(),'Etapa curentă');
+   await clickNav(p,'#sign-out');await p.waitForSelector('#work-editor',{state:'hidden'});assert.equal(await p.locator('#current-work-title').textContent(),'Etapa curentă');
   }
   assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await p.close();
  }

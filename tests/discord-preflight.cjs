@@ -1,3 +1,4 @@
+const {clickNav}=require('./nav-action.cjs');
 // Real SDK + hosted Supabase authorize endpoint. Stops BEFORE Discord consent.
 const {chromium}=require('playwright');const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
@@ -8,7 +9,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.route('https://discord.com/**',r=>r.fulfill({contentType:'text/html',body:'<title>OAuth preflight stopped before consent</title>'}));
  await page.addInitScript(()=>localStorage.setItem('bg3ro-discord-authorized','1'));
  await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'});await page.waitForSelector('html.portal-ready');
- await page.locator('.topbar [data-auth-open]').click();
+ await clickNav(page,'.topbar [data-auth-open]');
  assert(await page.locator('#discord-login').isEnabled());assert(!await page.locator('#auth-unavailable').isVisible());
  await page.screenshot({path:'.qa/discord-login-mobile.png'});
  await page.locator('#auth-consent').check();await page.locator('#discord-login').click();

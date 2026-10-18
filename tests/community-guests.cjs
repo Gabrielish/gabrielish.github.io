@@ -1,3 +1,4 @@
+const {clickNav}=require('./nav-action.cjs');
 // Synthetic browser interactions; database policies are tested separately with ROLLBACK.
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
@@ -14,12 +15,12 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
  await p.locator('#tab-discutii').click();await p.locator('[data-guest-start=discussion]').click();await p.waitForSelector('#discussion-form',{state:'visible'});
  await p.locator('#discussion-name').fill('Vizitator');await p.locator('#discussion-title').fill('Întrebare fără cont');await p.locator('#discussion-body').fill('<img src=x onerror=alert(1)> Mesaj anonim de test.');await p.locator('#discussion-form button[type=submit]').click();await p.waitForSelector('#discussion-list .post');
  assert.equal(await p.evaluate(()=>window.__communityTest.guestCalls),1);assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].is_guest),true);assert((await p.locator('.post-meta').textContent()).includes('Oaspete'));assert.equal(await p.locator('#discussion-list .post-body img').count(),0);
- assert.equal(await p.locator('#admin-tools:visible').count(),0);assert(await p.locator('.topbar [data-auth-open]').isVisible());
+ assert.equal(await p.locator('#admin-tools:visible').count(),0);assert.equal(await p.locator('.topbar [data-auth-open]').getAttribute('hidden'),null);
  await p.locator('[data-rating="4"]').click();assert(await p.locator('#auth-dialog').isVisible());await p.keyboard.press('Escape');await p.locator('[data-works=true]').click();assert(await p.locator('#auth-dialog').isVisible());await p.keyboard.press('Escape');
  await p.locator('#tab-erori').click();await p.locator('#report-name').fill('Vizitator');await p.locator('#report-title').fill('Raportare ca oaspete');await p.locator('#report-version').fill('test');await p.locator('#report-body').fill('Un context de test suficient de lung pentru această raportare.');
  await p.locator('#report-form button[type=submit]').click();assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),2,'Public consent is required');await p.locator('[name=public_consent]').check();await p.locator('#report-form button[type=submit]').click();await p.waitForFunction(()=>window.__communityTest.reports.length===3);assert.equal(await p.evaluate(()=>window.__communityTest.reports[0].is_public),true);
- await p.locator('#sign-out').click();await p.waitForSelector('#sign-out',{state:'hidden'});await p.locator('#tab-erori').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
- await p.evaluate(()=>window.__qaOwner=true);await p.locator('.topbar [data-auth-open]').click();await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===3);
+ await clickNav(p,'#sign-out');await p.waitForSelector('#sign-out',{state:'hidden'});await p.locator('#tab-erori').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
+ await p.evaluate(()=>window.__qaOwner=true);await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===3);
  await p.locator('.report-item').first().getByRole('button',{name:'Șterge raportul',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
  await p.locator('#tab-discutii').click();await p.locator('.post').first().getByRole('button',{name:'Șterge',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('#discussion-list .post').length===0);
  assert.deepEqual(errors,[]);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));

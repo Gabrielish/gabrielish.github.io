@@ -1,3 +1,4 @@
+const {clickNav}=require('./nav-action.cjs');
 // Synthetic UI data only. Actual database permissions are tested in releases-access.sql.
 const {chromium}=require('playwright');
 const fs=require('node:fs');
@@ -39,7 +40,7 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       }
       assert.match(await p.locator('#translation-releases .release-file').textContent(),/test-translation.zip · 1 MB/);
       assert.equal(await p.locator('.release-edit:visible').count(),0);
-      await p.locator('.topbar [data-auth-open]').click();await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#sign-out',{state:'visible'});
+      await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
       if(owner){
         await p.waitForSelector('#release-editor',{state:'visible'});
         await p.locator('#translation-releases .release-edit summary').click();
@@ -66,7 +67,7 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       }else assert.equal(await p.locator('#release-editor:visible').count(),0,'Discord profile metadata cannot grant publishing rights');
       assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
       await p.locator('#descarcari').screenshot({path:`.qa/releases-downloads-${owner?'desktop':'mobile'}.png`});
-      await p.locator('#sign-out').click();await p.waitForSelector('#sign-out',{state:'hidden'});
+      await clickNav(p,'#sign-out');await p.waitForSelector('#sign-out',{state:'hidden'});
       assert.equal(await p.locator('.release-edit:visible').count(),0);
       assert.deepEqual(errors,[]);await p.close();
     }

@@ -1,3 +1,4 @@
+const {clickNav}=require('./nav-action.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
@@ -7,7 +8,7 @@ const assert=require('node:assert/strict');
   await page.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:'window.BG3RO_CONFIG={};'}));
   await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
   const trigger=page.locator('.nav-support'),dialog=page.locator('#support-dialog');const originalURL=page.url();
-  await trigger.click();assert(await dialog.isVisible());assert.equal(page.url(),originalURL,'No jump to sidebar');
+  await clickNav(page,'.nav-support');assert(await dialog.isVisible());assert.equal(page.url(),originalURL,'No jump to sidebar');
   assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
   assert.equal(await page.locator('.support-close').evaluate(el=>el===document.activeElement),true);
   assert.equal(await dialog.locator('a').count(),2);
@@ -26,9 +27,9 @@ const assert=require('node:assert/strict');
   assert(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth));
   await page.screenshot({path:`.qa/support-dialog-${width}.png`});
   await page.locator('.support-close').click();assert(!await dialog.isVisible());
-  assert(await trigger.evaluate(el=>el===document.activeElement));
-  await page.keyboard.press('Enter');assert(await dialog.isVisible());await page.keyboard.press('Escape');assert(!await dialog.isVisible());
-  await trigger.click();await page.mouse.click(1,200);assert(!await dialog.isVisible());
+  assert(await page.locator(width<=1100?'.nav-toggle':'.nav-support').evaluate(el=>el===document.activeElement));
+  await clickNav(page,'.nav-support');assert(await dialog.isVisible());await page.keyboard.press('Escape');assert(!await dialog.isVisible());
+  await clickNav(page,'.nav-support');await page.mouse.click(1,200);assert(!await dialog.isVisible());
   assert(!await page.locator('html').evaluate(el=>el.classList.contains('support-open')));assert.deepEqual(errors,[]);
   await page.close();
  }

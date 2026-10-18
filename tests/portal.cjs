@@ -1,3 +1,4 @@
+const {clickNav}=require('./nav-action.cjs');
 const {chromium} = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -33,7 +34,7 @@ const fs = require('node:fs');
       await page.keyboard.press('Home');assert.equal(await page.locator('#tab-despre').getAttribute('aria-selected'),'true');
       await page.locator('.sidebar [data-go-tab="descarcari"]').click();assert(await page.locator('#descarcari').isVisible());
       await page.goBack();assert(await page.locator('#despre').isVisible());
-      await page.locator('.topbar [data-auth-open]').click();assert(await page.locator('#auth-dialog').isVisible());
+      await clickNav(page,'.topbar [data-auth-open]');assert(await page.locator('#auth-dialog').isVisible());
       assert(await page.locator('#auth-unavailable').isVisible());await page.keyboard.press('Escape');
       assert.equal(await page.locator('#auth-dialog:visible').count(),0);
       await page.locator('a[href="#confidentialitate"]').click();assert(await page.locator('#confidentialitate').evaluate(el=>el.open));

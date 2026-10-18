@@ -1,3 +1,4 @@
+const {clickNav}=require('./nav-action.cjs');
 // Browser integration with a synthetic SDK. Real RLS is tested separately in portal-db.cjs.
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
@@ -50,7 +51,7 @@ function syntheticSDK(){
       await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'test-public-key'};"}));
       await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${syntheticSDK.toString()})();`}));
       await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
-      await p.locator('.topbar [data-auth-open]').click();await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
+      await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
       assert.equal(await p.evaluate(()=>window.__communityTest.oauth.provider),'discord');
       assert.equal(await p.locator('#discussion-name').inputValue(),'Jucător Discord');
       await p.locator('#tab-discutii').click();await p.locator('#discussion-name').fill('Jucător de test');await p.locator('#discussion-title').fill('O întrebare');await p.locator('#discussion-body').fill('<img src=x onerror="window.injected=true"> Text de test.');
@@ -72,7 +73,7 @@ function syntheticSDK(){
         await p.locator('#tab-despre').click();assert.equal(await p.locator('#translation-percent').textContent(),'82%');assert.equal(await p.locator('#review-percent').textContent(),'25%');assert.equal(await p.locator('#testing-percent').textContent(),'30%');
         await p.locator('#tab-actualizari').click();await p.locator('#admin-tools details summary').first().click();await p.locator('#update-title').fill('Actualizare de test');await p.locator('#update-body').fill('O actualizare sintetică pentru testarea interfeței.');await p.locator('#update-form button').click();await p.waitForFunction(()=>document.querySelector('#updates-list').textContent.includes('Actualizare de test'));
       }else assert.equal(await p.locator('#admin-tools:visible').count(),0);
-      await p.locator('#sign-out').click();await p.waitForSelector('#sign-out',{state:'hidden'});assert.equal(await p.locator('[data-user-form]:visible').count(),0);await p.locator('#tab-erori').click();assert.equal(await p.locator('#my-reports:visible').count(),1);assert.equal(await p.locator('.report-item').count(),1);
+      await clickNav(p,'#sign-out');await p.waitForSelector('#sign-out',{state:'hidden'});assert.equal(await p.locator('[data-user-form]:visible').count(),0);await p.locator('#tab-erori').click();assert.equal(await p.locator('#my-reports:visible').count(),1);assert.equal(await p.locator('.report-item').count(),1);
       assert.deepEqual(errors,[]);await p.close();
     }
     for(const outcome of ['success','expired','cancelled']){
