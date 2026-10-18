@@ -259,10 +259,26 @@
         meta = el("div", "release-meta"),
         time = el("time", "", date(row.published_at));
       time.dateTime = row.published_at;
+      const versionBadge = el("span", "release-version-badge"),
+        uploadIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+        uploadPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      uploadIcon.setAttribute("viewBox", "0 0 24 24");
+      uploadIcon.setAttribute("width", "12");
+      uploadIcon.setAttribute("height", "12");
+      uploadIcon.setAttribute("fill", "none");
+      uploadIcon.setAttribute("stroke", "currentColor");
+      uploadIcon.setAttribute("stroke-width", "2");
+      uploadIcon.setAttribute("stroke-linecap", "round");
+      uploadIcon.setAttribute("stroke-linejoin", "round");
+      uploadIcon.setAttribute("aria-hidden", "true");
+      uploadIcon.setAttribute("focusable", "false");
+      uploadPath.setAttribute("d", "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12");
+      uploadIcon.append(uploadPath);
+      versionBadge.append(uploadIcon, el("span", "", `Versiunea ${row.version}`));
       meta.append(
         el("strong", "", row.author_name),
         time,
-        el("span", "badge", `Versiunea ${row.version}`),
+        versionBadge,
       );
       const title = el("h3", "", `Noua versiune ${row.version}`),
         link = el("a", "", "Toate descărcările →");

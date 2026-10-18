@@ -27,6 +27,10 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       const errors=[];p.on('pageerror',e=>errors.push(e.message));
       await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
       await p.waitForSelector('#release-updates .release-news',{state:'attached'});
+      const badge=p.locator('#release-updates .release-version-badge').first();
+      assert.equal(await badge.textContent(),'Versiunea 0.1');
+      assert.equal(await badge.locator('svg[aria-hidden="true"] path').count(),1);
+      assert.deepEqual(await badge.evaluate(el=>{const s=getComputedStyle(el);return [s.borderRadius,s.padding,s.fontSize,s.lineHeight,s.gap,s.color];}),['9999px','2px 8px','12px','16px','4px','oklch(0.723 0.219 149.579)']);
       assert.equal(await p.locator('#extra-releases .release-card').count(),3);
       assert.equal(await p.locator('#release-editor:visible').count(),0);
       assert.match(await p.locator('.hero-cta').getAttribute('href'),/github.com.*test-translation.zip/);

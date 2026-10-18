@@ -65,8 +65,28 @@
 .release-meta strong {
   color: var(--text);
 }
-.release-meta .badge {
+.release-version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgb(34 197 94 / 10%);
+  background: oklch(72.3% 0.219 149.579 / 10%);
+  color: #22c55e;
+  color: oklch(72.3% 0.219 149.579);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
   margin-left: auto;
+  max-width: 100%;
+}
+.release-version-badge svg {
+  flex-shrink: 0;
+}
+.release-version-badge span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .release-news h3 {
   font-size: 20px;
@@ -127,7 +147,7 @@
   .release-notes {
     padding: 16px;
   }
-  .release-meta .badge {
+  .release-version-badge {
     margin-left: 0;
   }
   .release-meta {
