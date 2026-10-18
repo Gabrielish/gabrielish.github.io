@@ -41,7 +41,13 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.equal(await downloadButton.textContent(),'Descărcați fișierul ZIP');
       assert.equal(await downloadButton.locator('svg[aria-hidden="true"]').count(),1);
       assert.equal(await downloadButton.getAttribute('download'),'test-translation.zip');
-      assert.match(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundImage),/linear-gradient/);
+      assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundImage),'none');
+      assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundColor),await p.locator('#github-quick-download').evaluate(el=>getComputedStyle(el).backgroundColor),'Same cream as sidebar download');
+      assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).color),'rgb(23, 21, 15)');
+      const restingGlow=await downloadButton.evaluate(el=>getComputedStyle(el).boxShadow);
+      await downloadButton.hover();assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
+      assert.notEqual(await downloadButton.evaluate(el=>getComputedStyle(el).boxShadow),restingGlow,'Warm glow increases on hover');
+      await p.mouse.move(0,0);
       assert.equal(await p.locator('#translation-releases .release-notes h3 svg').count(),1);
       assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Noua versiune 0.1');
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');

@@ -24,23 +24,20 @@
   padding: 10px 16px;
   border: 0;
   border-radius: 12px;
-  color: #fff;
+  color: #17150f;
   font-size: 14px;
   font-weight: 600;
   line-height: 20px;
   gap: 8px;
-  background: linear-gradient(to right, #9333ea, #4f46e5);
-  background: linear-gradient(to right, oklch(55.8% 0.288 302.321), oklch(51.1% 0.262 276.966));
-  box-shadow: 0 4px 6px -1px #a855f740, 0 2px 4px -2px #a855f740;
-  transition: box-shadow .2s, filter .2s;
+  background: var(--accent);
+  box-shadow: 0 4px 12px -3px #ddc9a72e;
+  transition: background .2s, box-shadow .2s;
 }
 .release-download:hover {
-  background: linear-gradient(to right, #9333ea, #4f46e5);
-  background: linear-gradient(to right, oklch(55.8% 0.288 302.321), oklch(51.1% 0.262 276.966));
-  box-shadow: 0 10px 15px -3px #a855f74d, 0 4px 6px -4px #a855f74d;
-  filter: brightness(1.08);
+  background: #fff;
+  box-shadow: 0 8px 20px -4px #ddc9a74d;
 }
-.release-download:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 4px; }
+.release-download:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
 .release-download svg { flex-shrink: 0; }
 .release-download span { min-width: 0; overflow-wrap: anywhere; }
 .release-file {
