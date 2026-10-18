@@ -101,6 +101,7 @@
     } else a.textContent = "Descarcă arhiva";
     a.href = row.download_url;
     a.download = row.file_name;
+    a.dataset.releaseId = row.id;
     return a;
   }
   function tags(row) {
@@ -327,6 +328,7 @@
       if (latest) {
         a.href = latest.download_url;
         a.download = latest.file_name;
+        a.dataset.releaseId = latest.id;
         a.removeAttribute("target");
         a.removeAttribute("data-go-tab");
       }
@@ -335,6 +337,7 @@
     if (latest) {
       $("#github-quick-download").href = latest.download_url;
       $("#github-quick-download").download = latest.file_name;
+      $("#github-quick-download").dataset.releaseId = latest.id;
     }
   }
   async function load() {

@@ -10,7 +10,7 @@ const M = '33333333-3333-3333-3333-333333333333';
 (async () => {
   const db = new PGlite();
   try {
-    await db.exec(`create role anon; create role authenticated; create schema auth;
+    await db.exec(`create role anon; create role authenticated; create role service_role bypassrls; create schema auth;
       create table auth.users(id uuid primary key,is_anonymous boolean default false,raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb) $$;
@@ -89,6 +89,7 @@ const M = '33333333-3333-3333-3333-333333333333';
     await role(B); await denied('select * from bg3ro_private.submission_limits');
     await db.exec('reset role');
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/contact-access.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/statistics-access.sql'),'utf8'));
     console.log('PASS: migration executes; anonymous/owner/other-user/moderator isolation; private reports; immediate publication; column privileges; rate limits survive deletion; progress bounds; private contact submission and moderator inbox.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

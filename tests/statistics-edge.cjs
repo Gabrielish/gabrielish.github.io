@@ -1,0 +1,33 @@
+const assert = require('node:assert/strict');
+const {pathToFileURL}=require('node:url');
+global.Deno={env:{get:key=>key==='SUPABASE_URL'?'https://db.test':'server-only-test-secret'},serve:()=>{}};
+const key='sb_publishable_8wgqYScl0lmXs3-x0feaIw_4z7kr4bd';
+(async()=>{
+  const {handler}=await import(pathToFileURL(require('node:path').resolve('supabase/functions/bg3ro-statistics/index.ts')));
+  let calls=[],claim=true,invalid=false,fail=false;
+  global.fetch=async(url,options={})=>{
+    calls.push([url,options]);
+    if(String(url).includes('api.nexusmods.com'))return Response.json(fail?{errors:['down']}:{data:{mod:{uid:'14920716410683',downloads:invalid?-1:23}}});
+    if(String(url).includes('claim_nexus_sync'))return Response.json(claim);
+    if(String(url).includes('record_download'))return Response.json(true);
+    return options.method==='PATCH'?new Response(null,{status:204}):Response.json([{nexus_downloads:23,site_downloads:2,nexus_views:906}]);
+  };
+  const req=(body,headers={})=>new Request('https://edge.test',{method:'POST',headers:{apikey:key,...headers},body:JSON.stringify(body)});
+  assert.equal((await handler(req({action:'sync'},{apikey:'wrong'}))).status,401);
+  assert.equal((await handler(req({action:'sync'},{origin:'https://evil.test'}))).status,403);
+  assert.equal(calls.length,0);
+  let result=await handler(req({action:'sync'}));assert.equal((await result.json()).downloads,23);
+  assert(calls.find(([url,o])=>o.method==='PATCH'&&JSON.parse(o.body).downloads_synced_at));
+  calls=[];claim=false;await handler(req({action:'sync'}));assert.equal(calls.length,1);
+  claim=true;fail=true;calls=[];assert.equal((await handler(req({action:'sync'}))).status,502);
+  assert(calls.some(([,o])=>o.method==='PATCH'&&o.body==='{"sync_ok":false}'));
+  assert(!calls.some(([,o])=>o.method==='PATCH'&&o.body.includes('nexus_views')));
+  fail=false;invalid=true;assert.equal((await handler(req({action:'sync'}))).status,502);
+  calls=[];assert.equal((await handler(req({action:'download',release_id:'not-valid'}))).status,400);assert.equal(calls.length,0);
+  const id='11111111-1111-1111-1111-111111111111';
+  assert.equal((await (await handler(req({action:'download',release_id:id}))).json()).counted,false);
+  calls=[];const count=await handler(req({action:'download',release_id:id},{'x-forwarded-for':'192.0.2.1'}));
+  assert.equal((await count.json()).counted,true);
+  const payload=JSON.parse(calls[0][1].body);assert.match(payload.p_fingerprint,/^[a-f0-9]{64}$/);assert(!calls[0][1].body.includes('192.0.2.1'));
+  console.log('PASS: Edge API key/origin validation, daily claim, failure retention, payload validation, hashed network deduplication.');
+})().catch(e=>{console.error(e);process.exitCode=1});
