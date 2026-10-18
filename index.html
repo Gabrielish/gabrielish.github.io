@@ -40,7 +40,9 @@
 
   <link rel="stylesheet" href="./portal.css?v=20261017-video">
   <link rel="stylesheet" href="./portal-hero.css?v=20261018-full-fireflies">
-  <link rel="stylesheet" href="./portal-footer.css?v=20261017-columns">
+  <link rel="stylesheet" href="./portal-footer.css?v=20261018-information">
+  <link rel="stylesheet" href="./information.css?v=20261018-pages">
+  <script src="./portal-contact.js?v=20261018-contact" defer></script>
   <link rel="stylesheet" href="./portal-navbar.css?v=20261018-compact-mobile">
   <script src="./portal-config.js?v=20261017-discord" defer></script>
   <link rel="stylesheet" href="./portal-sidebar.css?v=20261017">
@@ -49,7 +51,7 @@
   <script src="./portal-releases.js?v=20261018-download-alignment" defer></script>
   <link rel="stylesheet" href="./portal-discussions.css?v=20261018-threads-avatars">
   <script src="./portal-auth-storage.js?v=20261018-remember-session" defer></script>
-  <script src="./portal.js?v=20261018-remember-session" defer></script>
+  <script src="./portal.js?v=20261018-information" defer></script>
   <script src="./portal-navbar.js?v=20261018-compact-mobile" defer></script>
   <script src="./portal-video.js?v=20261017-no-controls" defer></script>
   <title>Baldur’s Gate 3 | Traducere în Limba Română</title>
@@ -121,6 +123,7 @@
               <details><summary>Publică o actualizare</summary><form id="update-form"><div class="field"><label for="update-title">Titlu</label><input id="update-title" name="title" required maxlength="160"></div><div class="field"><label for="update-body">Conținut</label><textarea id="update-body" name="body" required maxlength="12000"></textarea></div><button class="btn" type="submit">Publică actualizarea</button><p class="form-status" role="status"></p></form></details>
               <details><summary>Modifică progresul</summary><form id="progress-form"><div class="field"><label for="progress-value">Traducere (%)</label><input id="progress-value" name="translation_percent" type="number" min="0" max="100" value="80" required></div><div class="form-grid"><div class="field"><label for="progress-review-value">Corectură (%)</label><input id="progress-review-value" name="review_percent" type="number" min="0" max="100" value="20" required></div><div class="field"><label for="progress-testing-value">Testare (%)</label><input id="progress-testing-value" name="testing_percent" type="number" min="0" max="100" value="20" required></div></div><div class="field"><label for="progress-review">Stadiul corecturii</label><input id="progress-review" name="review_state" maxlength="180" required></div><div class="field"><label for="progress-testing">Stadiul testării</label><input id="progress-testing" name="testing_state" maxlength="180" required></div><button class="btn" type="submit">Salvează progresul</button><p class="form-status" role="status"></p></form></details>
             </section>
+            <section class="card contact-inbox" id="contact-inbox" hidden aria-labelledby="inbox-title"><h2 id="inbox-title">Mesaje de contact</h2><p class="small">Căsuță privată, accesibilă doar moderatorului. Formularul salvează mesajele aici; nu trimite notificări prin e-mail. „Răspunde” deschide aplicația ta de e-mail.</p><div class="pager"><button type="button" class="btn secondary" data-contact-refresh>Reîncarcă</button><button type="button" class="btn secondary" data-contact-prev disabled>Înapoi</button><button type="button" class="btn secondary" data-contact-next disabled>Înainte</button></div><p class="form-status" role="status"></p><div class="contact-messages"></div></section>
           </section>
           <section id="descarcari" class="tab-panel panel-stack" aria-labelledby="tab-descarcari">
             <p id="release-load-status" class="small" role="status"></p>
@@ -173,6 +176,7 @@
           <a href="#actualizari" data-go-tab="actualizari">Actualizări</a>
           <a href="#descarcari" data-go-tab="descarcari">Descărcări</a>
           <a href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=description" target="_blank" rel="noopener noreferrer">Instrucțiuni pe Nexus ↗</a>
+          <a href="https://gabrielish.github.io/Polyhedron/" target="_blank" rel="noopener noreferrer">Polyhedron ↗</a>
         </nav>
         <nav class="footer-column" aria-labelledby="footer-community"><h2 id="footer-community">Comunitate</h2>
           <a href="#discutii" data-go-tab="discutii">Discuții</a>
@@ -181,14 +185,15 @@
           <a href="https://ko-fi.com/gabrielish" target="_blank" rel="noopener noreferrer">Ko-fi ↗</a>
         </nav>
         <nav class="footer-column" aria-labelledby="footer-information"><h2 id="footer-information">Informații</h2>
-          <a href="#intrebari-frecvente" data-go-tab="despre" data-go-target="intrebari-frecvente">Întrebări frecvente</a>
-          <a href="#confidentialitate">Confidențialitate</a>
-          <a href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=posts" target="_blank" rel="noopener noreferrer">Contact ↗</a>
+          <a href="./termeni/">Termeni de utilizare</a>
+          <a href="./confidentialitate/">Politica de confidențialitate</a>
+          <a href="./intrebari-frecvente/">Întrebări frecvente</a>
+          <a href="./contact/">Contact</a>
         </nav>
       </div>
       <div class="footer-bottom"><span>© 2026 BG3RO · Gabrielish</span><span>Traducere gratuită pentru comunitatea românească.</span></div>
       <div class="footer-attribution"><p>Proiect neoficial, fără afiliere cu Larian Studios sau Wizards of the Coast. Baldur’s Gate 3 și materialele asociate aparțin titularilor lor. Ilustrația de tabără este furnizată de proiect. Video de fundal, imagine statică și ornamentele butonului: <a href="https://baldursgate3.game/about" target="_blank" rel="noopener noreferrer">Larian Studios / Baldur’s Gate 3</a>.</p></div>
-<details id="confidentialitate"><summary>Despre cont, mesaje și datele personale</summary><p>Autentificarea se face prin Discord și Supabase Auth. Discord poate furniza identificatorul contului, numele și adresa de e-mail; e-mailul nu apare în discuții. Sesiunea este păstrată în localStorage pe acest browser, inclusiv după închiderea filei, și este reînnoită automat cât timp rămâne validă. Deconectarea sau ștergerea datelor site-ului încheie conectarea pe acest browser. Pe dispozitive partajate, deconectează-te la final. Verificatorul PKCE rămâne doar în sessionStorage. Numele afișat, avatarul Discord disponibil și mesajele publicate în Discuții sunt publice. Avatarul este încărcat de pe CDN-ul Discord; pentru oaspeți sau imagini indisponibile se folosește emblema site-ului. Evaluările și raportările de compatibilitate (rezultat, platformă, versiune și dată) sunt publice, fără numele sau identificatorul contului. Raportările noi de erori sunt publice, împreună cu numele ales și răspunsurile. Raportările trimise anterior ca private rămân accesibile numai autorului și moderatorului. Poți posta ca oaspete, fără Discord sau e-mail: Supabase creează o sesiune tehnică de oaspete. Numele de oaspete nu este o identitate verificată. Ratingurile și voturile de compatibilitate necesită un cont Discord. Sesiunea de oaspete nu se recuperează după deconectare, ștergerea datelor browserului sau schimbarea dispozitivului. Nu publica date personale în mesaje. Pentru ștergerea unui mesaj folosește opțiunea „Șterge”; pentru ștergerea contului și a rapoartelor, contactează Gabrielish prin pagina Nexus. Nu sunt utilizate contoare publicitare sau statistici de vizitare în această versiune.</p></details>
+<details id="confidentialitate"><summary>Despre cont, mesaje și datele personale</summary><p>Autentificarea se face prin Discord și Supabase Auth. Discord poate furniza identificatorul contului, numele și adresa de e-mail; e-mailul nu apare în discuții. Sesiunea este păstrată în localStorage pe acest browser, inclusiv după închiderea filei, și este reînnoită automat cât timp rămâne validă. Deconectarea sau ștergerea datelor site-ului încheie conectarea pe acest browser. Pe dispozitive partajate, deconectează-te la final. Verificatorul PKCE rămâne doar în sessionStorage. Numele afișat, avatarul Discord disponibil și mesajele publicate în Discuții sunt publice. Avatarul este încărcat de pe CDN-ul Discord; pentru oaspeți sau imagini indisponibile se folosește emblema site-ului. Evaluările și raportările de compatibilitate (rezultat, platformă, versiune și dată) sunt publice, fără numele sau identificatorul contului. Raportările noi de erori sunt publice, împreună cu numele ales și răspunsurile. Raportările trimise anterior ca private rămân accesibile numai autorului și moderatorului. Poți posta ca oaspete, fără Discord sau e-mail: Supabase creează o sesiune tehnică de oaspete. Numele de oaspete nu este o identitate verificată. Ratingurile și voturile de compatibilitate necesită un cont Discord. Sesiunea de oaspete nu se recuperează după deconectare, ștergerea datelor browserului sau schimbarea dispozitivului. Nu publica date personale în mesaje. Pentru ștergerea unui mesaj folosește opțiunea „Șterge”; pentru ștergerea contului și a rapoartelor, contactează Gabrielish la gabrielish@proton.me sau prin formularul privat de Contact. Formularul păstrează numele, e-mailul, subiectul și mesajul în căsuța privată a administratorului, pentru soluționarea solicitării; nu trimite notificări automate prin e-mail. Nu sunt utilizate contoare publicitare sau statistici de vizitare în această versiune. Citește <a href="./confidentialitate/">politica de confidențialitate completă</a>.</p></details>
     </div>
   </footer>
   <dialog id="auth-dialog" aria-labelledby="auth-heading"><div class="dialog-title"><h2 id="auth-heading">Intră în comunitate</h2><button type="button" class="dialog-close" aria-label="Închide autentificarea">×</button></div><p class="dialog-copy">Conectează-te cu Discord pentru a participa la discuții și a raporta erori. La prima conectare se creează automat contul. Conectarea este reținută pe acest browser; pe un dispozitiv partajat, deconectează-te la final.</p><p id="auth-unavailable" class="notice" hidden>Conectarea nu este disponibilă momentan. Reîncarcă pagina și încearcă din nou.</p><form id="discord-login-form"><label class="checkbox-line"><input id="auth-consent" type="checkbox" required><span>Am citit informațiile despre cont și datele personale din footer.</span></label><button class="btn discord-login" id="discord-login" type="submit" disabled><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M19.7 5.1a18 18 0 0 0-4.4-1.4l-.5 1a16.3 16.3 0 0 0-5.6 0l-.5-1a18 18 0 0 0-4.4 1.4A19.4 19.4 0 0 0 1 18a18 18 0 0 0 5.4 2.7l1.1-1.8-1.7-.8.4-.3a12.6 12.6 0 0 0 11.6 0l.4.3-1.7.8 1.1 1.8A18 18 0 0 0 23 18a19.4 19.4 0 0 0-3.3-12.9ZM8.4 15c-1 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Zm7.2 0c-1 0-1.7-.9-1.7-2s.7-2 1.7-2 1.7.9 1.7 2-.8 2-1.7 2Z"/></svg>Continuă cu Discord</button><p class="form-status" role="status"></p></form></dialog>

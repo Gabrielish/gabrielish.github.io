@@ -3,7 +3,7 @@ const {clickNav}=require('./nav-action.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 function syntheticSDK(){
-  const state=window.__communityTest={user:null,comments:[],reports:[],updates:[],failInsert:false,status:{translation_percent:80,review_percent:20,testing_percent:20,review_state:'Actul I verificat',testing_state:'Actul II urmează'}};
+  const state=window.__communityTest={user:null,comments:[],reports:[],updates:[],contacts:[],failInsert:false,status:{translation_percent:80,review_percent:20,testing_percent:20,review_state:'Actul I verificat',testing_state:'Actul II urmează'}};
   const moderator=()=>state.user?.id==='owner';
   let authCallback=()=>{};
   const client={
@@ -18,7 +18,7 @@ function syntheticSDK(){
         select(){return this},eq(key,value){this.filters.push([key,value]);return this},is(key,value){this.filters.push([key,value]);return this},in(key,value){this.filters.push([key,value]);return this},order(key,options){this.orders.push([key,options?.ascending!==false]);return this},limit(){return this},range(a,b){this.bounds=[a,b];return this},maybeSingle(){this.single=true;return this},
         insert(payload){this.operation='insert';this.payload=payload;return this},update(payload){this.operation='update';this.payload=payload;return this},delete(){this.operation='delete';return this},
         then(resolve,reject){return Promise.resolve().then(()=>{
-          const name=table.replace('bg3ro_',''),key={discussion_posts:'comments',bug_reports:'reports',project_updates:'updates'}[name];
+          const name=table.replace('bg3ro_',''),key={discussion_posts:'comments',bug_reports:'reports',project_updates:'updates',contact_messages:'contacts'}[name];
           if(name==='project_status'){
             if(this.operation==='update')Object.assign(state.status,this.payload);
             return{data:{...state.status},error:null};

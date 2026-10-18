@@ -45,7 +45,7 @@
   });
   addEventListener('popstate', () => setTab(location.hash.slice(1)));
   addEventListener('hashchange', () => { if (ids.includes(location.hash.slice(1))) setTab(location.hash.slice(1)); });
-  $('a[href="#confidentialitate"]').addEventListener('click', () => { $('#confidentialitate').open = true; });
+  $('a[href="#confidentialitate"]')?.addEventListener('click', () => { $('#confidentialitate').open = true; });
 
   let client = null, user = null, moderator = false, page = 0, reportsLimit = 20, reportsRequest = 0, commentsRequest = 0;
   let toastTimer, workDirty = false;

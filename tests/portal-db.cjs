@@ -87,6 +87,8 @@ const M = '33333333-3333-3333-3333-333333333333';
     await assert.rejects(db.query('update public.bg3ro_project_status set review_percent=101'));
     await assert.rejects(db.query('update public.bg3ro_project_status set testing_percent=-1'));
     await role(B); await denied('select * from bg3ro_private.submission_limits');
-    console.log('PASS: migration executes; anonymous/owner/other-user/moderator isolation; private reports; immediate publication; column privileges; rate limits survive deletion; progress bounds.');
+    await db.exec('reset role');
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/contact-access.sql'),'utf8'));
+    console.log('PASS: migration executes; anonymous/owner/other-user/moderator isolation; private reports; immediate publication; column privileges; rate limits survive deletion; progress bounds; private contact submission and moderator inbox.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
