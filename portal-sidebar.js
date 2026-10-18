@@ -5,6 +5,30 @@
   let client = null, userId = null, myRating = null, myVote = null, average = 0, busy = false, statsRequest = 0, authRequest = 0;
   const platforms = { windows: 'Windows', macos: 'macOS', linux: 'Linux / Steam Deck', ps5: 'PS5', other: 'Altă platformă' };
   const setText = (selector, text) => { $(selector).textContent = text; };
+  let releaseVersions = [], versionsState = 'loading';
+  const versionKey = value => String(value || '').trim().toLowerCase();
+  function drawVersions(preferred = $('#compatibility-version').value) {
+    const select = $('#compatibility-version');
+    const placeholder = document.createElement('option');placeholder.value = '';
+    placeholder.textContent = versionsState === 'loading' ? 'Se încarcă…' : versionsState === 'error' && !releaseVersions.length ? 'Versiuni indisponibile' : releaseVersions.length ? 'Nespecificată' : 'Nicio versiune publicată';
+    select.replaceChildren(placeholder);
+    const choices = [...releaseVersions];
+    const previous = String(myVote?.mod_version || '').trim();
+    if (previous && !choices.some(value => versionKey(value) === versionKey(previous))) choices.push(previous);
+    for (const value of choices) {
+      const option = document.createElement('option');option.value = value;option.textContent = value;
+      if (!releaseVersions.includes(value)) option.textContent += ' (vot anterior)';
+      select.append(option);
+    }
+    select.value = choices.find(value => versionKey(value) === versionKey(preferred)) || '';
+  }
+  window.addEventListener('bg3ro:releases-updated', event => {
+    if (!Array.isArray(event.detail?.versions)) return;
+    const unique = new Map();
+    event.detail.versions.forEach(value => { if (typeof value === 'string' && value.trim() && value.trim().length <= 80 && !unique.has(versionKey(value))) unique.set(versionKey(value),value.trim()); });
+    releaseVersions = [...unique.values()];versionsState = 'ready';drawVersions();
+  });
+  window.addEventListener('bg3ro:releases-unavailable', () => { versionsState = 'error';drawVersions(); });
   function status(id, text, error = false) { $(id).textContent = text; $(id).classList.toggle('error', error); }
   function drawStars(value) { document.querySelectorAll('[data-rating]').forEach(b => { b.classList.toggle('is-filled', Number(b.dataset.rating) <= value); b.setAttribute('aria-pressed', String(Number(b.dataset.rating) === myRating)); }); }
   function drawOwn() {
@@ -41,13 +65,13 @@
     const changed = client !== event.detail.client || userId !== event.detail.userId;
     client = event.detail.client;userId = event.detail.userId;
     if (!changed) return;
-    const request = ++authRequest;myRating = null;myVote = null;drawOwn();
+    const request = ++authRequest;myRating = null;myVote = null;drawOwn();drawVersions('');
     if (!client || !userId) return;
     try {
       const [rating, vote] = await Promise.all([client.from('bg3ro_ratings').select('rating').eq('user_id', userId).maybeSingle(),client.from('bg3ro_compatibility').select('works,platform,mod_version').eq('user_id', userId).maybeSingle()]);
       if (request !== authRequest) return;
       if (!rating.error && rating.data) myRating = rating.data.rating;
-      if (!vote.error && vote.data) { myVote = vote.data;$('#compatibility-platform').value = myVote.platform;$('#compatibility-version').value = myVote.mod_version; }
+      if (!vote.error && vote.data) { myVote = vote.data;$('#compatibility-platform').value = myVote.platform;drawVersions(myVote.mod_version); }
       drawOwn();
     } catch (_) { /* Public statistics remain available independently. */ }
   });

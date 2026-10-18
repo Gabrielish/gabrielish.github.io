@@ -20,6 +20,9 @@
 .compatibility-counts{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10px;color:#ce9993}.compatibility-counts .works-count{color:#86c397}
 .project-sidebar .field{margin-bottom:13px}.project-sidebar .field label{font-size:11px}
 .project-sidebar .field :is(input,select){font-size:12px}
+.compatibility-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;align-items:end}
+.project-sidebar .compatibility-fields .field{min-width:0;margin:0}
+.compatibility-fields select{min-width:0;min-height:44px;padding:9px 8px}
 .compatibility-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.compatibility-actions .btn{width:auto;min-width:0;font-size:11px;padding-inline:7px}
 .compatibility-actions button[aria-pressed=true]{border-color:#bda37b;background:#352b1f;color:#f4ecd9}
 .recent-compatibility{margin-top:18px;font-size:11px;color:#bdb3a3}.recent-compatibility summary{cursor:pointer;min-height:34px}

@@ -351,9 +351,10 @@
       rows = result.data || [];
       draw();
       $("#release-load-status").textContent = "";
-      window.dispatchEvent(new Event("bg3ro:releases-updated"));
+      window.dispatchEvent(new CustomEvent("bg3ro:releases-updated", { detail: { versions: rows.filter(row => row.kind === "translation").map(row => row.version) } }));
     } catch (_) {
       if (ticket !== request) return;
+      window.dispatchEvent(new CustomEvent("bg3ro:releases-unavailable"));
       $("#release-load-status").textContent =
         "Lista versiunilor nu a putut fi încărcată. Poți folosi pagina Nexus Mods.";
     }

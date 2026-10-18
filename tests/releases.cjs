@@ -27,6 +27,7 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       const errors=[];p.on('pageerror',e=>errors.push(e.message));
       await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
       await p.waitForSelector('#release-updates .release-news',{state:'attached'});
+      assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.1'],'Version dropdown uses published base translations only');
       const badge=p.locator('#release-updates .release-version-badge').first();
       assert.equal(await badge.textContent(),'Versiunea 0.1');
       assert.equal(await badge.locator('svg[aria-hidden="true"] path').count(),1);
@@ -72,6 +73,7 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
         await p.locator('#release-description').fill('Modificări de test pentru versiunea 0.2.');
         await p.locator('#release-publish-form button').click();
         await p.waitForFunction(()=>document.querySelector('#release-updates').textContent.includes('Noua versiune 0.2'));
+        assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.2','0.1'],'New publications update the compatibility dropdown');
         assert.match(await p.locator('#translation-releases h2').textContent(),/Versiune nouă de test/);
         await p.locator('#tab-actualizari').click();
         await p.locator('#release-updates').screenshot({path:'.qa/releases-updates-desktop.png'});
