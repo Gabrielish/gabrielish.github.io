@@ -24,6 +24,7 @@ function fakeSDK(){
   for(const slug of ['contact','intrebari-frecvente','confidentialitate','termeni']){
    await p.goto(base+slug+'/',{waitUntil:'networkidle'});await p.waitForURL(url=>url.hash==='#'+slug&&url.pathname===new URL(base).pathname);await p.waitForSelector('html.portal-ready');assert.equal(await p.locator('h1').textContent(),'Baldur’s Gate 3');
    assert(await p.locator('#'+slug+'.information-panel').isVisible());assert.equal(await p.locator('.tab-panel:visible').count(),0);
+   assert.equal(await p.locator('.information-panel .information-back').count(),0,'No redundant return-to-project links');
    assert.equal(await p.locator('.topbar,.project-banner,.project-sidebar,.footer').count(),4,'Original main-page shell retained');
    assert.equal(await p.evaluate(()=>__contactClientCount),1,'Only the existing main Auth client');
    assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No overflow '+width+' '+slug);
