@@ -17,8 +17,8 @@ const assert=require('node:assert/strict');
       for(const id of ['despre','actualizari','descarcari','discutii','erori']){
         await footer.locator(`[data-go-tab="${id}"]`).first().click();assert(await page.locator(`#${id}`).isVisible());
       }
-      await footer.locator('a[href="./intrebari-frecvente/"]').click();assert.equal(await page.locator('h1').textContent(),'Întrebări frecvente');await page.goBack();await page.waitForSelector('html.portal-ready');
-      await footer.locator('nav[aria-labelledby="footer-information"] a[href="./confidentialitate/"]').click();assert.equal(await page.locator('h1').textContent(),'Politica de confidențialitate');await page.goBack();await page.waitForSelector('html.portal-ready');
+      await footer.locator('a[href="#intrebari-frecvente"]').click();assert(await page.locator('#intrebari-frecvente.information-panel').isVisible());await page.goBack();await page.waitForSelector('html.portal-ready');
+      await footer.locator('nav[aria-labelledby="footer-information"] a[href="#confidentialitate"]').click();assert(await page.locator('#confidentialitate.information-panel').isVisible());await page.goBack();await page.waitForSelector('html.portal-ready');
       assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
       if([390,1440].includes(width))await footer.screenshot({path:`.qa/footer-columns-${width}.png`});
       await page.close();

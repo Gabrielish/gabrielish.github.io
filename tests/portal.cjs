@@ -37,7 +37,7 @@ const fs = require('node:fs');
       await clickNav(page,'.topbar [data-auth-open]');assert(await page.locator('#auth-dialog').isVisible());
       assert(await page.locator('#auth-unavailable').isVisible());await page.keyboard.press('Escape');
       assert.equal(await page.locator('#auth-dialog:visible').count(),0);
-      await page.locator('nav[aria-labelledby="footer-information"] a[href="./confidentialitate/"]').click();assert.equal(await page.locator('h1').textContent(),'Politica de confidențialitate');await page.goBack();await page.waitForSelector('html.portal-ready');
+      await page.locator('nav[aria-labelledby="footer-information"] a[href="#confidentialitate"]').click();assert(await page.locator('#confidentialitate.information-panel').isVisible());assert.equal(await page.locator('h1').textContent(),'Baldur’s Gate 3');await page.goBack();await page.waitForSelector('html.portal-ready');
       assert.deepEqual(errors,[]);
       if([390,1440].includes(width)) {
         await page.goto(base,{waitUntil:'networkidle'});await page.waitForSelector('html.portal-ready');

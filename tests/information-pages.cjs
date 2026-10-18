@@ -3,8 +3,10 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const base=process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/';
 function fakeSDK(){
+ window.__contactClientCount=(window.__contactClientCount||0)+1;
  const state=window.__contactQA={user:window.__qaContactOwner?{id:'owner'}:null,rows:window.__qaContactOwner?[{id:'one',name:'Vizitator',email:'qa@example.invalid',subject:'O întrebare privată',body:'<img src=x onerror=alert(1)> Un mesaj privat.',created_at:'2026-10-18T10:00:00Z',is_read:false}]:[],fail:false,guestCalls:0};
- return {auth:{getSession:async()=>({data:{session:state.user?{user:state.user}:null}}),onAuthStateChange:()=>({data:{}}),signInAnonymously:async()=>{state.guestCalls++;state.user={id:'guest',is_anonymous:true};return{data:{session:{user:state.user}}};}},rpc:async()=>({data:state.user?.id==='owner'}),from(){const q={op:'select',payload:null,filter:null,bounds:[0,19],select(){return this;},order(){return this;},range(a,b){this.bounds=[a,b];return this;},eq(k,v){this.filter=[k,v];return this;},insert(v){this.op='insert';this.payload=v;return this;},update(v){this.op='update';this.payload=v;return this;},delete(){this.op='delete';return this;},then(resolve,reject){return Promise.resolve().then(()=>{
+ let callback=()=>{};
+ return {auth:{getSession:async()=>({data:{session:state.user?{user:state.user}:null}}),onAuthStateChange:cb=>{callback=cb;return{data:{}};},signInAnonymously:async()=>{state.guestCalls++;state.user={id:'guest',is_anonymous:true};setTimeout(()=>callback('SIGNED_IN',{user:state.user}),0);return{data:{session:{user:state.user}}};}},rpc:async()=>({data:state.user?.id==='owner'}),from(table){if(table!=='bg3ro_contact_messages'){const empty={select(){return this;},eq(){return this;},is(){return this;},in(){return this;},order(){return this;},limit(){return this;},range(){return this;},maybeSingle:async()=>({data:table==='bg3ro_project_status'?{id:1,translation_percent:80,review_percent:20,testing_percent:20}:null}),then(resolve){return Promise.resolve({data:table==='bg3ro_project_status'?{id:1,translation_percent:80,review_percent:20,testing_percent:20}:[],count:0,error:null}).then(resolve);}};return empty;}const q={op:'select',payload:null,filter:null,bounds:[0,19],select(){return this;},order(){return this;},range(a,b){this.bounds=[a,b];return this;},eq(k,v){this.filter=[k,v];return this;},insert(v){this.op='insert';this.payload=v;return this;},update(v){this.op='update';this.payload=v;return this;},delete(){this.op='delete';return this;},then(resolve,reject){return Promise.resolve().then(()=>{
  if(state.fail)return{error:{message:'Network failed'}};
  if(this.op==='insert'){state.rows.push({id:'new',...this.payload});return{data:null,error:null};}
  const found=state.rows.filter(row=>!this.filter||row[this.filter[0]]===this.filter[1]);
@@ -20,14 +22,19 @@ function fakeSDK(){
   const p=await browser.newPage({viewport:{width,height:950},reducedMotion:'reduce'});const errors=[];p.on('pageerror',e=>errors.push(e.message));
   await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:'export const createClient=()=>('+fakeSDK.toString()+')();'}));
   for(const slug of ['contact','intrebari-frecvente','confidentialitate','termeni']){
-   const response=await p.goto(base+slug+'/',{waitUntil:'networkidle'});assert.equal(response.status(),200);assert.equal(await p.locator('h1').count(),1);
+   await p.goto(base+slug+'/',{waitUntil:'networkidle'});await p.waitForURL(url=>url.hash==='#'+slug&&url.pathname===new URL(base).pathname);await p.waitForSelector('html.portal-ready');assert.equal(await p.locator('h1').textContent(),'Baldur’s Gate 3');
+   assert(await p.locator('#'+slug+'.information-panel').isVisible());assert.equal(await p.locator('.tab-panel:visible').count(),0);
+   assert.equal(await p.locator('.topbar,.project-banner,.project-sidebar,.footer').count(),4,'Original main-page shell retained');
+   assert.equal(await p.evaluate(()=>__contactClientCount),1,'Only the existing main Auth client');
    assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No overflow '+width+' '+slug);
    assert.equal(await p.locator('nav[aria-labelledby="footer-information"] a').count(),4);
    assert.equal(await p.locator('.footer [href="https://gabrielish.github.io/Polyhedron/"]').count(),1);
-   if(slug==='intrebari-frecvente'){await p.locator('summary').first().click();assert(await p.locator('details').first().evaluate(e=>e.open));await p.locator('summary').first().focus();await p.keyboard.press('Enter');assert.equal(await p.locator('details').first().evaluate(e=>e.open),false);}
-   if([390,1440].includes(width))await p.screenshot({path:'.qa/info-'+slug+'-'+width+'.png',fullPage:true});
+   if(slug==='intrebari-frecvente'){await p.locator('#intrebari-frecvente summary').first().click();assert(await p.locator('#intrebari-frecvente details').first().evaluate(e=>e.open));await p.locator('#intrebari-frecvente summary').first().focus();await p.keyboard.press('Enter');assert.equal(await p.locator('#intrebari-frecvente details').first().evaluate(e=>e.open),false);}
+   if([390,1440].includes(width))await p.screenshot({path:'.qa/info-'+slug+'-'+width+'.png'});
   }
-  await p.goto(base+'contact/',{waitUntil:'networkidle'});await p.waitForFunction(()=>!document.querySelector('#contact-form button').disabled);
+  await p.goto(base+'#contact',{waitUntil:'networkidle'});await p.waitForFunction(()=>!document.querySelector('#contact-form button').disabled);
+  await p.evaluate(()=>window.__sameDocumentMarker=1);
+  await p.locator('nav[aria-labelledby="footer-information"] a[href="#termeni"]').click();await p.goBack();assert(await p.locator('#contact').isVisible());assert.equal(await p.evaluate(()=>window.__sameDocumentMarker),1);
   assert.equal(await p.evaluate(()=>__contactQA.guestCalls),0,'No account on visit');
   assert.equal(await p.locator('#contact-inbox:visible').count(),0);
   await p.locator('#contact-name').fill('Vizitator');await p.locator('#contact-email').fill('qa@example.invalid');await p.locator('#contact-subject').fill('Întrebare despre traducere');await p.locator('#contact-body').fill('Un mesaj privat suficient de lung.');
@@ -39,11 +46,11 @@ function fakeSDK(){
  }
  const p=await browser.newPage();await p.addInitScript(()=>window.__qaContactOwner=true);
  await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:'export const createClient=()=>('+fakeSDK.toString()+')();'}));
- await p.goto(base+'contact/',{waitUntil:'networkidle'});await p.waitForSelector('#contact-inbox:visible');await p.waitForSelector('.contact-message');
+ await p.goto(base+'#actualizari',{waitUntil:'networkidle'});await p.waitForSelector('#contact-inbox:visible');await p.waitForSelector('.contact-message');
  assert.equal(await p.locator('.contact-message img').count(),0,'Message rendered as text, not HTML');
  await p.getByRole('button',{name:'Marchează citit',exact:true}).click();await p.waitForFunction(()=>__contactQA.rows[0].is_read===true);
  p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Șterge',exact:true}).click();await p.waitForFunction(()=>__contactQA.rows.length===0);await p.close();
- const nojs=await browser.newPage({javaScriptEnabled:false,viewport:{width:390,height:844}});await nojs.goto(base+'contact/');assert(await nojs.locator('noscript a[href^="mailto:"]').isVisible());await nojs.close();
- console.log('PASS: four static pages, footer links, FAQ keyboard, mobile 320–1440, private guest contact, validation, failures retain text, owner inbox read/delete, XSS-safe text, no-JS contact.');
+ const nojs=await browser.newPage({javaScriptEnabled:false,viewport:{width:390,height:844}});await nojs.goto(base+'#contact');assert(await nojs.locator('#contact noscript a[href^="mailto:"]').isVisible());await nojs.close();
+ console.log('PASS: four integrated main-page sections, legacy redirects, shared Auth client, same-document footer/history navigation, FAQ keyboard, mobile 320–1440, private contact/inbox, errors, safe text, no-JS contact.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

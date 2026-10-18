@@ -3,6 +3,8 @@
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
   const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori'];
+  const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni'];
+  const routeIds = [...ids, ...informationIds];
   const tabs = $$('.tab-list a');
   const panels = ids.map(id => document.getElementById(id));
   const tablist = $('.tab-list');
@@ -11,23 +13,28 @@
   tabs.forEach(tab => tab.setAttribute('role', 'tab'));
   panels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
   function setTab(id, focus = false) {
-    const selected = ids.includes(id) ? id : 'despre';
+    const selected = routeIds.includes(id) ? id : 'despre';
     tabs.forEach((tab, index) => {
       const active = ids[index] === selected;
       tab.setAttribute('aria-selected', String(active));
       tab.setAttribute('aria-controls', ids[index]);
-      tab.tabIndex = active ? 0 : -1;
+      tab.tabIndex = active || (informationIds.includes(selected) && index === 0) ? 0 : -1;
       panels[index].hidden = !active;
       panels[index].tabIndex = 0;
       if (active && focus) tab.focus();
     });
+    informationIds.forEach(route => {
+      const panel = document.getElementById(route);panel.hidden = route !== selected;panel.tabIndex = 0;
+      if (route === selected && focus) panel.focus({ preventScroll: true });
+    });
   }
   function goTab(id, focus = false) {
-    if (!ids.includes(id)) return;
+    if (!routeIds.includes(id)) return;
     history.pushState(null, '', `#${id}`);
     setTab(id, focus);
   }
   setTab(location.hash.slice(1));
+  if (informationIds.includes(location.hash.slice(1))) requestAnimationFrame(() => tablist.scrollIntoView({ block: 'start', behavior: 'instant' }));
   tabs.forEach((tab, i) => tab.addEventListener('click', event => { event.preventDefault(); goTab(ids[i]); }));
   $$('[data-go-tab]').forEach(link => link.addEventListener('click', event => {
     if (link.hasAttribute('data-primary-download') && link.href.startsWith('https://')) return;
@@ -44,8 +51,7 @@
     goTab(ids[target], true);
   });
   addEventListener('popstate', () => setTab(location.hash.slice(1)));
-  addEventListener('hashchange', () => { if (ids.includes(location.hash.slice(1))) setTab(location.hash.slice(1)); });
-  $('a[href="#confidentialitate"]')?.addEventListener('click', () => { $('#confidentialitate').open = true; });
+  addEventListener('hashchange', () => { if (routeIds.includes(location.hash.slice(1))) setTab(location.hash.slice(1)); });
 
   let client = null, user = null, moderator = false, page = 0, reportsLimit = 20, reportsRequest = 0, commentsRequest = 0;
   let toastTimer, workDirty = false;
@@ -133,7 +139,7 @@
     event.preventDefault(); if (!client || !authEnabled) return;
     const form = event.currentTarget;
     submit(form, async () => {
-      sessionStorage.setItem('bg3ro-return-tab', ids.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'discutii');
+      sessionStorage.setItem('bg3ro-return-tab', routeIds.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'discutii');
       const { error } = await client.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: config.authRedirectUrl || new URL('./', location.href).href, queryParams: { prompt: !discordConsentRequired && discordWasAuthorized() ? 'none' : 'consent' } } });
       if (error) throw error;
       formStatus(form, 'Se deschide Discord…');
@@ -384,7 +390,7 @@
         if (authCode || authError) {
           const returnTab = sessionStorage.getItem('bg3ro-return-tab');
           sessionStorage.removeItem('bg3ro-return-tab');
-          if (ids.includes(returnTab)) { history.replaceState(null, '', location.pathname + location.search + '#' + returnTab); setTab(returnTab); $('.tab-list').scrollIntoView({ block: 'start' }); }
+          if (routeIds.includes(returnTab)) { history.replaceState(null, '', location.pathname + location.search + '#' + returnTab); setTab(returnTab); $('.tab-list').scrollIntoView({ block: 'start' }); }
           if (callbackFailed || !data.session) {
             $('#auth-unavailable').hidden = true; $('#discord-login-form').hidden = false;
             discordConsentRequired = true;

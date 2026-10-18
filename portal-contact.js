@@ -3,12 +3,17 @@
   const form = document.querySelector('#contact-form');
   const inbox = document.querySelector('#contact-inbox');
   if (!form && !inbox) return;
-  let client = null, owner = false, offset = 0, generation = 0;
+  let client = null, owner = false, offset = 0, generation = 0, sending = false;
   const pageSize = 20;
   const node = (tag, text, className) => { const el=document.createElement(tag); if(text!==undefined)el.textContent=text; if(className)el.className=className; return el; };
   function status(target,message,error=false){const el=target.querySelector('.form-status');el.textContent=message;el.classList.toggle('error',error);}
   function authChanged(detail){
     generation++; client=detail.client;owner=detail.moderator===true;offset=0;
+    if(form){
+      form.querySelector('[type=submit]').disabled=!client||sending;
+      if(!client)status(form,'Formularul este indisponibil momentan. Scrie la gabrielish@proton.me.',true);
+      else if(form.querySelector('.form-status').textContent.startsWith('Se pregătește'))status(form,'');
+    }
     if(inbox){inbox.hidden=!owner;inbox.querySelector('.contact-messages').replaceChildren();if(owner)loadInbox();}
   }
   async function loadInbox(){
@@ -50,13 +55,14 @@
     inbox.querySelector('[data-contact-prev]').onclick=()=>{offset=Math.max(0,offset-pageSize);loadInbox();};
     inbox.querySelector('[data-contact-next]').onclick=()=>{offset+=pageSize;loadInbox();};
   }
-  // On the main page, reuse its client and verified moderator state. No second Auth client.
-  if(!form){addEventListener('bg3ro:auth',event=>authChanged(event.detail));return;}
+  // Reuse the main page client, session and server-verified moderator state.
+  addEventListener('bg3ro:auth',event=>authChanged(event.detail));
+  if(!form)return;
   const button=form.querySelector('[type=submit]');button.disabled=true;
   form.addEventListener('submit',async event=>{
     event.preventDefault();if(button.disabled||!client||!form.reportValidity())return;
     if(form.elements.website.value){status(form,'Trimiterea a fost blocată.',true);return;}
-    button.disabled=true;status(form,'Se trimite mesajul…');
+    sending=true;button.disabled=true;status(form,'Se trimite mesajul…');
     try{
       let {data,error}=await client.auth.getSession();if(error)throw error;
       if(!data.session){const result=await client.auth.signInAnonymously();if(result.error||!result.data.session)throw result.error||new Error('Guest unavailable');}
@@ -68,18 +74,6 @@
     }catch(error){
       const limited=/60 de secunde|zilnic|rate|too many/i.test(error?.message||'');
       status(form,limited?'Ai trimis prea multe solicitări. Așteaptă cel puțin un minut; limita este de 3 mesaje în 24 de ore.':'Mesajul nu a fost trimis. Verifică internetul sau scrie direct la gabrielish@proton.me.',true);
-    }finally{button.disabled=false;}
+    }finally{sending=false;button.disabled=!client;}
   });
-  (async()=>{
-    try{
-      const config=window.BG3RO_CONFIG||{};
-      if(!config.supabaseUrl||!config.supabasePublishableKey)throw new Error('Not configured');
-      const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.118.0');
-      client=createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{flowType:'pkce',storage:window.BG3RO_AUTH_STORAGE||sessionStorage,storageKey:'bg3ro-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
-      const {data,error}=await client.auth.getSession();if(error)throw error;
-      const verify=async session=>{const request=++generation;owner=false;if(inbox){inbox.hidden=true;inbox.querySelector('.contact-messages').replaceChildren();}if(session?.user&&!session.user.is_anonymous){const result=await client.rpc('bg3ro_is_moderator');if(request!==generation)return;owner=!result.error&&result.data===true;}if(inbox){inbox.hidden=!owner;if(owner)loadInbox();}};
-      await verify(data.session);button.disabled=false;status(form,'');
-      client.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>verify(session),0);});
-    }catch(_){status(form,'Formularul este indisponibil momentan. Scrie la gabrielish@proton.me.',true);}
-  })();
 })();
