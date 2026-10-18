@@ -56,6 +56,8 @@
   const callbackURL = new URL(location.href);
   const authCode = callbackURL.searchParams.get('code');
   const authError = callbackURL.searchParams.has('error') || callbackURL.searchParams.has('error_description');
+  let discordConsentRequired = authError;
+  function discordWasAuthorized() { try { return localStorage.getItem('bg3ro-discord-authorized') === '1'; } catch (_) { return false; } }
   if (authCode || authError) {
     ['code','error','error_code','error_description'].forEach(key => callbackURL.searchParams.delete(key));
     history.replaceState(null, '', callbackURL.pathname + callbackURL.search + callbackURL.hash);
@@ -132,7 +134,7 @@
     const form = event.currentTarget;
     submit(form, async () => {
       sessionStorage.setItem('bg3ro-return-tab', ids.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'discutii');
-      const { error } = await client.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: config.authRedirectUrl || new URL('./', location.href).href } });
+      const { error } = await client.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: config.authRedirectUrl || new URL('./', location.href).href, queryParams: { prompt: !discordConsentRequired && discordWasAuthorized() ? 'none' : 'consent' } } });
       if (error) throw error;
       formStatus(form, 'Se deschide Discord…');
     });
@@ -148,6 +150,7 @@
   async function sessionChanged(session) {
     user = session?.user || null; moderator = false;
     if (user && !user.is_anonymous) {
+      try { localStorage.setItem('bg3ro-discord-authorized', '1'); } catch (_) {}
       const { data, error } = await client.rpc('bg3ro_is_moderator');
       if (!error) moderator = data === true;
       if (!$('#discussion-name').value) $('#discussion-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
@@ -366,7 +369,7 @@
     if (configured) {
       try {
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.118.0');
-        client = createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { flowType: 'pkce', storage: sessionStorage, storageKey: 'bg3ro-auth', persistSession: true, detectSessionInUrl: false, autoRefreshToken: true } });
+        client = createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { flowType: 'pkce', storage: window.BG3RO_AUTH_STORAGE || sessionStorage, storageKey: 'bg3ro-auth', persistSession: true, detectSessionInUrl: false, autoRefreshToken: true } });
         const schema = await client.from('bg3ro_project_status').select('id').eq('id', 1).maybeSingle();
         if (schema.error || !schema.data) throw new Error('Community schema is not ready');
         let callbackFailed = authError;
@@ -384,7 +387,8 @@
           if (ids.includes(returnTab)) { history.replaceState(null, '', location.pathname + location.search + '#' + returnTab); setTab(returnTab); $('.tab-list').scrollIntoView({ block: 'start' }); }
           if (callbackFailed || !data.session) {
             $('#auth-unavailable').hidden = true; $('#discord-login-form').hidden = false;
-            formStatus($('#discord-login-form'), 'Conectarea Discord a fost anulată sau a expirat. Încearcă din nou din acest browser.', true); dialog.showModal();
+            discordConsentRequired = true;
+            formStatus($('#discord-login-form'), 'Conectarea Discord a fost anulată sau a expirat. Încearcă din nou din acest browser; dacă este nevoie, Discord îți va cere autorizarea.', true); dialog.showModal();
           } else toast('Ești conectat prin Discord. Poți participa la comunitate.');
         }
       } catch (_error) { client = null; }

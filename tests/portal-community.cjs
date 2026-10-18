@@ -86,7 +86,7 @@ function syntheticSDK(){
       await p.goto(url.href,{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
       assert.equal(new URL(p.url()).search,'');assert.equal(new URL(p.url()).hash,'#erori');
       assert.equal(await p.evaluate(()=>window.__authOptions.auth.flowType),'pkce');
-      assert(await p.evaluate(()=>window.__authOptions.auth.storage===sessionStorage));
+      assert(await p.evaluate(()=>window.__authOptions.auth.storage===window.BG3RO_AUTH_STORAGE));
       assert.equal(await p.locator('#admin-tools:visible').count(),0,'User metadata cannot grant moderator access');
       if(outcome==='success'){assert(await p.locator('#report-form').isVisible());assert.equal(await p.evaluate(()=>window.__communityTest.exchangeCode),'test-code');}
       else {assert(await p.locator('#auth-dialog').isVisible());assert(await p.locator('#discord-login-form .form-status.error').isVisible());assert.equal(await p.locator('#report-form:visible').count(),0);assert(!(await p.locator('#auth-dialog').textContent()).includes('untrusted-message'));}

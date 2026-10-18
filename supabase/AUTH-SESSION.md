@@ -1,0 +1,9 @@
+# Reconectare fără aprobări repetitive
+
+Clientul păstrează sesiunea Supabase în localStorage, cu persistSession și autoRefreshToken. PKCE/code-verifier și tabul de revenire rămân în sessionStorage. Adaptorul `portal-auth-storage.js` migrează sesiunea veche din fila curentă și elimină provider_token/provider_refresh_token înainte de persistare; nu sunt necesare pentru acest site. Dacă localStorage nu este disponibil la inițializare, rămâne sesiune de filă. Ștergerea datelor sau signOut pierde sesiunea locală. Pe un dispozitiv partajat, utilizatorul trebuie să se deconecteze.
+
+După o conectare Discord reușită, un indicator UX local reține că aplicația a fost autorizată. Acesta NU autentifică și NU acordă drepturi. La reconectare se trimite queryParams.prompt=none; la prima conectare pe un browser nou se folosește consent. Dacă revenirea OAuth eșuează, următoarea încercare folosește consent pentru a permite reautorizarea. Nu există redirecturi automate în buclă sau automatizarea butonului Discord Authorize. Scopurile rămân neschimbate.
+
+Discord decide dacă accesul deja acordat este suficient: revocarea, schimbarea contului/scopurilor sau verificările sale pot cere autorizare nouă. Conectarea în browser privat sau după ștergerea stocării nu poate fi garantată permanent. https://docs.discord.com/developers/topics/oauth2#authorization-code-grant
+
+`tests/auth-session.cjs` verifică restaurarea între file, migrarea, ștergerea la logout, lipsa tokenurilor Discord din stocare, PKCE separat și fallbackul după eroare, cu sesiuni sintetice. `tests/discord-preflight.cjs` folosește SDK-ul real și endpointul Supabase real, verificând că prompt=none ajunge la aplicația Discord corectă; se oprește înainte de consimțământ. Doar proprietarul poate confirma fluxul final în contul său Discord deja autorizat.

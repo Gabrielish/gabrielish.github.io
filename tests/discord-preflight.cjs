@@ -6,6 +6,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  page.on('request',request=>{const url=new URL(request.url());if(url.pathname==='/auth/v1/authorize')authorizeURL=url;});
  await page.route('https://baldursgate3.game/**',r=>r.abort());
  await page.route('https://discord.com/**',r=>r.fulfill({contentType:'text/html',body:'<title>OAuth preflight stopped before consent</title>'}));
+ await page.addInitScript(()=>localStorage.setItem('bg3ro-discord-authorized','1'));
  await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'domcontentloaded'});await page.waitForSelector('html.portal-ready');
  await page.locator('.topbar [data-auth-open]').click();
  assert(await page.locator('#discord-login').isEnabled());assert(!await page.locator('#auth-unavailable').isVisible());
@@ -18,5 +19,6 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.equal(target.searchParams.get('client_id'),'1190788174314754161');
  assert.equal(target.searchParams.get('redirect_uri'),'https://gatkiwcyjgbgjwfgvplm.supabase.co/auth/v1/callback');
  assert(target.searchParams.get('scope').includes('identify'));
+ assert.equal(authorizeURL.searchParams.get('prompt'),'none');assert.equal(target.searchParams.get('prompt'),'none','Supabase forwards the no-repeat-consent option to Discord');
  console.log('PASS: real SDK stores PKCE verifier, hosted Supabase sends Login to correct Discord application/callback; stopped before user consent.');
 }finally{await browser.close()}})().catch(e=>{console.error(e.name+': '+e.message.split('\n')[0]);process.exitCode=1});
