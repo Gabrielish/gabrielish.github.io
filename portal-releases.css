@@ -16,6 +16,33 @@
 .release-head h2 {
   margin: 0 0 8px;
 }
+.release-head > div { min-width: 0; }
+.release-download {
+  flex-shrink: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  gap: 8px;
+  background: linear-gradient(to right, #9333ea, #4f46e5);
+  background: linear-gradient(to right, oklch(55.8% 0.288 302.321), oklch(51.1% 0.262 276.966));
+  box-shadow: 0 4px 6px -1px #a855f740, 0 2px 4px -2px #a855f740;
+  transition: box-shadow .2s, filter .2s;
+}
+.release-download:hover {
+  background: linear-gradient(to right, #9333ea, #4f46e5);
+  background: linear-gradient(to right, oklch(55.8% 0.288 302.321), oklch(51.1% 0.262 276.966));
+  box-shadow: 0 10px 15px -3px #a855f74d, 0 4px 6px -4px #a855f74d;
+  filter: brightness(1.08);
+}
+.release-download:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 4px; }
+.release-download svg { flex-shrink: 0; }
+.release-download span { min-width: 0; overflow-wrap: anywhere; }
 .release-file {
   color: var(--muted);
   font-size: 14px;
@@ -37,22 +64,33 @@
 }
 .release-notes {
   margin-top: 25px;
-  padding: 20px 23px;
-  border: 1px solid var(--line);
+  padding: 16px;
+  border: 1px solid #34344199;
+  border-color: oklch(25% 0.03 280 / 60%);
   border-radius: 12px;
-  background: #ffffff02;
+  background: #17172280;
+  background: oklch(22% 0.03 280 / 30%);
 }
 .release-notes h3 {
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
   color: var(--muted);
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
+.release-notes h3 svg { flex-shrink: 0; }
+.release-notes .release-notes-title { font-size: 16px; line-height: 1.5; font-weight: 600; color: var(--muted); margin: 0 0 18px; overflow-wrap: anywhere; }
 .release-notes p {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font-size: 14px;
   margin: 0;
 }
+.release-notes p { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .release-download { transition: none; } }
 .release-meta {
   display: flex;
   align-items: center;

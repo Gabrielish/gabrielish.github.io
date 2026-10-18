@@ -82,10 +82,23 @@
       return false;
     }
   }
-  function download(row) {
+  function outlineIcon(paths, size = 16) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    for (const [key, value] of Object.entries({ viewBox: "0 0 24 24", width: size, height: size, fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true", focusable: "false" })) svg.setAttribute(key, value);
+    paths.forEach(d => {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d); svg.append(path);
+    });
+    return svg;
+  }
+  function download(row, featured = false) {
     if (!archiveURL(row.download_url))
       return el("span", "small", "Fișier indisponibil");
-    const a = el("a", "btn", "Descarcă arhiva");
+    const a = el("a", featured ? "btn release-download" : "btn");
+    if (featured) {
+      const format = /\.(zip|rar|7z)$/i.exec(row.file_name)?.[1].toUpperCase();
+      a.append(outlineIcon(["M12 3v12m-5-5 5 5 5-5", "M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4"]), el("span", "", format ? `Descărcați fișierul ${format}` : "Descărcați fișierul"));
+    } else a.textContent = "Descarcă arhiva";
     a.href = row.download_url;
     a.download = row.file_name;
     return a;
@@ -219,10 +232,13 @@
       ),
       tags(row),
     );
-    head.append(info, download(row));
-    const notes = el("div", "release-notes");
+    head.append(info, download(row, true));
+    const notes = el("div", "release-notes"),
+      notesHeading = el("h3", "");
+    notesHeading.append(outlineIcon(["M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z", "M14 2v6h6", "M8 13h8m-8 4h8M8 9h2"], 14), el("span", "", "Ce este nou în această versiune"));
     notes.append(
-      el("h3", "", "Ce este nou în această versiune"),
+      notesHeading,
+      el("h4", "release-notes-title", `Noua versiune ${row.version}`),
       el("p", "", row.description),
     );
     article.append(head, notes);

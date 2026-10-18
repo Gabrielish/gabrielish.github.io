@@ -36,6 +36,14 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.match(await p.locator('.hero-cta').getAttribute('href'),/github.com.*test-translation.zip/);
       assert.match(await p.locator('#github-quick-download').getAttribute('href'),/test-translation.zip/);
       await p.locator('#tab-descarcari').click();
+      const downloadButton=p.locator('#translation-releases .release-download');
+      assert.equal(await downloadButton.textContent(),'Descărcați fișierul ZIP');
+      assert.equal(await downloadButton.locator('svg[aria-hidden="true"]').count(),1);
+      assert.equal(await downloadButton.getAttribute('download'),'test-translation.zip');
+      assert.match(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundImage),/linear-gradient/);
+      assert.equal(await p.locator('#translation-releases .release-notes h3 svg').count(),1);
+      assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Noua versiune 0.1');
+      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
       assert.equal(await p.locator('#release-load-status').isVisible(),false,'Empty status must not shift the release');
       assert.equal(await p.locator('#translation-releases a[href*="nexusmods"]').count(),0,'Nexus download belongs only in the sidebar');
       if(owner){
