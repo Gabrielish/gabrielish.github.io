@@ -1,0 +1,1 @@
+create index bg3ro_download_windows_release on bg3ro_private.download_windows(release_id);
