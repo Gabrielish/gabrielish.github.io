@@ -1,5 +1,6 @@
 /* Broad, luminous fireflies; decorative only and never intercept clicks. */
-.hero .embers { inset: 12% 4% 7%; overflow: hidden; z-index: 1; pointer-events: none; }
+/* Cover the entire hero. Only its outer edge should clip the particle glow. */
+.hero .embers { inset: 0; overflow: visible; z-index: 1; pointer-events: none; }
 .hero .ember {
   left: var(--left); top: var(--top); width: var(--size); height: var(--size);
   border-radius: 50%; background: #fff4c7;
@@ -16,7 +17,6 @@
   100% { opacity: 0; transform: translate(var(--drift), var(--lift)); }
 }
 @media (max-width: 780px) {
-  .hero .embers { inset: 14% 4% 8%; }
   .hero .ember { box-shadow: 0 0 4px 1px #fff0b6, 0 0 11px 2px #edbf7060, 0 0 20px 4px #e3a74624; }
 }
 @media (prefers-reduced-motion: reduce) { .hero .embers { display: none; } }

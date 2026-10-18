@@ -1,4 +1,4 @@
-@import url('./fireflies.css?v=20261017');
+@import url('./fireflies.css?v=20261018-full-hero');
 /* The picture/video is intentionally unfiltered: readability comes from text shadow only. */
 .project-banner.hero{height:clamp(540px,calc(100svh - 76px),900px);min-height:0;background:#0b0c0f;border-bottom:0}
 .project-banner.hero:after{content:none;display:none}
