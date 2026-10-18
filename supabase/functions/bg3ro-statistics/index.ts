@@ -17,7 +17,7 @@ export async function handler(req: Request) {
   const origin = req.headers.get('origin');
   const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': origin && allowed.has(origin) ? origin : 'https://gabrielish.github.io',
-    'Access-Control-Allow-Headers': 'apikey, content-type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Vary': 'Origin' };
+    'Access-Control-Allow-Headers': 'apikey, content-type, authorization', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Vary': 'Origin' };
   const reply = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers });
   if (origin && !allowed.has(origin)) return reply({error:'Origin not allowed'},403);
   if (req.method === 'OPTIONS') return new Response(null,{status:204,headers});
@@ -51,7 +51,16 @@ export async function handler(req: Request) {
         return reply({error:'Nexus unavailable; previous totals retained'},502);
       }
     }
-    if (body.action !== 'download' || typeof body.release_id !== 'string' || !/^[a-f0-9-]{36}$/i.test(body.release_id)) return reply({error:'Invalid event'},400);
+    if (body.action !== 'view' && body.action !== 'download') return reply({error:'Invalid event'},400);
+    if (body.action === 'download' && (typeof body.release_id !== 'string' || !/^[a-f0-9-]{36}$/i.test(body.release_id))) return reply({error:'Invalid event'},400);
+    let userId: string | null = null;
+    if (body.action === 'view' && req.headers.has('authorization')) {
+      const auth = await fetch(`${endpoint}/auth/v1/user`, {headers:{apikey:PUBLIC_KEY,Authorization:req.headers.get('authorization')!},signal:AbortSignal.timeout(10000)});
+      if(!auth.ok) return reply({error:'Invalid session'},401);
+      const user=await auth.json();
+      if(typeof user.id!=='string' || !/^[a-f0-9-]{36}$/i.test(user.id)) return reply({error:'Invalid session'},401);
+      userId=user.id;
+    }
     // Platform-provided forwarding header; missing network identity never increases totals.
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim();
     if (!ip) return reply({counted:false});
@@ -59,6 +68,7 @@ export async function handler(req: Request) {
     const key = await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
     const digest = await crypto.subtle.sign('HMAC',key,encoder.encode(`${new Date().toISOString().slice(0,10)}:${ip}`));
     const fingerprint = Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+    if(body.action === 'view') return reply({counted:await db('rpc/bg3ro_record_view',{p_fingerprint:fingerprint,p_user_id:userId})});
     return reply({counted:await db('rpc/bg3ro_record_download',{p_release_id:body.release_id,p_fingerprint:fingerprint})});
   } catch (_) { return reply({error:'Statistics unavailable'},503); }
 }

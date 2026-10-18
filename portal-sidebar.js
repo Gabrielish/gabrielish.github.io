@@ -48,7 +48,6 @@
       const count = Math.max(0, Number(data.rating_count) || 0), total = Math.max(0, Number(data.compatibility_count) || 0), works = Math.max(0, Number(data.works_count) || 0);
       average = Math.max(0, Math.min(5, Number(data.rating_average) || 0));
       setText('#rating-average', count ? average.toFixed(1) : '—');setText('#rating-count', `${count} ${count === 1 ? 'evaluare' : 'evaluări'}`);
-      setText('#statistics-ratings', String(count));setText('#statistics-compatibility', String(total));
       const percent = total ? Math.round(works * 100 / total) : 0;
       setText('#compatibility-percent', total ? `${percent}%` : '—');setText('#compatibility-total', `${total} ${total === 1 ? 'raportare' : 'raportări'}`);
       $('#compatibility-fill').style.width = `${percent}%`;$('.compatibility-track').setAttribute('aria-valuenow', String(percent));
@@ -59,7 +58,7 @@
       if (!reports.length) { const item = document.createElement('li');item.textContent = 'Nu sunt încă raportări.';list.append(item); }
       reports.forEach(report => { const item = document.createElement('li'), title = document.createElement('strong'), detail = document.createElement('span');title.textContent = report.works ? 'Funcționează' : 'Nu funcționează';detail.textContent = `${platforms[report.platform] || 'Altă platformă'}${report.mod_version ? ` · ${report.mod_version}` : ''} · ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`;item.append(title, detail);list.append(item); });
       drawOwn();
-    } catch (_) { if (request !== statsRequest) return;setText('#rating-count', 'Date indisponibile');setText('#compatibility-total', 'Date indisponibile');setText('#statistics-ratings', '—');setText('#statistics-compatibility', '—'); }
+    } catch (_) { if (request !== statsRequest) return;setText('#rating-count', 'Date indisponibile');setText('#compatibility-total', 'Date indisponibile'); }
   }
   window.addEventListener('bg3ro:auth', async event => {
     const changed = client !== event.detail.client || userId !== event.detail.userId;

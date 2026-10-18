@@ -10,15 +10,28 @@
       const response = await fetch(url,{headers,signal:AbortSignal.timeout(10000)});
       if(!response.ok) throw Error();
       const data = await response.json();
-      if(![data.nexus_downloads,data.site_downloads,data.nexus_views].every(v=>Number.isSafeInteger(v)&&v>=0)) throw Error();
+      if(![data.nexus_downloads,data.site_downloads,data.nexus_views,data.site_views].every(v=>Number.isSafeInteger(v)&&v>=0)) throw Error();
       text('statistics-downloads',number(data.nexus_downloads+data.site_downloads));
-      text('statistics-download-sources',`${number(data.nexus_downloads)} Nexus + ${number(data.site_downloads)} din site`);
-      text('statistics-views',number(data.nexus_views));
-      text('statistics-views-source',`Nexus · valoare comunicată la ${new Date(data.views_observed_at+'T12:00:00Z').toLocaleDateString('ro-RO')}; nu se sincronizează automat.`);
-      const date=data.downloads_synced_at && new Date(data.downloads_synced_at);
-      text('statistics-sync',date ? `Descărcări Nexus: ${date.toLocaleString('ro-RO')}${!data.sync_ok || Date.now()-date.getTime()>48*3600000 ? ' · ultima valoare disponibilă' : ' · sincronizare zilnică'}.` : 'Descărcări Nexus: ultima valoare comunicată; sincronizare în așteptare.');
-    } catch (_) { text('statistics-sync','Statisticile nu pot fi actualizate momentan.'); }
+      text('statistics-views',number(data.nexus_views+data.site_views));
+    } catch (_) { /* Keep the last known totals; unavailable first loads remain dashes. */ }
   }
+  let viewSent=false;
+  // Wait for restored Auth/moderator state; never count a signed-in admin as a guest.
+  window.addEventListener('bg3ro:auth',async event=>{
+    const {client,moderator,userId}=event.detail || {};
+    if(viewSent || !client || moderator || location.hostname!=='gabrielish.github.io') return;
+    viewSent=true;
+    try {
+      const viewHeaders={...headers};
+      if(userId){
+        const {data,error}=await client.auth.getSession();
+        if(error || !data.session?.access_token) return;
+        viewHeaders.Authorization=`Bearer ${data.session.access_token}`;
+      }
+      const response=await fetch(url,{method:'POST',headers:viewHeaders,body:JSON.stringify({action:'view'}),keepalive:true});
+      if(response.ok) await load();
+    } catch (_) { /* Page rendering does not depend on statistics. */ }
+  });
   const pending = new Set();
   document.addEventListener('click',event=>{
     const anchor=event.target.closest?.('a[data-release-id]');

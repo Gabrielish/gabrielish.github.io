@@ -90,6 +90,7 @@ const M = '33333333-3333-3333-3333-333333333333';
     await db.exec('reset role');
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/contact-access.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/statistics-access.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/views-access.sql'),'utf8'));
     console.log('PASS: migration executes; anonymous/owner/other-user/moderator isolation; private reports; immediate publication; column privileges; rate limits survive deletion; progress bounds; private contact submission and moderator inbox.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
