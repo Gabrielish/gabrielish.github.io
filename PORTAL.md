@@ -1,5 +1,7 @@
 # Portal BG3RO — lucru în curs
 
+În Actualizări nu se mai repetă antetul „Actualizări / Istoric pe Nexus”. Cardul „La ce lucrez acum” se salvează în coloanele `work_title`, `work_body`, `work_note` din `bg3ro_project_status`, folosind citirea publică și politica existentă de editare doar pentru moderatori. Migrarea `20261018132321_editable_work_section.sql` este aplicată. Administratorul conectat vede „Editează secțiunea” direct în card; nota poate fi goală. Textul se afișează fără HTML, cu paragrafe păstrate. `tests/current-work.cjs` verifică UI, iar `supabase/tests/current-work-access.sql` verifică permisiunile reale cu ROLLBACK.
+
 Comunitatea publică, postarea ca oaspete și ștergerea de către moderator sunt documentate în [supabase/COMMUNITY.md](supabase/COMMUNITY.md). Raportările vechi rămân private; cele noi sunt publice cu consimțământ. Ratingurile/voturile necesită Discord.
 
 Fluxul nou de versiuni GitHub, anunțuri legate, drepturi ale proprietarului și încărcare este documentat în [supabase/RELEASES.md](supabase/RELEASES.md). Acesta înlocuiește fluxul anterior exclusiv Nexus pentru descărcarea principală, după prima versiune publicată.

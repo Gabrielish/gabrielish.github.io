@@ -48,7 +48,7 @@
   $('a[href="#confidentialitate"]').addEventListener('click', () => { $('#confidentialitate').open = true; });
 
   let client = null, user = null, moderator = false, page = 0, reportsLimit = 20, reportsRequest = 0, commentsRequest = 0;
-  let toastTimer;
+  let toastTimer, workDirty = false;
   const config = window.BG3RO_CONFIG || {};
   const authEnabled = config.authEnabled !== false;
   const configured = /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(config.supabaseUrl || '') && !!config.supabasePublishableKey;
@@ -99,6 +99,8 @@
     $('#sign-out').textContent = user?.is_anonymous ? 'Ieși din modul oaspete' : 'Deconectare';
     $('#my-reports').hidden = !client;
     $('#admin-tools').hidden = !moderator;
+    $('#work-editor').hidden = !moderator;
+    if (!moderator) { $('#work-editor').open = false; workDirty = false; $('#work-form').reset(); }
     $('#reports-heading').textContent = moderator ? 'Raportări publice și private' : 'Raportări publice';
     $('#discussion-form button[type="submit"]').textContent = 'Publică mesajul';
     $('#discord-login').disabled = !client || !authEnabled;
@@ -156,7 +158,7 @@
   }
   async function loadProgress() {
     if (!client) return;
-    const { data, error } = await client.from('bg3ro_project_status').select('translation_percent,review_percent,testing_percent,review_state,testing_state').eq('id', 1).maybeSingle();
+    const { data, error } = await client.from('bg3ro_project_status').select('translation_percent,review_percent,testing_percent,review_state,testing_state,work_title,work_body,work_note').eq('id', 1).maybeSingle();
     if (error || !data) return;
     for (const [kind, field, input] of [['translation','translation_percent','progress-value'],['review','review_percent','progress-review-value'],['testing','testing_percent','progress-testing-value']]) {
       const value = Number(data[field]);
@@ -168,7 +170,25 @@
       $(`#${input}`).value = percent;
     }
     $('#progress-review').value = data.review_state; $('#progress-testing').value = data.testing_state;
+    for (const field of ['title','body','note']) {
+      const output = $(`#current-work-${field}`), value = data[`work_${field}`];
+      if (typeof value === 'string') output.textContent = value;
+      if (field === 'note') output.hidden = !output.textContent.trim();
+      if (!workDirty) $(`#work-${field}`).value = output.textContent;
+    }
   }
+  $('#work-form').addEventListener('input', () => { workDirty = true; });
+  $('#work-form').addEventListener('submit', event => {
+    event.preventDefault(); if (!client || !moderator) return;
+    submit(event.currentTarget, async () => {
+      const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
+      Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
+      if (!values.work_title || !values.work_body) throw new Error('Empty work content');
+      const { data, error } = await client.from('bg3ro_project_status').update(values).eq('id', 1).select('work_title,work_body,work_note').maybeSingle();
+      if (error || !data) throw error || new Error('Work section not saved');
+      workDirty = false; await loadProgress(); formStatus(form, 'Secțiunea a fost salvată.');
+    });
+  });
   async function loadUpdates() {
     const target = $('#updates-list');
     if (!client) { target.replaceChildren(element('p', 'small', 'Nicio actualizare publicată încă în acest portal. Istoricul versiunilor publice este pe Nexus Mods.')); return; }
