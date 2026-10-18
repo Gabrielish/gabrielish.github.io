@@ -9,6 +9,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.route('**/rest/v1/rpc/bg3ro_sidebar_stats',async r=>{const state=await page.evaluate(()=>window.__sidebarTest);await r.fulfill({contentType:'application/json',body:JSON.stringify({rating_count:state.rating?1:0,rating_average:state.rating?.rating||null,compatibility_count:state.vote?1:0,works_count:state.vote?.works?1:0,last_update:null,recent:state.vote?[{...state.vote,updated_at:'2026-10-17T10:00:00Z'}]:[]})});});
  await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
  assert.equal(await page.locator('.rating-star').count(),5);assert.equal(await page.locator('.sidebar .author-line').count(),0);
+ assert(!await page.locator('.compatibility-card').textContent().then(text=>text.includes('Voturi ale utilizatorilor, nu o verificare oficială.')),'Redundant compatibility note removed');
  assert.equal(await page.locator('#rating-average').textContent(),'—');assert.equal(await page.locator('#rating-count').textContent(),'0 evaluări');
  await page.locator('[data-rating="4"]').click();assert(await page.locator('#auth-dialog').isVisible());await page.keyboard.press('Escape');
  await page.evaluate(()=>{
