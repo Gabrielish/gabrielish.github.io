@@ -16,6 +16,11 @@ try{for(const width of [320,390,820,1100,1280,1440,1920]){
   const logo=await header.locator('.wordmark').boundingBox(),toggle=await page.locator('.nav-toggle').boundingBox();assert(toggle.width>=44&&toggle.height>=44);assert(logo.x+logo.width<toggle.x);
   if(width<=760)assert((await header.locator('.topbar-inner').boundingBox()).height<=76);
   await page.locator('.nav-toggle').click();assert(await page.locator('.main-navigation').isVisible());assert(await header.locator('[data-auth-open]').isVisible());assert(await page.locator('.nav-support').isVisible());
+  const menu=await page.locator('.main-navigation').boundingBox();
+  for(const selector of ['.main-navigation>a','.main-navigation [data-auth-open]','.main-navigation .nav-support']){
+   const box=await page.locator(selector).boundingBox();assert(Math.abs(box.x+box.width/2-menu.x-menu.width/2)<2,`Centered mobile action ${selector} at ${width}`);
+  }
+  assert.equal(await page.locator('.main-navigation .navbar-actions').evaluate(el=>getComputedStyle(el).borderTopWidth),'0px');
   await page.screenshot({path:`.qa/navbar-open-${width}.png`});
   await page.keyboard.press('Escape');assert.equal(await page.locator('.nav-toggle').getAttribute('aria-expanded'),'false');await page.locator('.nav-toggle').click();
  }

@@ -40,8 +40,8 @@
   .nav-toggle{display:flex;margin-left:auto;flex-shrink:0}
   .main-navigation{display:none;position:absolute;top:95px;left:16px;right:16px;margin:0;padding:20px 24px 24px;max-height:calc(100svh - 115px);overflow-y:auto;background:#0b0c0ff5;border:1px solid #ddc9a740;border-radius:12px;backdrop-filter:blur(12px);flex-direction:column;align-items:stretch;gap:12px}
   .topbar.menu-open .main-navigation{display:flex}
-  .main-navigation>a,.main-navigation .nav-login{font-size:19px;min-height:44px;text-align:left;align-self:flex-start}
-  .main-navigation .navbar-actions{width:100%;margin:0;flex-direction:column;align-items:stretch;gap:16px;border-top:1px solid var(--line);padding-top:12px}
+  .main-navigation>a,.main-navigation .nav-login{font-size:19px;min-height:44px;text-align:center;align-self:center}
+  .main-navigation .navbar-actions{width:100%;margin:0;flex-direction:column;align-items:stretch;gap:16px;border:0;padding-top:0}
   .main-navigation .nav-support{max-width:none;width:100%;min-height:56px;font-size:17px;white-space:nowrap}
   html:not(.nav-enhanced) .main-navigation{display:flex;position:static;background:#0b0c0f;max-height:none;flex-wrap:wrap;flex-direction:row;gap:15px}
   html:not(.nav-enhanced) .topbar{position:relative;background:#0b0c0f}
