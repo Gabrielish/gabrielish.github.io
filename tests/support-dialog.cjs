@@ -11,6 +11,14 @@ const assert=require('node:assert/strict');
   assert.equal(await dialog.evaluate(el=>el.matches(':modal')),true);
   assert.equal(await page.locator('.support-close').evaluate(el=>el===document.activeElement),true);
   assert.equal(await dialog.locator('a').count(),2);
+  assert.equal(await dialog.locator('a.btn svg[aria-hidden="true"]').count(),2);
+  const buttons=await dialog.locator('a').all(),left=await buttons[0].boundingBox(),right=await buttons[1].boundingBox();
+  assert(Math.abs(left.y-right.y)<1&&right.x>=left.x+left.width,'Donation buttons remain side by side');
+  const styles=await page.evaluate(()=>{
+   const values=(selector,keys)=>{const s=getComputedStyle(document.querySelector(selector));return keys.map(k=>s[k]);};
+   return{support:values('#support-dialog',['backgroundColor','borderRadius','borderColor','padding']),auth:values('#auth-dialog',['backgroundColor','borderRadius','borderColor','padding']),button:values('#support-dialog a',['backgroundColor','borderRadius','color','fontSize','minHeight']),discord:values('#discord-login',['backgroundColor','borderRadius','color','fontSize','minHeight'])};
+  });
+  assert.deepEqual(styles.support,styles.auth,'Support and auth share the dialog surface');assert.deepEqual(styles.button,styles.discord,'Donation buttons match Discord button styling');
   for(const [i,url] of ['https://www.patreon.com/cw/Gabrielish','https://ko-fi.com/gabrielish'].entries()){
    const link=dialog.locator('a').nth(i);assert.equal(await link.getAttribute('href'),url);assert.equal(await link.getAttribute('target'),'_blank');assert((await link.getAttribute('rel')).includes('noopener'));
   }
