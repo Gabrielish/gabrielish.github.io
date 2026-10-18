@@ -13,8 +13,8 @@ function syntheticSDK(){
       signOut:async()=>{state.user=null;authCallback('SIGNED_OUT',null);return{error:null}}},
     rpc:async()=>({data:moderator(),error:null}),
     from(table){
-      const query={operation:'select',filters:[],single:false,payload:null,
-        select(){return this},eq(key,value){this.filters.push([key,value]);return this},order(){return this},limit(){return this},range(){return this},maybeSingle(){this.single=true;return this},
+      const query={operation:'select',filters:[],single:false,payload:null,orders:[],bounds:null,
+        select(){return this},eq(key,value){this.filters.push([key,value]);return this},is(key,value){this.filters.push([key,value]);return this},in(key,value){this.filters.push([key,value]);return this},order(key,options){this.orders.push([key,options?.ascending!==false]);return this},limit(){return this},range(a,b){this.bounds=[a,b];return this},maybeSingle(){this.single=true;return this},
         insert(payload){this.operation='insert';this.payload=payload;return this},update(payload){this.operation='update';this.payload=payload;return this},delete(){this.operation='delete';return this},
         then(resolve,reject){return Promise.resolve().then(()=>{
           const name=table.replace('bg3ro_',''),key={discussion_posts:'comments',bug_reports:'reports',project_updates:'updates'}[name];
@@ -27,11 +27,13 @@ function syntheticSDK(){
             const row={id:`row-${Date.now()}-${Math.random()}`,created_at:new Date().toISOString(),published_at:new Date().toISOString(),status:key==='comments'?'approved':'new',moderator_reply:'',...this.payload,is_guest:!!state.user?.is_anonymous};
             state[key].unshift(row);return{data:null,error:null};
           }
-          const matches=row=>this.filters.every(([k,v])=>row[k]===v);
+          const matches=row=>this.filters.every(([k,v])=>Array.isArray(v)?v.includes(row[k]):(row[k]??null)===v);
           if(this.operation==='update'){state[key].filter(matches).forEach(row=>Object.assign(row,this.payload));return{data:null,error:null}}
           if(this.operation==='delete'){state[key]=state[key].filter(row=>!matches(row));return{data:null,error:null}}
-          const data=state[key].filter(matches).filter(row=>moderator()||key==='updates'||(key==='reports'&&row.is_public)||(key==='comments'&&row.status==='approved')||row.author_id===state.user?.id);
-          return{data:JSON.parse(JSON.stringify(data)),count:data.length,error:null};
+          let data=state[key].filter(matches).filter(row=>moderator()||key==='updates'||(key==='reports'&&row.is_public)||(key==='comments'&&row.status==='approved')||row.author_id===state.user?.id);
+          for(const [key,asc] of [...this.orders].reverse())data.sort((a,b)=>String(a[key]).localeCompare(String(b[key]))*(asc?1:-1));
+          const count=data.length;if(this.bounds)data=data.slice(this.bounds[0],this.bounds[1]+1);
+          return{data:JSON.parse(JSON.stringify(data)),count,error:null};
         }).then(resolve,reject)}
       };return query;
     }
@@ -53,7 +55,7 @@ function syntheticSDK(){
       assert.equal(await p.locator('#discussion-name').inputValue(),'Jucător Discord');
       await p.locator('#tab-discutii').click();await p.locator('#discussion-name').fill('Jucător de test');await p.locator('#discussion-title').fill('O întrebare');await p.locator('#discussion-body').fill('<img src=x onerror="window.injected=true"> Text de test.');
       await p.locator('#discussion-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#discussion-form .form-status').textContent.includes('Mesaj'));
-      assert.equal(await p.locator('#discussion-list img').count(),0);assert.equal(await p.evaluate(()=>window.injected),undefined);
+      assert.equal(await p.locator('#discussion-list .post-body img').count(),0);assert.equal(await p.evaluate(()=>window.injected),undefined);
       assert.equal(await p.evaluate(()=>window.__communityTest.comments.length),1);
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].status),'approved');
       assert.equal(await p.locator('#discussion-form .form-status').textContent(),'Mesajul a fost publicat.');

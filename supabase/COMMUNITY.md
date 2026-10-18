@@ -12,7 +12,13 @@ Migrarea `20261017215722_public_community_guests.sql` este aplicată în proiect
 - `is_guest` este atribuit de trigger din JWT, nu din date trimise de client. Mesajele sunt afișate ca text, nu HTML.
 - Anti-spam: 30 secunde între trimiteri și maximum 5/zi/oaspete/tip, respectiv 20/zi/membru/tip. Contoarele supraviețuiesc ștergerii mesajelor. Aceste limite nu împiedică abuzul prin crearea mai multor conturi; protecția Auth per IP și, recomandat, CAPTCHA sunt necesare pentru trafic ostil. CAPTCHA nu este configurat în interfața actuală. Conturile tehnice anonime nu se curăță automat.
 
-## Verificări
+## Discuții grupate și avataruri
+
+Migrarea `20261017222606_discussion_threads_avatars.sql` este aplicată. Paginarea este pe discuții principale (20/pagină), nu pe mesaje amestecate. Răspunsurile sunt citite separat pentru părinții afișați și grupate cronologic, în loturi de 100, cu buton de continuare. Nu se pierde părintele când răspunsul este mai nou sau trece pe altă pagină.
+
+`author_avatar_url` păstrează fotografia publică Discord la trimiterea mesajului. Triggerul privat verifică autorul/sesiunea și copiază doar URL-uri HTTPS din căile CDN Discord permise; oaspeții primesc NULL. Coloana nu poate fi scrisă direct de vizitatori. Fotografia este prezentare, nu dovadă de identitate sau drept de moderare. Datele Auth, inclusiv e-mailul și restul metadatelor, nu sunt expuse. Mesajele existente Discord au primit fotografia validată disponibilă. Dacă avatarul lipsește sau nu se încarcă, se folosește `assets/discussion-avatar.svg`: geometria existentă a emblemei, cu nuanțe crem/aurii din paleta oficială, fără tricolor. Avatarurile externe folosesc referrerpolicy=no-referrer.
+
+`tests/discussion-threads.cjs` verifică gruparea, paginarea cu părinți vechi și răspunsuri noi, loturi de 100, indentarea pe mobil, fallbackul imaginilor și siguranța textului. `supabase/tests/discussion-avatars.sql` verifică izolarea datelor Auth și avatarurile pe instanța reală, cu ROLLBACK.
 
 `tests/community-guests.cjs` verifică interfața cu SDK sintetic (lectură publică, nume fără Discord, consimțământ, gating rating/vot, ștergere moderator, XSS și layout mobil). `supabase/tests/public-community-access.sql` verifică pe instanța reală izolarea rapoartelor vechi, granturile anonime, publicarea imediată, refuzul voturilor oaspeților, voturile membrilor, rate limiting și ștergerea de către moderator. Datele SQL de diagnostic sunt anulate integral prin ROLLBACK.
 
