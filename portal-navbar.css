@@ -19,10 +19,9 @@
 .nav-support:after{background:#fff;opacity:0;transition:opacity .4s}
 .nav-support:is(:hover,:focus-visible):after{opacity:1}
 .nav-toggle{display:none;align-items:center;justify-content:center;width:44px;height:44px;background:none;border:0;padding:9px;color:#ddc9a7}
-.menu-icon{display:grid;gap:5px;width:22px}.menu-icon i{display:block;width:22px;height:2px;background:currentColor;border-radius:2px;transition:transform .2s,opacity .2s}
-.nav-toggle[aria-expanded=true] .menu-icon i:first-child{transform:translateY(7px) rotate(45deg)}
-.nav-toggle[aria-expanded=true] .menu-icon i:nth-child(2){opacity:0}
-.nav-toggle[aria-expanded=true] .menu-icon i:last-child{transform:translateY(-7px) rotate(-45deg)}
+.dot-grid{display:grid;grid-template-columns:repeat(3,4px);gap:5px;transition:transform .2s}
+.dot-grid i{display:block;width:4px;height:4px;background:currentColor;border-radius:50%}
+.nav-toggle[aria-expanded=true] .dot-grid{transform:rotate(45deg)}
 .project-banner.hero{height:clamp(600px,100svh,1000px)}
 .project-banner.hero .project-badges{top:145px}
 /* Fade the media itself through a soft, irregular alpha mask. No cropped
@@ -63,7 +62,7 @@
   .navbar-actions{gap:8px}.nav-support{font-size:12px;min-height:50px;padding-inline:14px;max-width:106px;white-space:normal;text-align:center}
   .nav-login{font-size:13px}.nav-toggle{width:44px;padding:9px}
 }
-@media(prefers-reduced-motion:reduce){.main-navigation a,.main-navigation a:after,.nav-login,.nav-login:after,.nav-support:after,.menu-icon i{transition:none}}
+@media(prefers-reduced-motion:reduce){.main-navigation a,.main-navigation a:after,.nav-login,.nav-login:after,.nav-support:after,.dot-grid{transition:none}}
 @media(max-width:360px){
   .topbar .topbar-inner{width:calc(100% - 20px);gap:6px}
   .topbar .wordmark{font-size:27px;gap:7px}.topbar .wordmark img{width:30px;height:30px}

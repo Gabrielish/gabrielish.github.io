@@ -12,6 +12,9 @@ try{for(const width of [320,390,820,1100,1280,1440,1920]){
  assert((await page.locator('.banner-video').evaluate(el=>getComputedStyle(el).maskImage)).includes('hero-video-feather.svg'));
  assert.equal(await header.locator('[data-auth-open]').textContent(),'CONECTARE');
  if(width<=1100){
+  assert.equal(await page.locator('.nav-toggle .dot-grid i').count(),9,'Original nine-dot menu icon');
+  assert.equal(await page.locator('.nav-toggle .menu-icon').count(),0);
+  assert.equal(await page.locator('.dot-grid i').first().evaluate(el=>getComputedStyle(el).borderRadius),'50%');
   assert(!await header.locator('[data-auth-open]').isVisible());assert(!await page.locator('.nav-support').isVisible());assert(await header.locator('.wordmark').isVisible());
   const logo=await header.locator('.wordmark').boundingBox(),toggle=await page.locator('.nav-toggle').boundingBox();assert(toggle.width>=44&&toggle.height>=44);assert(logo.x+logo.width<toggle.x);
   if(width<=760)assert((await header.locator('.topbar-inner').boundingBox()).height<=76);
