@@ -27,9 +27,9 @@ const assert=require('node:assert/strict');
     await saving.goto(url,{waitUntil:'networkidle'});assert.equal(await saving.locator('video').getAttribute('src'),null,'No video download for data saver');await saving.close();
     const failure=await browser.newPage();
     await failure.route('**/About_infinity_video*.mp4',r=>r.abort());await failure.route('**/about/video-still.jpg',r=>r.abort());
-    await failure.goto(url,{waitUntil:'networkidle'});await failure.waitForFunction(()=>{const img=document.querySelector('.banner-art');return img.complete&&img.naturalWidth>0&&img.src.includes('camp-romania-clean.webp')});
+    await failure.goto(url,{waitUntil:'networkidle'});await failure.waitForFunction(()=>document.querySelector('.banner-art').hidden);
     assert.equal(await failure.locator('.project-banner').evaluate(el=>el.classList.contains('video-loaded')),false);
     assert.equal(await failure.locator('#banner-video-toggle').count(),0);await failure.close();
-    console.log('PASS: official video plays desktop/mobile without manual controls, mute/loop/inline, offscreen pause, reduced motion/data-saver skip download, local fallback on external failure.');
+    console.log('PASS: official video plays desktop/mobile without manual controls, mute/loop/inline, offscreen pause, reduced motion/data-saver skip download, plain dark fallback on external failure.');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

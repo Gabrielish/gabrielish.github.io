@@ -50,6 +50,7 @@
   video.addEventListener('error', stopOnFailure);
   function imageFallback() {
     if (image.dataset.fallback) { const fallback = image.dataset.fallback; delete image.dataset.fallback; image.src = fallback; }
+    else image.hidden = true;
   }
   image?.addEventListener('error', imageFallback);
   if (image?.complete && !image.naturalWidth) imageFallback();

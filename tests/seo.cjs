@@ -19,6 +19,10 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.equal(webpage.name, expectedTitle);
   assert.equal(webpage.description, expectedDescription);
   assert.equal(structured['@context'], 'https://schema.org');
+  assert(!/camp-romania|logo-d20/.test(html),'No obsolete dice illustration in active page, fallback or share metadata');
+  const logo=structured['@graph'].find(item=>item['@type']==='ImageObject');
+  assert(logo.url.endsWith('/assets/portal-apple-touch-icon.png'));
+  assert.equal(logo.width,180);assert.equal(logo.height,180);
   const ids = structured['@graph'].map(item => item['@id']);
   assert.equal(new Set(ids).size, ids.length);
   function checkRefs(value) {
