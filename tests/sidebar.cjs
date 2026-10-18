@@ -9,6 +9,10 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.route('**/rest/v1/rpc/bg3ro_sidebar_stats',async r=>{const state=await page.evaluate(()=>window.__sidebarTest);await r.fulfill({contentType:'application/json',body:JSON.stringify({rating_count:state.rating?1:0,rating_average:state.rating?.rating||null,compatibility_count:state.vote?1:0,works_count:state.vote?.works?1:0,last_update:null,recent:state.vote?[{...state.vote,updated_at:'2026-10-17T10:00:00Z'}]:[]})});});
  await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
  assert.equal(await page.locator('.rating-star').count(),5);assert.equal(await page.locator('.sidebar .author-line').count(),0);
+ assert.equal(await page.locator('.compatibility-actions button svg[aria-hidden="true"]').count(),2);
+ assert.equal(await page.locator('.compatibility-counts svg').count(),2);
+ assert.equal(await page.locator('[data-works="false"] svg.is-down').count(),1);
+ assert.equal(await page.locator('[data-works="true"]').getAttribute('aria-label'),null,'Visible button text remains the accessible name');
  assert(!await page.locator('.compatibility-card').textContent().then(text=>text.includes('Voturi ale utilizatorilor, nu o verificare oficială.')),'Redundant compatibility note removed');
  assert.equal(await page.locator('#rating-average').textContent(),'—');assert.equal(await page.locator('#rating-count').textContent(),'0 evaluări');
  await page.locator('[data-rating="4"]').click();assert(await page.locator('#auth-dialog').isVisible());await page.keyboard.press('Escape');
@@ -33,11 +37,16 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.locator('#compatibility-platform').selectOption('macos');await page.locator('#compatibility-version').selectOption('<img src=x> test');
  await page.locator('[data-works="true"]').click();await page.waitForFunction(()=>document.querySelector('#compatibility-percent').textContent==='100%');
  await page.locator('.recent-compatibility summary').click();assert.equal(await page.locator('#recent-compatibility-list img').count(),0);assert((await page.locator('#recent-compatibility-list').textContent()).includes('<img src=x>'));
+ assert.equal(await page.locator('#recent-compatibility-list .is-working>svg').count(),1);
+ assert.equal(await page.locator('.compatibility-counts svg').count(),2,'Counter icons survive refreshed totals');
  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-updated',{detail:{versions:['v0.9.0','v0.8.0']}})));
  assert.equal(await page.locator('#compatibility-version').inputValue(),'<img src=x> test','An existing historical vote is retained');
  await page.locator('#compatibility-version').selectOption('v0.8.0');
  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-unavailable')));
  assert.equal(await page.locator('#compatibility-version').inputValue(),'v0.8.0','A temporary release error preserves the selected version');
+ await page.locator('[data-works="false"]').click();await page.waitForFunction(()=>document.querySelector('#compatibility-percent').textContent==='0%');
+ assert.equal(await page.locator('#recent-compatibility-list .is-broken>svg.is-down').count(),1);
+ assert.equal(await page.locator('#works-count').textContent(),'0 funcționează');assert.equal(await page.locator('#broken-count').textContent(),'1 nu funcționează');
  await page.evaluate(()=>window.__sidebarTest.fail=true);await page.locator('[data-rating="2"]').click();await page.waitForSelector('#rating-status.error');assert.equal(await page.locator('#rating-average').textContent(),'4.0');
  assert((await page.locator('.quick-download a[href*="nexusmods"]').getAttribute('href')).includes('tab=files'));assert.equal(await page.locator('#github-quick-download:visible').count(),0);assert.equal(await page.locator('#statistics-updated').textContent(),'Nicio actualizare');
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);

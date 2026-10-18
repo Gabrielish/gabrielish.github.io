@@ -2,6 +2,20 @@
   'use strict';
   const $ = s => document.querySelector(s);
   const config = window.BG3RO_CONFIG || {};
+  function thumbIcon(works) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    for (const [key,value] of Object.entries({viewBox:'0 0 24 24',width:'20',height:'20',fill:'none',stroke:'currentColor','stroke-width':'1.8','stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false',class:`compatibility-icon${works ? '' : ' is-down'}`})) svg.setAttribute(key,value);
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d','M7 10v11H3V10h4Zm0 0 5-8a3 3 0 0 1 3 3l-1 5h5a2 2 0 0 1 2 2l-2 7a3 3 0 0 1-3 2H7');
+    svg.append(path);
+    return svg;
+  }
+  for (const [selector,works] of [['#works-count',true],['#broken-count',false]]) {
+    const label=$(selector), wrapper=document.createElement('span');
+    wrapper.className=`compatibility-count ${works ? 'is-working' : 'is-broken'}`;
+    label.before(wrapper);wrapper.append(thumbIcon(works),label);
+  }
+  document.querySelectorAll('[data-works]').forEach(button=>button.prepend(thumbIcon(button.dataset.works==='true')));
   let client = null, userId = null, myRating = null, myVote = null, average = 0, busy = false, statsRequest = 0, authRequest = 0;
   const platforms = { windows: 'Windows', macos: 'macOS', linux: 'Linux / Steam Deck', ps5: 'PS5', other: 'Altă platformă' };
   const setText = (selector, text) => { $(selector).textContent = text; };
@@ -56,7 +70,7 @@
       const reports = Array.isArray(data.recent) ? data.recent.slice(0, 10) : [];
       setText('#recent-count', `(${reports.length})`);const list = $('#recent-compatibility-list');list.replaceChildren();
       if (!reports.length) { const item = document.createElement('li');item.textContent = 'Nu sunt încă raportări.';list.append(item); }
-      reports.forEach(report => { const item = document.createElement('li'), title = document.createElement('strong'), detail = document.createElement('span');title.textContent = report.works ? 'Funcționează' : 'Nu funcționează';detail.textContent = `${platforms[report.platform] || 'Altă platformă'}${report.mod_version ? ` · ${report.mod_version}` : ''} · ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`;item.append(title, detail);list.append(item); });
+      reports.forEach(report => { const item = document.createElement('li'), title = document.createElement('strong'), detail = document.createElement('span'), content=document.createElement('div');item.className=report.works ? 'is-working' : 'is-broken';title.textContent = report.works ? 'Funcționează' : 'Nu funcționează';detail.textContent = `${platforms[report.platform] || 'Altă platformă'}${report.mod_version ? ` · ${report.mod_version}` : ''} · ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`;content.append(title,detail);item.append(thumbIcon(report.works),content);list.append(item); });
       drawOwn();
     } catch (_) { if (request !== statsRequest) return;setText('#rating-count', 'Date indisponibile');setText('#compatibility-total', 'Date indisponibile'); }
   }

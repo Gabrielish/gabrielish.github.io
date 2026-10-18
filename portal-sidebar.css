@@ -18,6 +18,10 @@
 .compatibility-line strong{font-size:18px;color:#86c397}.compatibility-track{height:8px;background:#2b2d2c;border-radius:8px;margin:10px 0;overflow:hidden}
 #compatibility-fill{width:0;height:100%;background:#73b382;border-radius:inherit}
 .compatibility-counts{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10px;color:#ce9993}.compatibility-counts .works-count{color:#86c397}
+.compatibility-icon{display:inline-block;width:18px;height:18px;flex:none;vertical-align:middle}.compatibility-icon.is-down{transform:rotate(180deg)}
+.compatibility-count{display:inline-flex;align-items:center;gap:6px}.is-working>.compatibility-icon{color:#86c397}.is-broken>.compatibility-icon{color:#e87f78}
+.compatibility-counts .compatibility-icon{width:16px;height:16px}
+.compatibility-actions .btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
 .project-sidebar .field{margin-bottom:13px}.project-sidebar .field label{font-size:11px}
 .project-sidebar .field :is(input,select){font-size:12px}
 .compatibility-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;align-items:end}
@@ -28,6 +32,8 @@
 .recent-compatibility{margin-top:18px;font-size:11px;color:#bdb3a3}.recent-compatibility summary{cursor:pointer;min-height:34px}
 .recent-compatibility ul{list-style:none;padding:0;margin:9px 0 0}.recent-compatibility li{padding:11px 0;border-top:1px solid var(--line);overflow-wrap:anywhere;line-height:1.8}
 .recent-compatibility li strong{display:block}.recent-compatibility li span{font-size:10px;color:#a9aaa9}
+.recent-compatibility li:is(.is-working,.is-broken){display:flex;align-items:flex-start;gap:10px;border:0;border-radius:8px;padding:12px;background:#1a1b1e;margin-top:8px}
+.recent-compatibility li>.compatibility-icon{margin-top:2px}.recent-compatibility li>div{min-width:0}
 .sidebar-report-link{display:inline-block;font-size:11px;margin-top:16px}.project-sidebar dl>div{align-items:start}
 .project-sidebar dd{max-width:47%;overflow-wrap:anywhere}.project-sidebar .support-actions{grid-template-columns:1fr 1fr}
 @media(min-width:1500px){.page-grid{grid-template-columns:minmax(0,1fr) 370px}}
