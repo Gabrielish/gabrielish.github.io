@@ -51,6 +51,8 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.equal(await p.locator('#translation-releases .release-notes h3 svg').count(),1);
       assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Noua versiune 0.1');
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
+      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(25, 24, 21)','Warm charcoal, without the previous violet cast');
+      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopColor),'rgb(57, 52, 41)','Subtle warm gold border');
       assert.equal(await p.locator('#release-load-status').isVisible(),false,'Empty status must not shift the release');
       assert.equal(await p.locator('#translation-releases a[href*="nexusmods"]').count(),0,'Nexus download belongs only in the sidebar');
       if(owner){

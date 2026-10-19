@@ -62,11 +62,9 @@
 .release-notes {
   margin-top: 25px;
   padding: 16px;
-  border: 1px solid #34344199;
-  border-color: oklch(25% 0.03 280 / 60%);
+  border: 1px solid #393429;
   border-radius: 12px;
-  background: #17172280;
-  background: oklch(22% 0.03 280 / 30%);
+  background: #191815;
 }
 .release-notes h3 {
   display: flex;
