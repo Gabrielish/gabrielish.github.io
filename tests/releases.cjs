@@ -58,7 +58,11 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.notEqual(await downloadButton.evaluate(el=>getComputedStyle(el).boxShadow),restingGlow,'Warm glow increases on hover');
       await p.mouse.move(0,0);
       assert.equal(await p.locator('#translation-releases .release-notes h3 svg').count(),1);
-      assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Noua versiune 0.1');
+      assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Versiune de test translation');
+      assert.equal(await p.locator('#release-updates .release-news > h3').textContent(),'Versiune de test translation');
+      assert.equal(await p.locator('#release-updates .release-news a[download]').count(),0);
+      assert.equal(await p.locator('#release-updates .release-news .btn').count(),0);
+      assert.equal(await p.locator('#release-updates .release-author-avatar').count(),1);
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
       const nexusRestingBackground=await p.locator('.quick-download a[href*="nexusmods"]').evaluate(el=>getComputedStyle(el).backgroundColor);
       assert.equal(nexusRestingBackground,'rgb(24, 25, 25)');
@@ -80,10 +84,13 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       if(owner){
         await p.waitForSelector('#release-editor',{state:'visible'});
         await p.locator('#translation-releases .edit-control > .edit-pencil').click();
+        await p.locator('#translation-releases .edit-dialog input[name=title]').fill('Titlul ales de administrator');
         await p.locator('#translation-releases textarea').fill('<img src=x onerror=alert(1)> Notă editată.');
         await p.locator('#translation-releases .edit-dialog form button').click();
         await p.waitForFunction(()=>document.querySelector('#release-updates').textContent.includes('Notă editată.'));
-        assert.equal(await p.locator('#release-updates img').count(),0);
+        assert.equal(await p.locator('#release-updates > article > p img').count(),0);
+        assert.equal(await p.locator('#release-updates .release-news > h3').textContent(),'Titlul ales de administrator');
+        assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Titlul ales de administrator');
         await p.locator('#release-editor summary').click();
         await p.locator('#release-version').fill('0.2');await p.locator('#release-title').fill('Versiune nouă de test');
         await p.locator('#release-archive').setInputFiles({name:'new.zip',mimeType:'application/zip',buffer:Buffer.alloc(2097152)});
@@ -95,7 +102,7 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
         assert.equal(await p.locator('#release-file-bytes').inputValue(),'2097152');
         await p.locator('#release-description').fill('Modificări de test pentru versiunea 0.2.');
         await p.locator('#release-publish-form button').click();
-        await p.waitForFunction(()=>document.querySelector('#release-updates').textContent.includes('Noua versiune 0.2'));
+        await p.waitForFunction(()=>document.querySelector('#release-updates').textContent.includes('Versiune nouă de test'));
         assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.2','0.1'],'New publications update the compatibility dropdown');
         assert.match(await p.locator('#translation-releases .release-head h2').textContent(),/Versiune nouă de test/);
         await p.locator('.hero-cta').click();assert.equal(await p.locator('.hero-cta').getAttribute('href'),'#descarcari');

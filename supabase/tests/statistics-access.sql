@@ -1,8 +1,9 @@
 begin;
+select set_config('request.jwt.claim.sub',(select user_id::text from bg3ro_private.moderators limit 1),true);
 insert into public.bg3ro_releases(author_id,kind,version,title,file_name,file_bytes,download_url,description)
 select id,'translation','statistics-test','Test','test.zip',1,
 'https://github.com/Gabrielish/bg3ro/releases/download/test/test.zip','Test'
-from auth.users limit 1;
+from auth.users where id=auth.uid();
 select set_config('test.release_id',(select id::text from public.bg3ro_releases where version='statistics-test'),true);
 update public.bg3ro_download_statistics set site_downloads=0,sync_attempt_at=null where id=1;
 set local role anon;

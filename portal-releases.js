@@ -2,7 +2,7 @@
   "use strict";
   const $ = (s) => document.querySelector(s);
   const fields =
-    "id,author_name,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at";
+    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at";
   const kinds = {
     translation: "Traducerea în limba română",
     search: "Căutare fără diacritice",
@@ -19,6 +19,14 @@
     if (cls) e.className = cls;
     if (text !== undefined) e.textContent = text;
     return e;
+  }
+  function authorAvatar(row) {
+    const image = el("img", "release-author-avatar");
+    const remote = /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(row.author_avatar_url || "");
+    image.src = remote ? row.author_avatar_url : "./assets/discussion-avatar.svg";
+    image.alt = ""; image.width = 44; image.height = 44; image.loading = "lazy"; image.referrerPolicy = "no-referrer";
+    if (remote) image.addEventListener("error", () => { image.src = "./assets/discussion-avatar.svg"; }, { once: true });
+    return image;
   }
   function date(value) {
     return new Date(value).toLocaleDateString("ro-RO", {
@@ -239,7 +247,7 @@
     notesHeading.append(outlineIcon(["M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z", "M14 2v6h6", "M8 13h8m-8 4h8M8 9h2"], 14), el("span", "", "Ce este nou în această versiune"));
     notes.append(
       notesHeading,
-      el("h4", "release-notes-title", `Noua versiune ${row.version}`),
+      el("h4", "release-notes-title", row.title),
       el("p", "", row.description),
     );
     article.append(head, notes);
@@ -294,29 +302,25 @@
       uploadIcon.append(uploadPath);
       versionBadge.append(uploadIcon, el("span", "", `Versiunea ${row.version}`));
       meta.append(
+        authorAvatar(row),
         el("strong", "", row.author_name),
         time,
         versionBadge,
       );
-      const title = el("h3", "", `Noua versiune ${row.version}`),
-        link = el("a", "", "Toate descărcările →");
+      const title = el("h3", "", row.title),
+        link = el("a", "release-news-link", "Descărcări ↗");
       link.href = "#descarcari";
       link.addEventListener("click", (e) => {
         e.preventDefault();
         $("#tab-descarcari").click();
         $(".tab-list").scrollIntoView({ block: "start" });
       });
+      meta.insertBefore(link, versionBadge);
       article.append(
         meta,
         title,
-        el("p", "small", row.title),
         el("p", "", row.description),
-        link,
       );
-      const direct = download(row);
-      direct.className = "btn secondary small-btn";
-      article.append(el("p", "", ""), direct);
-      if (moderator) article.append(editor(row));
       news.append(article);
     });
     $("#release-editor").hidden = !moderator;
