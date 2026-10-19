@@ -17,7 +17,10 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   await page.goto('http://127.0.0.1:4173/#actualizari',{waitUntil:'networkidle'});
   await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await page.waitForSelector('#auth-dialog',{state:'hidden'});
   const releaseBefore=await page.locator('#release-updates').textContent();
-  await page.locator('#admin-tools .edit-pencil').first().click();const form=page.locator('#update-form');
+  assert.equal(await page.locator('#admin-tools > .edit-control > button').count(),1,'Only one publication button remains');
+  assert.equal(await page.locator('#admin-tools').evaluate(el=>el.classList.contains('card')),false,'No administration card');
+  assert.equal(await page.locator('#admin-tools > h2,#admin-tools > p').count(),0);
+  await page.getByRole('button',{name:'Publică o actualizare',exact:true}).click();const form=page.locator('#update-form');
   await form.locator('[name=title]').fill('Anunț manual');await form.locator('[name=body]').fill('Conținut pentru testarea actualizărilor manuale.');
   await form.locator('[name=link_label]').fill('Pagina proiectului');await form.locator('[name=link_url]').fill('javascript:alert(1)');await form.locator('[name=badge_label]').fill('În lucru');
   await form.locator('[type=submit]').click();await page.waitForSelector('#update-form .form-status.error');assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),0);

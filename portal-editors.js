@@ -39,7 +39,12 @@
   const progress = mount(document.querySelector('#progress-form').closest('details'), 'Editează progresul traducerii', document.querySelector('.progress-card h2'));
   progress.id = 'progress-editor'; progress.hidden = true;
   mount(document.querySelector('#work-editor'), 'Editează secțiunea', document.querySelector('#current-work-title'));
-  document.querySelectorAll('#admin-tools > details').forEach(source => mount(source, source.querySelector('summary').textContent, document.querySelector('#admin-tools h2')));
+  document.querySelectorAll('#admin-tools > details').forEach(source => {
+    const title = source.querySelector('summary').textContent;
+    const control = mount(source, title);
+    const button = control.querySelector('button');
+    button.className = 'btn'; button.replaceChildren(document.createTextNode(title));
+  });
 
   const about = document.querySelector('.about-copy'), heading = about.querySelector('h2'), paragraphs = [...about.querySelectorAll('p:not(.note)')], note = about.querySelector('.note');
   const body = document.createElement('div'); body.id = 'about-project-body'; paragraphs[0].before(body); paragraphs.forEach(p => body.append(p));

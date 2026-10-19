@@ -17,7 +17,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.waitForSelector('#auth-dialog',{state:'hidden'});
   await page.waitForSelector('#about-editor > button',{state:'visible'});
   assert.equal(await page.locator('#despre .edit-pencil:visible').count(),2);
-  for(const selector of ['.progress-card','.about-copy','#current-work','#admin-tools']){
+  for(const selector of ['.progress-card','.about-copy','#current-work']){
    if(selector==='#current-work')await page.locator('#tab-actualizari').click();
    const positions=await page.locator(selector).evaluate(card=>{
     const row=card.querySelector('.editable-header'),title=row.querySelector(':scope > h2'),button=row.querySelector(':scope > .edit-control > button');
