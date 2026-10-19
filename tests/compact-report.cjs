@@ -14,9 +14,13 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-unavailable')));
   assert.equal(await page.locator('#report-version').inputValue(),'v0.7.0');
   const formBox=await page.locator('#report-form').boundingBox();if(width===1440)assert(formBox.height<470,'Compact desktop form');
-  assert(await page.locator('[name=public_consent]').isVisible());
+  assert.equal(await page.locator('[name=public_consent]').count(),0);
+  assert.equal(await page.locator('#report-form .help').count(),0);
+  assert((await page.locator('.report-compose > p.small').textContent()).startsWith('Un text greșit, un acord nepotrivit sau o problemă tehnică?'));
+  const nameBox=await page.locator('#report-name').boundingBox(),subjectBox=await page.locator('#report-title').boundingBox();
+  assert(subjectBox.y>=nameBox.y+nameBox.height,'Subject occupies its own row');assert.equal(subjectBox.width,nameBox.width);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
   await page.locator('.report-compose').screenshot({path:`.qa/compact-report-${width}.png`});await page.close();
  }
- console.log('PASS: compact report layout 320–1440px, game version removed, published-version dropdown deduplication, selection preserved, public consent kept.');
+ console.log('PASS: report layout 320–1440px, restored introduction, full-width subject, redundant note/checkbox removed, published-version dropdown and selection preserved.');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
