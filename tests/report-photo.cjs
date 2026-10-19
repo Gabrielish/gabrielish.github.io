@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
  const browser=await chromium.launch({channel:'msedge',headless:true});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844}});
-  await page.setContent('<form id="report-form"><input name="title" value="Test"><input id="report-photo" type="file"><img id="report-photo-preview" hidden><button type="button" id="report-photo-remove" hidden>Remove</button><p id="report-photo-status"></p><button type="submit">Send</button></form><article id="report"><form></form></article>');
+  await page.setContent('<form id="report-form"><input name="title" value="Test"><div id="report-photo-drop"><strong id="report-photo-label"></strong><input id="report-photo" type="file"><img id="report-photo-preview" hidden><button type="button" id="report-photo-remove" hidden>Remove</button><p id="report-photo-status"></p><button type="submit">Send</button></div></form><article id="report"><form></form></article>');
   await page.addScriptTag({content:fs.readFileSync(require('node:path').join(__dirname,'../portal-report-photo.js'),'utf8')});
   const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=64;c.height=32;c.getContext('2d').fillRect(0,0,64,32);return c.toDataURL('image/png').split(',')[1]});
   await page.locator('#report-photo').setInputFiles({name:'bad.png',mimeType:'image/png',buffer:Buffer.from('<svg onload="alert(1)"/>')});
@@ -18,6 +18,8 @@ const assert=require('node:assert/strict');
   assert.equal(await page.locator('#report-photo').inputValue(),'');
   await page.locator('#report-photo').setInputFiles({name:'capture.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
   await page.waitForSelector('#report-photo-preview',{state:'visible'});
+  await page.evaluate(()=>{const input=document.querySelector('#report-photo'),dt=new DataTransfer();dt.items.add(input.files[0]);document.querySelector('#report-photo-drop').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:dt}));});
+  await page.waitForFunction(()=>document.querySelector('#report-photo-label').textContent==='capture.png');
   const results=await page.evaluate(async()=>{
    const calls={inserts:0,uploads:0,attaches:0,removes:0},id='11111111-1111-1111-1111-111111111111';
    let failUpload=true,failAttach=true;

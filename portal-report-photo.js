@@ -3,6 +3,13 @@
  const form=document.querySelector('#report-form'),input=document.querySelector('#report-photo');
  if(!form||!input)return;
  const preview=document.querySelector('#report-photo-preview'),remove=document.querySelector('#report-photo-remove'),hint=document.querySelector('#report-photo-status');
+ const drop=document.querySelector('#report-photo-drop'),browse=document.querySelector('#report-photo-browse'),fileLabel=document.querySelector('#report-photo-label');
+ if(browse)browse.addEventListener('click',()=>{if(!input.disabled)input.click();});
+ if(drop){
+  ['dragenter','dragover'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();if(!input.disabled)drop.classList.add('drag-over');}));
+  ['dragleave','drop'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('drag-over');}));
+  drop.addEventListener('drop',e=>{if(input.disabled)return;if(e.dataTransfer.files.length!==1){hint.textContent='Alege o singură fotografie.';return;}input.files=e.dataTransfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));});
+ }
  const bucket='bg3ro-report-images',limit=5*1024*1024;
  let previewURL,pending=null,frozen=[];
  function error(message){const e=new Error(message);e.code='REPORT_PHOTO';return e;}
@@ -25,10 +32,10 @@
    return blob;
   }finally{bitmap.close();}
  }
- function clearPreview(){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;preview.removeAttribute('src');preview.hidden=true;remove.hidden=true;hint.textContent='';}
+ function clearPreview(){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;preview.removeAttribute('src');preview.hidden=true;remove.hidden=true;hint.textContent='';if(fileLabel)fileLabel.textContent='Trage o fotografie aici';}
  input.addEventListener('change',async()=>{
   clearPreview();const file=input.files[0];if(!file)return;
-  try{await prepare(file);if(input.files[0]!==file)return;previewURL=URL.createObjectURL(file);preview.src=previewURL;preview.hidden=false;remove.hidden=false;}
+  try{await prepare(file);if(input.files[0]!==file)return;previewURL=URL.createObjectURL(file);preview.src=previewURL;preview.hidden=false;remove.hidden=false;if(fileLabel)fileLabel.textContent=file.name;}
   catch(e){if(input.files[0]===file){input.value='';hint.textContent=e.message;}}
  });
  remove.addEventListener('click',()=>{input.value='';clearPreview();});
@@ -65,7 +72,7 @@
    let url;try{url=new URL(data.signedUrl);if(url.origin!==new URL(window.BG3RO_CONFIG.supabaseUrl).origin||!url.pathname.startsWith('/storage/v1/object/sign/'+bucket+'/'))return;}catch(_){return;}
    const link=document.createElement('a');link.className='report-photo-link';link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.setAttribute('aria-label','Deschide fotografia raportării');
    const image=document.createElement('img');image.src=url.href;image.alt='Fotografie atașată raportării';image.loading='lazy';image.referrerPolicy='no-referrer';
-   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);const moderation=article.querySelector('form');if(moderation)moderation.before(link);else article.append(link);
+   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);const moderation=article.querySelector(':scope > form');if(moderation)moderation.before(link);else article.append(link);
   },
   async cleanup(client,path){if(path)try{await client.storage.from(bucket).remove([path]);}catch(_){/* Deleted-report images are no longer publicly readable. */}}
  };

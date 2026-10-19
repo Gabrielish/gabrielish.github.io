@@ -105,6 +105,8 @@
   function dateText(value) { return new Intl.DateTimeFormat('ro-RO', { dateStyle: 'medium' }).format(new Date(value)); }
   function syncAuth() {
     const member = !!user && !user.is_anonymous;
+    $('#report-name').closest('.field').hidden = member;
+    $('#report-name').disabled = member;
     $$('[data-auth-gate]').forEach(gate => { gate.hidden = !!user || !client || !authEnabled; });
     $$('[data-user-form]').forEach(form => { form.hidden = !user; });
     $$('[data-auth-open]').forEach(button => { button.hidden = member; });
@@ -328,6 +330,11 @@
     submit(event.currentTarget, async () => {
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form)); delete values.website; delete values.public_consent;
       Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
+      if (!user.is_anonymous) {
+        const metadata = user.user_metadata || {};
+        values.author_name = String(metadata.preferred_username || metadata.user_name || metadata.full_name || metadata.name || 'Jucător Discord').replace(/[\u0000-\u001f]/g, '').trim().slice(0,40);
+        if (values.author_name.includes('@') || values.author_name.length < 2) values.author_name = 'Jucător Discord';
+      }
       await window.BG3RO_REPORT_PHOTO.publish(client, { ...values, author_id: user.id, is_public: true });
       form.reset(); formStatus(form, 'Raportarea a fost trimisă și este publică. O poți urmări mai jos.'); await loadReports();
     });
@@ -336,14 +343,23 @@
     const request = ++reportsRequest;
     if (!client) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path,author_avatar_url', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     target.replaceChildren(); $('#more-reports').hidden = reportsLimit >= count;
     if (!data.length) target.append(element('p', 'small', 'Nu a fost raportată nicio eroare.'));
     data.forEach(report => {
       const article = element('article', 'report-item');
-      article.append(element('p', 'small', `${report.author_name || 'Jucător'} · ${report.is_guest ? 'Oaspete · ' : ''}${report.is_public ? 'Raportare publică' : 'Raportare privată — vizibilă doar autorului și moderatorului'}`));
+      const avatar = element('img', 'post-avatar');
+      const remote = !report.is_guest && /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(report.author_avatar_url || '');
+      avatar.src = remote ? report.author_avatar_url : './assets/discussion-avatar.svg';
+      avatar.classList.toggle('post-avatar-default', !remote); avatar.alt = ''; avatar.width = 44; avatar.height = 44; avatar.loading = 'lazy'; avatar.referrerPolicy = 'no-referrer';
+      if (remote) avatar.addEventListener('error', () => { avatar.classList.add('post-avatar-default'); avatar.src = './assets/discussion-avatar.svg'; }, { once: true });
+      const header = element('div', 'report-header'), author = element('div', 'report-author'), copy = element('div', 'report-author-copy');
+      copy.append(element('strong', '', report.author_name || 'Jucător'));
+      if (report.is_guest) copy.append(element('p', 'small', 'Oaspete'));
+      if (!report.is_public) copy.append(element('p', 'small', 'Privată'));
+      author.append(avatar, copy); header.append(author); article.append(header);
       article.append(element('span', 'post-status', statusLabels[report.status]), element('h3', '', report.title), element('p', 'small', `${dateText(report.created_at)} · ${report.platform} · ${report.mod_version}`), element('p', '', report.body));
       if (report.moderator_reply) article.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
       if (moderator) {
@@ -360,7 +376,7 @@
         form.append(field, replyField, actions, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
         form.addEventListener('submit', event => { event.preventDefault(); submit(form, async () => {
           const { error: updateError } = await client.from('bg3ro_bug_reports').update({ status: select.value, moderator_reply: textarea.value.trim() }).eq('id', report.id);
-          if (updateError) throw updateError; toast('Raportare actualizată.'); await loadReports();
+          if (updateError) throw updateError; form.closest('dialog')?.close(); toast('Raportare actualizată.'); await loadReports();
         }); }); article.append(form);
         const remove = actionButton('Șterge raportarea', async () => {
           if (!confirm('Ștergi definitiv această raportare?')) return;
@@ -370,7 +386,11 @@
           await loadReports();
         });
         buttonIcon(remove, ['M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14','M10 10v6m4-6v6']);
-        actions.append(remove);
+        const source = element('div'); source.id = 'report-editor-' + report.id; source.append(form); article.append(source);
+        const editor = window.BG3RO_EDITORS.mount(source, 'Editează raportarea');
+        const toolbar = element('div', 'report-toolbar'); remove.setAttribute('aria-label', 'Șterge raportarea'); remove.title = 'Șterge raportarea';
+        remove.querySelector('span')?.remove();
+        toolbar.append(editor, remove); header.append(toolbar);
       }
       target.append(article);
       window.BG3RO_REPORT_PHOTO.show(client, report, article).catch(() => {});
