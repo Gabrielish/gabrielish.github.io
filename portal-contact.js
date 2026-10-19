@@ -27,7 +27,7 @@
       if(!client)status(form,'Formularul este indisponibil momentan. Scrie la gabrielish@proton.me.',true);
       else if(form.querySelector('.form-status').textContent.startsWith('Se pregătește'))status(form,'');
     }
-    if(inbox){inbox.hidden=!owner;inbox.querySelector('.contact-messages').replaceChildren();status(inbox,'');if(owner){loadInbox();loadUnread();unreadTimer=setInterval(()=>{if(!document.hidden)loadUnread();},60000);}}
+    if(inbox){inbox.hidden=!owner;inbox.querySelector('.contact-messages').replaceChildren();inbox.querySelector('[data-contact-summary]').textContent='';inbox.querySelector('[data-contact-pagination]').hidden=true;status(inbox,'');if(owner){loadInbox();loadUnread();unreadTimer=setInterval(()=>{if(!document.hidden)loadUnread();},60000);}}
   }
   async function loadInbox(){
     if(!client||!owner||!inbox)return;
@@ -38,6 +38,7 @@
       const {data,error,count}=await activeClient.from('bg3ro_contact_messages').select('id,name,email,subject,body,created_at,is_read',{count:'exact'}).order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+pageSize-1);
       if(request!==generation||!owner)return;
       if(error)throw error;
+      if(offset>0&&offset>=(count||0)){offset=Math.max(0,(Math.ceil((count||0)/pageSize)-1)*pageSize);return loadInbox();}
       list.replaceChildren();
       for(const item of data||[]){
         const card=node('article',undefined,'contact-message');
@@ -54,7 +55,11 @@
       if(!data?.length)list.append(node('p','Nu există mesaje pe această pagină.'));
       inbox.querySelector('[data-contact-prev]').disabled=offset===0;
       inbox.querySelector('[data-contact-next]').disabled=offset+pageSize>=(count||0);
-      status(inbox,(count||0)+' mesaje private. Pagina '+(offset/pageSize+1)+'.');
+      const total=count||0, pages=Math.max(1,Math.ceil(total/pageSize));
+      inbox.querySelector('[data-contact-summary]').textContent=total===0?'Niciun mesaj':total===1?'1 mesaj':total+' mesaje';
+      inbox.querySelector('[data-contact-pagination]').hidden=pages<=1;
+      inbox.querySelector('[data-contact-page]').textContent=(offset/pageSize+1)+' / '+pages;
+      status(inbox,'');
       loadUnread();
     }catch(_){if(request===generation&&owner)status(inbox,'Mesajele nu au putut fi încărcate. Încearcă din nou.',true);}
   }

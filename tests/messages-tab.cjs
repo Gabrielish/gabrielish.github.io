@@ -16,6 +16,9 @@ const sdk=source.slice(source.indexOf('function fakeSDK(){'),source.indexOf('\n(
   }else{
    await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (1)');
    assert(await page.locator('#mesaje').isVisible());assert.equal(await page.locator('#actualizari #contact-inbox').count(),0);
+   assert.equal(await page.locator('[data-contact-summary]').textContent(),'1 mesaj');
+   assert.equal(await page.locator('[data-contact-pagination]').isVisible(),false);
+   await page.locator('.inbox-header').screenshot({path:`.qa/inbox-header-${width}.png`});
    assert.equal(await page.locator('.contact-message img').count(),0);
    await page.getByRole('button',{name:'Marchează citit',exact:true}).click();
    await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje');
@@ -24,8 +27,17 @@ const sdk=source.slice(source.indexOf('function fakeSDK(){'),source.indexOf('\n(
    await page.locator('#tab-despre').click();await tab.click();
    await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (26)');
    assert.equal(await page.locator('.contact-message').count(),20);
+   assert(await page.locator('[data-contact-pagination]').isVisible());
+   assert.equal(await page.locator('[data-contact-page]').textContent(),'1 / 2');
+   await page.locator('[data-contact-next]').click();await page.waitForFunction(()=>document.querySelector('[data-contact-page]').textContent==='2 / 2');
+   assert.equal(await page.locator('.contact-message').count(),6);
+   await page.locator('[data-contact-prev]').click();await page.waitForFunction(()=>document.querySelector('[data-contact-page]').textContent==='1 / 2');
    await page.getByRole('button',{name:'Marchează citit',exact:true}).first().click();await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (25)');
    await page.locator('.tab-list').screenshot({path:`.qa/messages-tab-${width}.png`});
+   await page.locator('[data-contact-next]').click();await page.waitForFunction(()=>document.querySelector('[data-contact-page]').textContent==='2 / 2');
+   await page.evaluate(()=>window.__contactQA.rows=[]);await page.locator('[data-contact-refresh]').click();
+   await page.waitForFunction(()=>document.querySelector('[data-contact-summary]').textContent==='Niciun mesaj');
+   assert.equal(await page.locator('[data-contact-pagination]').isVisible(),false);
    await clickNav(page,'#sign-out');await page.waitForSelector('#tab-mesaje',{state:'hidden'});
    assert.equal(await page.locator('#mesaje').isVisible(),false);assert(page.url().endsWith('#despre'));
    assert.equal(await page.locator('.contact-message').count(),0);assert.equal(await tab.textContent(),'Mesaje','Unread total cleared on logout');
