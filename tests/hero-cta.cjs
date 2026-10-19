@@ -14,15 +14,14 @@ const assert=require('node:assert/strict');
       const surface=await page.locator('.hero-cta__surface').evaluate(el=>({blur:getComputedStyle(el).backdropFilter,bg:getComputedStyle(el).backgroundColor}));
       assert.equal(surface.blur,'blur(10px)');assert.equal(surface.bg,'rgba(0, 0, 0, 0.35)');
       assert.equal(await page.locator('.hero-availability').textContent(),'Disponibilă pentru');
-      assert.deepEqual(await page.locator('.hero-platforms img').evaluateAll(els=>els.map(el=>el.alt)),['PC / Windows','macOS','PS5']);
-      assert.equal(await page.locator('.hero-platforms').textContent(),'(în lucru)');
+      assert.deepEqual(await page.locator('.hero-platforms img').evaluateAll(els=>els.map(el=>el.alt)),['PC / Windows','macOS']);
+      assert.equal(await page.locator('.hero-platforms').textContent(),'');
       const hero=await page.locator('.project-banner').boundingBox(),button=await cta.boundingBox(),platforms=await page.locator('.hero-platforms').boundingBox();
       assert(button.y>hero.y && platforms.y>=button.y+button.height && platforms.y+platforms.height<hero.y+hero.height);
       assert(button.x>=0 && button.x+button.width<=width);
       await page.waitForFunction(()=>[...document.querySelectorAll('.hero-platforms img')].every(el=>el.complete&&el.naturalWidth>0));
       assert((await page.locator('.hero-cta__frame').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('hero-button-outline.svg'));
-      const ps=await page.locator('.in-development img').boundingBox(),note=await page.locator('.in-development span').boundingBox();
-      assert(note.x>=ps.x+ps.width&&Math.abs(note.y+note.height/2-ps.y-ps.height/2)<2,'PS5 note is on the right, not below');
+      assert.equal(await page.locator('.hero-platforms .in-development').count(),0);
       await page.screenshot({path:`.qa/restored-hero-${width}.png`});
       await cta.hover();
       assert.equal(await page.locator('.hero-cta__hover').evaluate(el=>getComputedStyle(el).opacity),'1');
@@ -33,6 +32,6 @@ const assert=require('node:assert/strict');
       assert(await page.locator('#descarcari').isVisible());
       await page.close();
     }
-    console.log('PASS: restored one-piece CTA, blur/transparency, hover, official platform SVGs, PS5 note to right, no playback controls, downloads and responsive bounds.');
+    console.log('PASS: CTA, blur/transparency, hover, PC/macOS platform SVGs, no PS5 hero label, downloads and responsive bounds.');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -30,6 +30,10 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    assert((await page.locator('#install-windows-localization + ol').textContent()).includes('Data\\Localization'));
    assert((await page.locator('#install-macos-localization + ol').textContent()).includes('Contents/Data/Localization'));
    assert.equal(await page.locator('#install-ps5 .installation-status').textContent(),'În curând');
+   assert.equal((await page.locator('#install-ps5').textContent()).trim(),'În curând');
+   assert.equal(await page.locator('#install-ps5 img').getAttribute('alt'),'PS5');
+   assert.equal(await guide.locator('.installation-source').count(),0);
+   assert((await guide.locator('.installation-intro').textContent()).includes('platforma pe care joci'));
    assert((await page.locator('.installation-backup').textContent()).includes('copie'));
    assert((await page.locator('#install-windows-mods').locator('..').textContent()).includes('Nu pune English.pak în acest folder'));
    assert((await page.locator('#install-macos-mods').locator('..').textContent()).includes('nu este încă confirmată'));
