@@ -24,6 +24,8 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   await form.locator('[name=link_url]').fill('https://example.com/project');await form.locator('[type=submit]').click();
   await page.waitForSelector('#updates-list .manual-update',{state:'attached'});await page.keyboard.press('Escape');
   const manual=page.locator('#updates-list .manual-update');
+  assert.equal(await page.locator('#updates-list .card').count(),0,'No nested cards inside the updates panel');
+  assert.equal(await manual.evaluate(el=>getComputedStyle(el).padding),'0px','Only outer panel supplies padding');
   assert.equal(await manual.locator('.release-news-link').textContent(),'Pagina proiectului');
   assert.equal(await manual.locator('.release-news-link').getAttribute('href'),'https://example.com/project');
   assert.equal(await manual.locator('.release-version-badge').textContent(),'În lucru');
@@ -34,7 +36,7 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   await page.waitForFunction(()=>document.querySelector('#updates-list .post-title')?.textContent==='Titlu editat');
   assert.equal(await manual.locator('.release-version-badge').textContent(),'Actualizat');
   assert.equal(await manual.locator('.release-news-link').getAttribute('href'),'https://example.com/edited');
-  await manual.screenshot({path:`.qa/manual-update-${width}.png`});
+  await page.locator('#updates-list').locator('..').screenshot({path:`.qa/manual-update-${width}.png`});
   page.once('dialog',d=>d.dismiss());await manual.getByRole('button',{name:'Șterge actualizarea',exact:true}).click();assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),1);
   page.once('dialog',d=>d.accept());await manual.getByRole('button',{name:'Șterge actualizarea',exact:true}).click();await page.waitForFunction(()=>window.__communityTest.updates.length===0);
   assert.equal(await page.locator('#release-updates').textContent(),releaseBefore,'Automatic release news is unchanged');
