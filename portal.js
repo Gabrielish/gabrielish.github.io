@@ -87,7 +87,7 @@
     const target = form.querySelector('.form-status'); target.textContent = message; target.classList.toggle('error', error);
   }
   function readableError(error) {
-    if (error?.code === 'REPORT_PHOTO') return error.message;
+    if (error?.code === 'REPORT_PHOTO' || error?.code === 'MANUAL_UPDATE') return error.message;
     const message = error?.message || '';
     if (/rate|limit|too many|30 de secunde|zilnic/i.test(message)) return 'Prea multe încercări. Așteaptă puțin înainte să trimiți din nou.';
     if (/expired|invalid.*token|otp/i.test(message)) return 'Conectarea a expirat. Încearcă din nou cu Discord.';
@@ -171,7 +171,7 @@
     if (error) { toast(readableError(error)); return; }
     user = null; moderator = false; syncAuth(); $('#reports-list').replaceChildren();
     $('#discussion-form').reset(); $('#report-form').reset(); cancelReply();
-    await Promise.all([loadComments(), loadReports()]); toast('Te-ai deconectat.');
+    await Promise.all([loadComments(), loadReports(), loadUpdates()]); toast('Te-ai deconectat.');
   });
   async function sessionChanged(session) {
     user = session?.user || null; moderator = false;
@@ -183,7 +183,7 @@
       if (!$('#report-name').value) $('#report-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
     }
     if (user && !user.is_anonymous && dialog.open) dialog.close();
-    syncAuth(); await Promise.all([loadComments(), loadReports(), loadProgress()]);
+    syncAuth(); await Promise.all([loadComments(), loadReports(), loadProgress(), loadUpdates()]);
   }
   async function loadProgress() {
     if (!client) return;
@@ -217,23 +217,17 @@
       workDirty = false; await loadProgress(); formStatus(form, 'Secțiunea a fost salvată.');
     });
   });
+  let updatesRequest = 0;
   async function loadUpdates() {
+    const ticket = ++updatesRequest;
     const target = $('#updates-list');
     if (!client) { target.replaceChildren(element('p', 'small', 'Nicio actualizare publicată încă în acest portal. Istoricul versiunilor publice este pe Nexus Mods.')); return; }
-    const { data, error } = await client.from('bg3ro_project_updates').select('id,title,body,published_at').order('published_at', { ascending: false }).limit(30);
+    const { data, error } = await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label').order('published_at', { ascending: false }).limit(30);
+    if (ticket !== updatesRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Actualizările nu au putut fi încărcate. Consultă istoricul pe Nexus Mods.')); return; }
     target.replaceChildren();
     if (!data.length) target.append(element('p', 'small release-empty-news', 'Nu sunt încă anunțuri separate publicate în acest portal. Versiunile publicate apar automat mai sus.'));
-    data.forEach(update => {
-      const article = element('article', 'update-article');
-      article.append(element('time', 'update-date', dateText(update.published_at)), element('h3', '', update.title), element('p', '', update.body));
-      if (moderator) article.append(actionButton('Șterge actualizarea', async () => {
-        if (!confirm('Ștergi această actualizare publică?')) return;
-        const result = await client.from('bg3ro_project_updates').delete().eq('id', update.id);
-        if (result.error) throw result.error; await loadUpdates();
-      }));
-      target.append(article);
-    });
+    window.BG3RO_UPDATES.render(client, data, target, moderator, user?.id, loadUpdates);
     window.dispatchEvent(new Event('bg3ro:updates-loaded'));
   }
   function buttonIcon(button, paths) {
@@ -413,7 +407,7 @@
     event.preventDefault(); if (!client || !moderator) return;
     submit(event.currentTarget, async () => {
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
-      const { error } = await client.from('bg3ro_project_updates').insert({ title: values.title.trim(), body: values.body.trim(), author_id: user.id });
+      const { error } = await client.from('bg3ro_project_updates').insert({ ...window.BG3RO_UPDATES.values(form), author_id: user.id });
       if (error) throw error; form.reset(); formStatus(form, 'Actualizare publicată.'); await loadUpdates();
     });
   });

@@ -224,3 +224,10 @@
     gap: 6px;
   }
 }
+.manual-update-header{position:relative;min-width:0}
+.manual-update-header:has(.manual-update-toolbar){padding-right:96px}
+.manual-update-toolbar{position:absolute;top:0;right:0;display:flex;gap:8px}
+.manual-update .post-meta strong{overflow-wrap:anywhere}
+#updates-list{display:grid;gap:20px}
+#updates-list>.release-empty-news{margin:0}
+@media(max-width:600px){.manual-update-header:has(.manual-update-toolbar){padding-right:80px}.manual-update-toolbar{gap:6px}.manual-update-toolbar .edit-pencil{width:34px;height:34px}}
