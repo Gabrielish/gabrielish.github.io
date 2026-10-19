@@ -1,4 +1,9 @@
 .edit-control{flex:none;display:inline-flex;align-items:center}
+.card-header.editable-header{flex-wrap:nowrap;align-items:flex-start}
+.editable-header>h2{min-width:0;flex:1;overflow-wrap:anywhere}
+.editable-header>.edit-control{margin-left:auto}
+.release-actions{display:flex;align-items:flex-start;justify-content:flex-end;gap:10px;flex-shrink:0;max-width:100%}
+@media(max-width:760px){.release-head>.release-actions{width:100%}.release-actions>.release-download{flex:1;min-width:0;flex-shrink:1}.release-actions>.edit-control{margin-left:auto}}
 .edit-pencil{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:8px;background:#181919;color:var(--gold)}
 .edit-pencil:hover{background:#29251e;border-color:var(--gold)}
 .edit-pencil svg{flex:none}

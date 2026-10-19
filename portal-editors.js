@@ -30,6 +30,7 @@
     if (heading) {
       const row = heading.parentElement.classList.contains('card-header') ? heading.parentElement : document.createElement('div');
       if (!row.classList.contains('card-header')) { row.className = 'card-header'; heading.before(row); row.append(heading); }
+      row.classList.add('editable-header');
       row.append(wrap);
     }
     return wrap;
@@ -38,7 +39,7 @@
   const progress = mount(document.querySelector('#progress-form').closest('details'), 'Editează progresul traducerii', document.querySelector('.progress-card h2'));
   progress.id = 'progress-editor'; progress.hidden = true;
   mount(document.querySelector('#work-editor'), 'Editează secțiunea', document.querySelector('#current-work-title'));
-  document.querySelectorAll('#admin-tools > details').forEach(source => mount(source, source.querySelector('summary').textContent));
+  document.querySelectorAll('#admin-tools > details').forEach(source => mount(source, source.querySelector('summary').textContent, document.querySelector('#admin-tools h2')));
 
   const about = document.querySelector('.about-copy'), heading = about.querySelector('h2'), paragraphs = [...about.querySelectorAll('p:not(.note)')], note = about.querySelector('.note');
   const body = document.createElement('div'); body.id = 'about-project-body'; paragraphs[0].before(body); paragraphs.forEach(p => body.append(p));
