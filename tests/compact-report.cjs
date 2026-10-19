@@ -6,6 +6,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await page.goto('http://127.0.0.1:4173/#erori',{waitUntil:'networkidle'});
   await page.locator('#report-form').evaluate(el=>el.hidden=false);await page.locator('#report-name').fill('Jucător');
   assert.equal(await page.locator('#report-game,[name=game_version]').count(),0);
+  assert.equal(await page.locator('#reports-heading').textContent(),'Erori raportate');
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-updated',{detail:{versions:['v0.8.0','v0.7.0','V0.8.0']}})));
   assert.deepEqual(await page.locator('#report-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','v0.8.0','v0.7.0','Nespecificată']);
   await page.locator('#report-version').selectOption('v0.7.0');

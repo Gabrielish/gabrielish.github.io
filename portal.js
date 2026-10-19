@@ -119,7 +119,7 @@
     } else if (!moderator) $('#mesaje').hidden = true;
     $('#work-editor').hidden = !moderator;
     if (!moderator) { workDirty = false; $('#work-form').reset(); }
-    $('#reports-heading').textContent = moderator ? 'Raportări publice și private' : 'Raportări publice';
+    $('#reports-heading').textContent = 'Erori raportate';
     $('#discussion-form button[type="submit"]').textContent = 'Publică mesajul';
     $('#discord-login').disabled = !client || !authEnabled;
     window.dispatchEvent(new CustomEvent('bg3ro:auth', { detail: { client, userId: member ? user.id : null, moderator, guest: !!user?.is_anonymous } }));
@@ -329,7 +329,7 @@
       Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
       const { error } = await client.from('bg3ro_bug_reports').insert({ ...values, author_id: user.id, is_public: true });
       if (error) throw error;
-      form.reset(); formStatus(form, 'Raportul a fost trimis și este public. Îl poți urmări mai jos.'); await loadReports();
+      form.reset(); formStatus(form, 'Raportarea a fost trimisă și este publică. O poți urmări mai jos.'); await loadReports();
     });
   });
   async function loadReports() {
@@ -338,9 +338,9 @@
     const target = $('#reports-list');
     const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
-    if (error) { target.replaceChildren(element('p', 'small', 'Rapoartele nu au putut fi încărcate.')); return; }
+    if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     target.replaceChildren(); $('#more-reports').hidden = reportsLimit >= count;
-    if (!data.length) target.append(element('p', 'small', 'Nu sunt rapoarte trimise.'));
+    if (!data.length) target.append(element('p', 'small', 'Nu a fost raportată nicio eroare.'));
     data.forEach(report => {
       const article = element('article', 'report-item');
       article.append(element('p', 'small', `${report.author_name || 'Jucător'} · ${report.is_guest ? 'Oaspete · ' : ''}${report.is_public ? 'Raportare publică' : 'Raportare privată — vizibilă doar autorului și moderatorului'}`));
@@ -348,7 +348,7 @@
       if (report.moderator_reply) article.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
       if (moderator) {
         const form = element('form'); const field = element('div', 'field');
-        const label = element('label', '', 'Stadiul raportului'); label.htmlFor = `state-${report.id}`;
+        const label = element('label', '', 'Stadiul raportării'); label.htmlFor = `state-${report.id}`;
         const select = element('select'); select.name = 'status'; select.id = label.htmlFor;
         ['new','investigating','resolved','closed'].forEach(value => { const option = element('option', '', statusLabels[value]); option.value = value; option.selected = report.status === value; select.append(option); });
         field.append(label, select);
@@ -360,9 +360,9 @@
         form.append(field, replyField, actions, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
         form.addEventListener('submit', event => { event.preventDefault(); submit(form, async () => {
           const { error: updateError } = await client.from('bg3ro_bug_reports').update({ status: select.value, moderator_reply: textarea.value.trim() }).eq('id', report.id);
-          if (updateError) throw updateError; toast('Raport actualizat.'); await loadReports();
+          if (updateError) throw updateError; toast('Raportare actualizată.'); await loadReports();
         }); }); article.append(form);
-        const remove = actionButton('Șterge raportul', async () => {
+        const remove = actionButton('Șterge raportarea', async () => {
           if (!confirm('Ștergi definitiv această raportare?')) return;
           const result = await client.from('bg3ro_bug_reports').delete().eq('id', report.id);
           if (result.error) throw result.error;
@@ -428,7 +428,7 @@
       $$('[data-auth-open]').forEach(button => { button.textContent = button.dataset.authLabel || 'Comunitate în pregătire'; });
       $$('.backend-notice').forEach(notice => {
         notice.hidden = false;
-        notice.textContent = 'Autentificarea este temporar dezactivată. Mesajele și rapoartele vor putea fi trimise după reactivare.';
+        notice.textContent = 'Autentificarea este temporar dezactivată. Mesajele și raportările vor putea fi trimise după reactivare.';
       });
     }
     syncAuth(); await Promise.all([loadUpdates(), loadComments(), loadReports(), loadProgress()]);

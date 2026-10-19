@@ -17,13 +17,15 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(style.appearance,'base-select');assert.equal(style.padding,'14px');
   assert((await select.evaluate(el=>getComputedStyle(el,'::picker-icon').backgroundImage)).includes('select-chevron.svg'));
   assert.equal(await actions.locator('svg[aria-hidden=true]').count(),2);
-  const save=actions.getByRole('button',{name:'Salvează răspunsul'}),remove=actions.getByRole('button',{name:'Șterge raportul'});
+  const save=actions.getByRole('button',{name:'Salvează răspunsul'}),remove=actions.getByRole('button',{name:'Șterge raportarea'});
   const a=await save.boundingBox(),b=await remove.boundingBox();assert(Math.abs(a.y-b.y)<1&&b.x>=a.x+a.width,'Buttons share a row');
   await select.selectOption('resolved');await page.locator('.report-item textarea').fill('Răspuns de test.');await save.click();
   await page.waitForFunction(()=>window.__communityTest.reports[0].status==='resolved');
   await page.locator('.report-item').screenshot({path:`.qa/report-actions-${width}.png`});
   page.once('dialog',d=>d.dismiss());await remove.click();assert.equal(await page.locator('.report-item').count(),1);
   page.once('dialog',d=>d.accept());await remove.click();await page.waitForFunction(()=>window.__communityTest.reports.length===0);
+  await page.waitForFunction(()=>document.querySelector('#reports-list').textContent==='Nu a fost raportată nicio eroare.');
+  assert.equal(await page.locator('#reports-heading').textContent(),'Erori raportate');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }
  console.log('PASS: inset dropdown chevron; icon buttons share a row at 320/390/1440px; save, delete cancellation/confirmation and no JS errors. Synthetic reports only.');
