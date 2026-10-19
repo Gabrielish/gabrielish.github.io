@@ -48,7 +48,7 @@
   <link rel="stylesheet" href="./portal-sidebar.css?v=20261019-download-spacing">
   <script src="./portal-sidebar.js?v=20261019-report-names" defer></script>
   <script src="./portal-statistics.js?v=20261018-page-views" defer></script>
-  <link rel="stylesheet" href="./portal-releases.css?v=20261019-download-navigation">
+  <link rel="stylesheet" href="./portal-releases.css?v=20261019-installation-guide">
   <script src="./portal-releases.js?v=20261019-download-navigation" defer></script>
   <link rel="stylesheet" href="./portal-discussions.css?v=20261018-threads-avatars">
   <script src="./portal-auth-storage.js?v=20261018-remember-session" defer></script>
@@ -132,7 +132,48 @@
             <section class="card release-editor" id="release-editor" hidden><details><summary>Publică o versiune</summary><p class="small">Fișierul publicat aici generează automat și anunțul din Actualizări. Încarcă arhiva, completează versiunea și descrierea, apoi publică. Arhivele cu același nume se înlocuiesc în folderul GitHub.</p><div class="field"><label for="release-archive">Arhivă ZIP, 7z sau RAR (maximum 20 MB)</label><input id="release-archive" type="file" accept=".zip,.7z,.rar"><button class="btn secondary" id="upload-release-file" type="button">Încarcă arhiva pe GitHub</button><p id="release-upload-status" class="form-status" role="status"></p></div><form id="release-publish-form"><div class="form-grid"><div class="field"><label for="release-kind">Pachet</label><select id="release-kind" name="kind"><option value="translation">Traducerea de bază</option><option value="search">Căutare fără diacritice</option><option value="item_gender">Acordul etichetelor obiectelor</option><option value="combat_log">Jurnalul de luptă</option></select></div><div class="field"><label for="release-version">Versiune</label><input id="release-version" name="version" maxlength="80" required placeholder="ex. 1.0.1"></div></div><div class="field"><label for="release-title">Numele versiunii</label><input id="release-title" name="title" maxlength="160" required></div><div class="field"><label for="release-url">Adresa arhivei (completată automat)</label><input id="release-url" readonly type="url" name="download_url" required></div><div class="form-grid"><div class="field"><label for="release-file-name">Numele fișierului</label><input id="release-file-name" readonly name="file_name" maxlength="240" required></div><div class="field"><label for="release-file-bytes">Dimensiunea exactă (completată automat)</label><input id="release-file-bytes" readonly name="file_bytes" type="number" min="1" max="2147483648" step="1" required></div></div><div class="field"><label for="release-tags">Taguri (separate prin virgulă)</label><input id="release-tags" name="tags" maxlength="240" placeholder="Early Access, Windows, macOS"></div><div class="field"><label for="release-description">Ce este nou în această versiune</label><textarea id="release-description" name="description" maxlength="12000" required></textarea></div><button class="btn" type="submit">Publică versiunea și anunțul</button><p class="form-status" role="status"></p></form></details></section>
             <h2 class="release-section-title">Moduri suplimentare pentru traducere</h2><p class="small">Pachete separate de traducerea de bază. Verifică cerințele fiecărui modul; compatibilitatea extensiilor cu macOS nu este încă confirmată.</p>
             <div id="extra-releases" class="release-list"><article class="card release-placeholder"><h3>Căutare fără diacritice</h3><p>Niciun fișier publicat încă în site.</p></article><article class="card release-placeholder"><h3>Acordul etichetelor obiectelor</h3><p>Niciun fișier publicat încă în site.</p></article><article class="card release-placeholder"><h3>Jurnalul de luptă</h3><p>Niciun fișier publicat încă în site.</p></article></div>
-            <article class="card" id="installation-guide"><h2>Ghid de instalare</h2><ol class="steps"><li><strong>Descarcă pachetul potrivit</strong>Verifică platforma, versiunea jocului și cerințele din descrierea arhivei.</li><li><strong>Urmează instrucțiunile pachetului</strong>Păstrează o copie a fișierelor înlocuite. Nu lăsa active versiuni vechi și noi ale aceluiași mod.</li><li><strong>Instalează separat modulele suplimentare</strong>Nu presupune că toate au aceleași cerințe sau că funcționează pe toate platformele.</li></ol><a class="btn secondary" href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=description" target="_blank" rel="noopener noreferrer">Instrucțiuni complete pe Nexus ↗</a></article>
+            <article class="card installation-guide" id="installation-guide" aria-labelledby="installation-title">
+              <h2 id="installation-title">Ghid de instalare</h2>
+              <p class="installation-intro">Alege platforma ta. Localizarea și modurile suplimentare se instalează separat.</p>
+              <p class="installation-backup"><strong>Important</strong> Închide jocul și păstrează o copie a fișierului original <code>English.pak</code> înainte de a-l înlocui.</p>
+              <details class="installation-platform" id="install-windows" open>
+                <summary><span class="installation-platform-name"><svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true" focusable="false"><path d="M2 3h9v8H2zm11 0h9v8h-9zM2 13h9v8H2zm11 0h9v8h-9z"/></svg><span>Windows</span></span><span class="installation-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="installation-content">
+                  <section aria-labelledby="install-windows-localization"><h3 id="install-windows-localization">Localizare</h3>
+                    <ol><li>Descarcă ultima arhivă a traducerii din această pagină și extrage fișierul <code>English.pak</code>.</li>
+                      <li>Deschide folderul jocului. Pentru instalarea Steam implicită, mergi la:<code class="installation-path">C:\Program Files (x86)\Steam\steamapps\common\Baldurs Gate 3\Data\Localization</code><p class="installation-note">Dacă ai instalat jocul pe alt disc, pornește din folderul instalării tale și intră în <code>Data\Localization</code>.</p></li>
+                      <li>După ce ai făcut backup, înlocuiește <code>English.pak</code> original cu cel extras din arhiva traducerii.</li></ol>
+                  </section>
+                  <section aria-labelledby="install-windows-mods"><h3 id="install-windows-mods">Moduri suplimentare</h3>
+                    <p>Căutarea fără diacritice, acordul etichetelor obiectelor și jurnalul de luptă sunt pachete separate. Verifică cerințele și instrucțiunile fiecărui pachet înainte de instalare.</p>
+                    <ol><li>Descarcă și extrage modul dorit din „Moduri suplimentare pentru traducere”.</li>
+                      <li>Pentru modurile în format <code>.pak</code> destinate folderului Mods, folosește:<code class="installation-path">%LOCALAPPDATA%\Larian Studios\Baldur's Gate 3\Mods</code>Nu pune <code>English.pak</code> în acest folder.</li>
+                      <li>Dacă modul cere o ordine de încărcare, activează-l în <a href="https://github.com/LaughingLeader/BG3ModManager" target="_blank" rel="noopener noreferrer">BG3 Mod Manager ↗</a> și exportă ordinea prin <strong>Export Order to Game</strong>, conform instrucțiunilor pachetului.</li></ol>
+                    <p class="installation-note">Pachetele cu Script Extender, fișiere <code>.dll</code> sau alte componente native nu se instalează prin simpla copiere în Mods. Urmează instrucțiunile lor dedicate; nu le copia în Localization.</p>
+                  </section>
+                </div>
+              </details>
+              <details class="installation-platform" id="install-macos" open>
+                <summary><span class="installation-platform-name"><img src="./assets/platform-mac-larian.svg" alt="" width="23" height="27"><span>macOS</span></span><span class="installation-chevron" aria-hidden="true">⌄</span></summary>
+                <div class="installation-content">
+                  <section aria-labelledby="install-macos-localization"><h3 id="install-macos-localization">Localizare</h3>
+                    <ol><li>Descarcă ultima arhivă a traducerii și extrage fișierul <code>English.pak</code>.</li>
+                      <li>În Finder, folosește <strong>Go → Go to Folder…</strong> pentru a deschide locația Steam implicită:<code class="installation-path">~/Library/Application Support/Steam/steamapps/common/Baldurs Gate 3</code><p class="installation-note">Dacă folosești altă bibliotecă Steam, deschide folderul jocului din acea bibliotecă.</p></li>
+                      <li>Click dreapta pe <strong>Baldur's Gate 3.app</strong> → <strong>Show Package Contents</strong> (Afișează conținutul pachetului), apoi intră în:<code class="installation-path">Contents/Data/Localization</code></li>
+                      <li>Păstrează o copie a originalului și înlocuiește <code>English.pak</code> cu fișierul extras.</li></ol>
+                  </section>
+                  <section aria-labelledby="install-macos-mods"><h3 id="install-macos-mods">Moduri suplimentare</h3>
+                    <p>Compatibilitatea celor trei module suplimentare cu macOS nu este încă confirmată. Instalează numai pachete care indică explicit suport macOS și urmează instrucțiunile lor dedicate.</p>
+                    <p class="installation-note">Nu aplica pașii pentru extensiile Windows și nu copia fișiere <code>.dll</code> în aplicația jocului. Instrucțiunile de mai sus pentru <code>English.pak</code> sunt pentru localizare, nu pentru moduri.</p>
+                  </section>
+                </div>
+              </details>
+              <section class="installation-platform installation-coming" id="install-ps5" aria-labelledby="install-ps5-title">
+                <h3 id="install-ps5-title"><img src="./assets/platform-ps5-larian.svg" alt="" width="82" height="32"><span>PlayStation 5</span><span class="installation-status">În curând</span></h3>
+                <p>Localizarea și ghidul de instalare pentru PS5 vor fi disponibile aici. Pașii pentru Windows și macOS nu se aplică pe consolă.</p>
+              </section>
+              <p class="installation-source"><a href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=description" target="_blank" rel="noopener noreferrer">Instrucțiunile proiectului pe Nexus ↗</a></p>
+            </article>
           </section>
           <section id="discutii" class="tab-panel panel-stack" aria-labelledby="tab-discutii">
             <div class="card"><div class="form-heading"><h2>Discuții</h2><span class="small" id="discussion-count"></span></div><p class="small">Întrebări, sugestii de formulare sau impresii despre traducere. Problemele concrete se trimit în <a href="#erori" data-go-tab="erori">Raportare erori</a>.</p>

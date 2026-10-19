@@ -170,6 +170,30 @@
   font-size: 13px;
   color: var(--muted);
 }
+.installation-guide .installation-intro{font-size:14px;color:var(--muted);margin:0 0 20px}
+.installation-backup{padding:14px 16px;border:1px solid #75604466;border-radius:9px;background:#211d17;font-size:13px;line-height:1.8;margin:0 0 22px}
+.installation-backup>strong{color:#e6b68d;margin-right:7px}
+.installation-platform{border:1px solid var(--line);border-radius:12px;background:#191815;overflow:hidden;margin-top:16px;min-width:0}
+.installation-platform summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;padding:18px 20px;cursor:pointer;min-height:64px;font-size:17px;font-weight:600;color:var(--text)}
+.installation-platform summary::-webkit-details-marker{display:none}
+.installation-platform summary:focus-visible{outline:2px solid var(--gold);outline-offset:-4px;border-radius:12px}
+.installation-platform-name{display:flex;align-items:center;gap:12px;color:var(--accent)}
+.installation-platform-name svg,.installation-platform-name img{flex:none;object-fit:contain}
+.installation-chevron{font-size:20px;color:var(--gold);transform:rotate(-90deg)}
+.installation-platform[open] .installation-chevron{transform:rotate(0)}
+.installation-content{padding:0 20px 20px}
+.installation-content section+section{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.installation-content h3{font-size:14px;color:var(--gold);margin:0 0 12px}
+.installation-content p,.installation-content li,.installation-coming p{font-size:13px;line-height:1.9;color:var(--muted)}
+.installation-content ol{padding-left:20px;margin:0}.installation-content li{padding-left:4px;margin:0 0 14px}.installation-content li:last-child{margin-bottom:0}
+.installation-guide code{font-size:.92em;color:#e6d6bb;overflow-wrap:anywhere}
+.installation-guide .installation-path{display:block;white-space:pre-wrap;word-break:break-word;background:#100f0d;border:1px solid #ddc9a71f;border-radius:7px;padding:12px 14px;margin:12px 0;font-size:12px;line-height:1.8}
+.installation-content .installation-note{font-size:12px;margin:10px 0 0;color:#b3a58f}
+.installation-coming{padding:18px 20px}.installation-coming h3{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:17px;margin:0 0 12px;color:var(--accent)}
+.installation-coming h3 img{flex:none;object-fit:contain}.installation-coming p{margin:0}
+.installation-status{font-size:11px;background:#ddc9a714;color:var(--gold);padding:3px 10px;border-radius:999px;margin-left:auto;white-space:nowrap}
+.installation-guide .installation-source{font-size:12px;margin:20px 0 0}
+@media(max-width:480px){.installation-platform summary{padding:16px}.installation-content{padding:0 16px 16px}.installation-coming{padding:16px}.installation-guide .installation-path{padding:10px;font-size:11px}.installation-coming h3{font-size:15px}}
 @media (max-width: 760px) {
   .release-head {
     flex-direction: column;
