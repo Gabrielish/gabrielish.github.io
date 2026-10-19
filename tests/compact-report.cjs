@@ -18,6 +18,16 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   assert.equal(await page.locator('[name=public_consent]').count(),0);
   assert.equal(await page.locator('#report-form .help').count(),1);
   assert.equal(await page.locator('#report-photo').count(),1);
+  assert.equal(await page.locator('label[for=report-body]').textContent(),'Descrie problema');
+  const description=page.locator('#report-body'),photo=page.locator('#report-photo-drop'),photoLabel=page.locator('label[for=report-photo]');
+  const descriptionBox=await description.boundingBox(),photoBox=await photo.boundingBox(),labelBox=await photoLabel.boundingBox();
+  assert(labelBox.y+labelBox.height<=photoBox.y,'Photo label is above the box');
+  if(width>600){assert(photoBox.x>=descriptionBox.x+descriptionBox.width,'Photo is on the right');assert(Math.abs(photoBox.y-descriptionBox.y)<2,'Boxes align');}
+  await description.fill(('Un text lung pentru testarea scrollului.\n').repeat(100));
+  const scroll=await description.evaluate(el=>({resize:getComputedStyle(el).resize,overflow:getComputedStyle(el).overflowY,content:el.scrollHeight,visible:el.clientHeight}));
+  assert.equal(scroll.resize,'none');assert.equal(scroll.overflow,'auto');assert(scroll.content>scroll.visible);
+  assert.equal((await description.boundingBox()).height,descriptionBox.height,'Long text does not enlarge textarea');
+  await description.fill('');
   assert.equal(await page.locator('#report-photo').getAttribute('name'),null,'Photo is handled separately from report text');
   assert(!(await page.locator('.report-compose > p.small').textContent()).includes('Raportările noi sunt publice'));
   assert((await page.locator('.report-compose > p.small').textContent()).startsWith('Un text greșit, un acord nepotrivit sau o problemă tehnică?'));
