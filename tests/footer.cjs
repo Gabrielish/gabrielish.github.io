@@ -7,6 +7,8 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
   const footer=page.locator('footer.footer'),bottom=page.locator('.footer-bottom');
   assert.equal(await bottom.locator('p').count(),2);
+  assert(await bottom.locator('p').first().evaluate(el=>el.classList.contains('footer-disclaimer')));
+  assert.equal(await bottom.locator('p').last().textContent(),'Traducere gratuită pentru comunitatea românească.');
   const text=await footer.textContent();assert(!text.includes('©'));assert(!text.includes('Video de fundal, imagine statică'));assert(!text.includes('materialele asociate aparțin titularilor lor'));
   assert.equal(await page.locator('.footer-disclaimer').textContent(),'Proiect neoficial, fără afiliere cu Larian Studios sau Wizards of the Coast.');
   assert.equal(await bottom.evaluate(el=>getComputedStyle(el).textAlign),'left');
