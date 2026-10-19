@@ -21,11 +21,12 @@
     return e;
   }
   function authorAvatar(row) {
-    const image = el("img", "release-author-avatar");
+    const image = el("img", "post-avatar release-author-avatar");
     const remote = /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(row.author_avatar_url || "");
     image.src = remote ? row.author_avatar_url : "./assets/discussion-avatar.svg";
+    image.classList.toggle("post-avatar-default", !remote);
     image.alt = ""; image.width = 44; image.height = 44; image.loading = "lazy"; image.referrerPolicy = "no-referrer";
-    if (remote) image.addEventListener("error", () => { image.src = "./assets/discussion-avatar.svg"; }, { once: true });
+    if (remote) image.addEventListener("error", () => { image.classList.add("post-avatar-default"); image.src = "./assets/discussion-avatar.svg"; }, { once: true });
     return image;
   }
   function date(value) {
@@ -284,8 +285,9 @@
     const localizationUpdates = rows.filter((row) => row.kind === "translation");
     localizationUpdates.forEach((row) => {
       const article = el("article", "card release-news"),
-        meta = el("div", "release-meta"),
-        time = el("time", "", date(row.published_at));
+        layout = el("div", "post"), content = el("div", "post-content"),
+        meta = el("div", "post-meta release-meta"),
+        time = el("time", "", new Intl.DateTimeFormat("ro-RO", {dateStyle:"medium"}).format(new Date(row.published_at)));
       time.dateTime = row.published_at;
       const versionBadge = el("span", "release-version-badge"),
         uploadIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
@@ -304,25 +306,27 @@
       uploadIcon.append(uploadPath);
       versionBadge.append(uploadIcon, el("span", "", `Versiunea ${row.version}`));
       meta.append(
-        authorAvatar(row),
         el("strong", "", row.author_name),
         time,
         versionBadge,
       );
-      const title = el("h3", "", row.title),
-        link = el("a", "release-news-link", "Descărcări ↗");
+      const title = el("h3", "post-title", row.title),
+        link = el("a", "release-news-link");
+      const linkIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      for (const [name,value] of Object.entries({viewBox:"0 0 24 24",width:"18",height:"18",fill:"none",stroke:"currentColor","stroke-width":"1.7","stroke-linecap":"round","stroke-linejoin":"round","aria-hidden":"true",focusable:"false"})) linkIcon.setAttribute(name,value);
+      const linkPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      linkPath.setAttribute("d", "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71");
+      linkIcon.append(linkPath); link.append(linkIcon,el("span","","Descărcări"));
       link.href = "#descarcari";
       link.addEventListener("click", (e) => {
         e.preventDefault();
         $("#tab-descarcari").click();
         $(".tab-list").scrollIntoView({ block: "start" });
       });
-      meta.insertBefore(link, versionBadge);
-      article.append(
-        meta,
-        title,
-        el("p", "", row.description),
-      );
+      const separator = el("span", "release-news-separator", "·"); separator.setAttribute("aria-hidden","true");
+      meta.insertBefore(separator, versionBadge); meta.insertBefore(link, versionBadge);
+      content.append(meta, title, el("div", "post-body", row.description));
+      layout.append(authorAvatar(row), content); article.append(layout);
       news.append(article);
     });
     $("#release-editor").hidden = !moderator;

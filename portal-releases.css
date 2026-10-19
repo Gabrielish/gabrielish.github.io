@@ -100,9 +100,12 @@
 .release-meta strong {
   color: var(--text);
 }
-.release-author-avatar{width:44px;height:44px;flex:none;border-radius:50%;object-fit:cover}
+
 .release-meta .release-news-link{font-size:12px;color:var(--muted)}
-.release-meta time:before,.release-news-link:before{content:'•';margin-right:10px;color:var(--muted)}
+.release-news-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.release-news-link svg{flex:none}
+.release-news-link:hover{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.release-news-separator{color:var(--muted)}
 .release-meta strong,.release-meta time{overflow-wrap:anywhere;min-width:0}
 .release-version-badge {
   display: inline-flex;
