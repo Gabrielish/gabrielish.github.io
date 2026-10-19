@@ -23,6 +23,18 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   const descriptionBox=await description.boundingBox(),photoBox=await photo.boundingBox(),labelBox=await photoLabel.boundingBox();
   assert(labelBox.y+labelBox.height<=photoBox.y,'Photo label is above the box');
   if(width>600){assert(photoBox.x>=descriptionBox.x+descriptionBox.width,'Photo is on the right');assert(Math.abs(photoBox.y-descriptionBox.y)<2,'Boxes align');}
+  if(width>600){
+   const versionBox=await page.locator('#report-version').boundingBox();
+   assert(Math.abs(photoBox.x-versionBox.x)<1,'Photo aligns with version column');
+   assert(Math.abs(photoBox.width-versionBox.width)<1,'Photo matches version width');
+  }
+  if(width>950){
+   const kindBox=await page.locator('#report-kind').boundingBox(),platformBox=await page.locator('#report-platform').boundingBox();
+   assert(Math.abs(descriptionBox.x-kindBox.x)<1);
+   assert(Math.abs(descriptionBox.x+descriptionBox.width-platformBox.x-platformBox.width)<1,'Description spans two columns');
+  }
+  const borders=await page.locator('#report-body,#report-photo-drop').evaluateAll(nodes=>nodes.map(el=>{const s=getComputedStyle(el);return [s.borderTopColor,s.borderTopStyle,s.borderTopWidth,s.borderTopLeftRadius,s.backgroundColor]}));
+  assert.deepEqual(borders[0],borders[1],'Photo and description share border, radius and background');
   await description.fill(('Un text lung pentru testarea scrollului.\n').repeat(100));
   const scroll=await description.evaluate(el=>({resize:getComputedStyle(el).resize,overflow:getComputedStyle(el).overflowY,content:el.scrollHeight,visible:el.clientHeight}));
   assert.equal(scroll.resize,'none');assert.equal(scroll.overflow,'auto');assert(scroll.content>scroll.visible);
