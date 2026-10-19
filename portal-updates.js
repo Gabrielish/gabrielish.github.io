@@ -9,7 +9,7 @@
   input.name=name;input.id='manual-update-'+(++sequence);l.htmlFor=input.id;input.maxLength=max;input.value=value||'';
   if(type!=='textarea')input.type=type;input.required=name==='title'||name==='body';
   if(name==='title')input.minLength=2;if(name==='body')input.minLength=10;
-  wrap.append(l,input);form.append(wrap);return input;
+  wrap.append(l,input);form.append(wrap);if(name==='body')window.BG3RO_CONTENT.enhance(input);return input;
  }
  function extras(form,data={}){
   field(form,'link_label','Numele linkului (opțional)','text',80,data.link_label);
@@ -34,7 +34,7 @@
    meta.append(el('strong','',update.author_name||'Gabrielish'),time);
    const url=safeURL(update.link_url);if(url&&update.link_label){const a=el('a','release-news-link');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon(chain),el('span','',update.link_label));meta.append(a);}
    if(update.badge_label)meta.append(el('span','release-version-badge',update.badge_label));
-   header.append(meta);content.append(header,el('h3','post-title',update.title),el('div','post-body',update.body));layout.append(avatar,content);article.append(layout);target.append(article);
+   header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(avatar,content);article.append(layout);target.append(article);
    if(!moderator)return;
    const toolbar=el('div','manual-update-toolbar');
    if(update.author_id===userId){
