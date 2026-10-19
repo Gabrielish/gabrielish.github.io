@@ -1,9 +1,8 @@
 .inbox-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
-.inbox-heading{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0}
-.inbox-heading h2{margin:0}.inbox-total{font-size:12px;color:var(--muted)}
+.inbox-total{font-size:12px;color:var(--muted)}
 .inbox-toolbar,.inbox-pagination{display:flex;align-items:center;gap:8px;flex:none}
 .inbox-toolbar .inbox-icon-button{width:38px;min-height:38px;padding:0;flex:none;border-radius:8px}
 .inbox-icon-button svg{display:block;flex:none}.inbox-page{font-size:12px;color:var(--muted);white-space:nowrap;min-width:35px;text-align:center}
 .contact-inbox>.form-status:empty{display:none}
 .contact-inbox .contact-messages:empty{display:none}
-@media(max-width:480px){.inbox-header{align-items:flex-start;flex-wrap:wrap;gap:12px}.inbox-toolbar{margin-left:auto}.inbox-heading{gap:8px}.inbox-heading h2{font-size:20px}}
+@media(max-width:480px){.inbox-header{flex-wrap:wrap;gap:12px}.inbox-toolbar{margin-left:auto}}

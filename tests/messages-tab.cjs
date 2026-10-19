@@ -17,6 +17,9 @@ const sdk=source.slice(source.indexOf('function fakeSDK(){'),source.indexOf('\n(
    await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (1)');
    assert(await page.locator('#mesaje').isVisible());assert.equal(await page.locator('#actualizari #contact-inbox').count(),0);
    assert.equal(await page.locator('[data-contact-summary]').textContent(),'1 mesaj');
+   assert.equal(await page.locator('#contact-inbox h2').count(),0,'No redundant inbox heading');
+   assert(!(await page.locator('#contact-inbox').textContent()).includes('Căsuță privată'));
+   assert.equal(await page.locator('[data-contact-refresh]').textContent(),'','Refresh is icon-only');
    assert.equal(await page.locator('[data-contact-pagination]').isVisible(),false);
    await page.locator('.inbox-header').screenshot({path:`.qa/inbox-header-${width}.png`});
    assert.equal(await page.locator('.contact-message img').count(),0);
