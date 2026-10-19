@@ -4,10 +4,10 @@
 .content-link-panel .field{margin-bottom:12px}
 .content-link-actions{display:flex;flex-wrap:wrap;gap:8px}
 .content-link-panel .form-status:empty{display:none}
-#updates-list .rich-content{white-space:normal}
-#updates-list .rich-content>p{margin:0 0 12px;white-space:normal;font:inherit;color:inherit;line-height:inherit}
-#updates-list .rich-content>ul{list-style:disc outside;margin:12px 0;padding-left:23px}
-#updates-list .rich-content li{padding-left:3px;margin:6px 0}
-#updates-list .rich-content>:last-child{margin-bottom:0}
-#updates-list .rich-content a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
-#updates-list .rich-content a:hover{color:var(--text)}
+#updates-feed .rich-content{white-space:normal}
+#updates-feed .rich-content>p{margin:0 0 12px;white-space:normal;font:inherit;color:inherit;line-height:inherit}
+#updates-feed .rich-content>ul{list-style:disc outside;margin:12px 0;padding-left:23px}
+#updates-feed .rich-content li{padding-left:3px;margin:6px 0}
+#updates-feed .rich-content>:last-child{margin-bottom:0}
+#updates-feed .rich-content a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+#updates-feed .rich-content a:hover{color:var(--text)}

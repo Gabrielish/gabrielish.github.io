@@ -49,21 +49,22 @@
   <link rel="stylesheet" href="./portal-sidebar.css?v=20261019-download-spacing">
   <script src="./portal-sidebar.js?v=20261019-clean-sidebar" defer></script>
   <script src="./portal-statistics.js?v=20261018-page-views" defer></script>
-  <link rel="stylesheet" href="./portal-releases.css?v=20261020-single-news-panel">
+  <link rel="stylesheet" href="./portal-releases.css?v=20261020-chronological">
   <link rel="stylesheet" href="./portal-editors.css?v=20261019-centered-close-hover">
   <script src="./portal-editors.js?v=20261020-publish-button" defer></script>
-  <script src="./portal-releases.js?v=20261020-shared-updates" defer></script>
-  <link rel="stylesheet" href="./portal-discussions.css?v=20261020-manual-updates">
+  <script src="./portal-releases.js?v=20261020-chronological" defer></script>
+  <link rel="stylesheet" href="./portal-discussions.css?v=20261020-chronological">
   <link rel="stylesheet" href="./portal-forms.css?v=20261019-centered-select-content">
   <link rel="stylesheet" href="./portal-auth.css?v=20261020-guest-choice">
   <link rel="stylesheet" href="./portal-report-form.css?v=20261020-shared-posts">
   <script src="./portal-report-photo.js?v=20261020-photo-viewer" defer></script>
   <script src="./portal-report-form.js?v=20261019-release-versions" defer></script>
   <script src="./portal-auth-storage.js?v=20261018-remember-session" defer></script>
-  <link rel="stylesheet" href="./portal-content.css?v=20261020-content-tools">
+  <link rel="stylesheet" href="./portal-content.css?v=20261020-chronological">
   <script src="./portal-content.js?v=20261020-content-tools" defer></script>
-  <script src="./portal-updates.js?v=20261020-content-tools" defer></script>
-  <script src="./portal.js?v=20261020-work-no-note" defer></script>
+  <script src="./portal-news-feed.js?v=20261020-chronological" defer></script>
+  <script src="./portal-updates.js?v=20261020-chronological" defer></script>
+  <script src="./portal.js?v=20261020-chronological" defer></script>
   <script src="./portal-navbar.js?v=20261018-compact-mobile" defer></script>
   <script src="./portal-video.js?v=20261018-no-dice" defer></script>
   <title>Baldur’s Gate 3 | Traducere în Limba Română</title>
@@ -127,8 +128,7 @@
             </article>
           </section>
           <section id="actualizari" class="tab-panel panel-stack" aria-labelledby="tab-actualizari">
-            <div id="release-updates" class="release-list"></div>
-            <div class="card"><div id="updates-list"><p class="muted">Se încarcă actualizările…</p></div></div>
+            <div id="updates-feed" class="release-list" aria-label="Istoricul actualizărilor"><p class="card muted">Se încarcă actualizările…</p></div>
             <section class="card" id="current-work" aria-labelledby="current-work-title"><h2 id="current-work-title">La ce lucrez acum</h2><p id="current-work-body" style="white-space:pre-wrap;overflow-wrap:anywhere">Următoarea etapă de verificare este Actul II. Continui în paralel revizia interfeței, a obiectelor și a vrăjilor.</p><details class="release-edit" id="work-editor" hidden><summary>Editează secțiunea</summary><form id="work-form"><div class="field"><label for="work-title">Titlu</label><input id="work-title" name="work_title" required maxlength="120"></div><div class="field"><label for="work-body">Text</label><textarea id="work-body" name="work_body" required maxlength="6000"></textarea></div><button class="btn" type="submit">Salvează secțiunea</button><p class="form-status" role="status"></p></form></details></section>
             <div id="admin-tools" hidden>
               <details><summary>Publică o actualizare</summary><form id="update-form"><div class="field"><label for="update-title">Titlu</label><input id="update-title" name="title" required maxlength="160"></div><div class="field"><label for="update-body">Conținut</label><textarea id="update-body" name="body" required maxlength="12000"></textarea></div><button class="btn" type="submit">Publică actualizarea</button><p class="form-status" role="status"></p></form></details>

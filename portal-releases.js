@@ -2,7 +2,7 @@
   "use strict";
   const $ = (s) => document.querySelector(s);
   const fields =
-    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at";
+    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at,news_title,news_body,news_badge";
   const kinds = {
     translation: "Traducerea în limba română",
     search: "Căutare fără diacritice",
@@ -260,7 +260,7 @@
   function draw() {
     const main = $("#translation-releases"),
       extras = $("#extra-releases"),
-      news = $("#release-updates");
+      news = el("div");
     main.replaceChildren();
     extras.replaceChildren();
     news.replaceChildren();
@@ -282,12 +282,13 @@
         target.append(placeholder);
       }
     });
-    const localizationUpdates = rows.filter((row) => row.kind === "translation");
-    localizationUpdates.forEach((row) => {
+    const localizationUpdates = rows.filter((row) => row.kind === "translation").sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
+    localizationUpdates.forEach((row,index) => {
       const article = el("article", "card release-news"),
         layout = el("div", "post"), content = el("div", "post-content"),
         meta = el("div", "post-meta release-meta"),
         time = el("time", "", new Intl.DateTimeFormat("ro-RO", {dateStyle:"medium"}).format(new Date(row.published_at)));
+      article.dataset.newsDate=row.published_at;article.dataset.newsId=row.id;article.dataset.newsPinned=String(index===0);
       time.dateTime = row.published_at;
       const versionBadge = el("span", "release-version-badge"),
         uploadIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
@@ -304,13 +305,14 @@
       uploadIcon.setAttribute("focusable", "false");
       uploadPath.setAttribute("d", "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12");
       uploadIcon.append(uploadPath);
-      versionBadge.append(uploadIcon, el("span", "", `Versiunea ${row.version}`));
+      versionBadge.append(uploadIcon, el("span", "", row.news_badge ?? `Versiunea ${row.version}`));
       meta.append(
         el("strong", "", row.author_name),
         time,
         versionBadge,
       );
-      const title = el("h3", "post-title", row.title),
+      versionBadge.hidden = row.news_badge === "";
+      const title = el("h3", "post-title", row.news_title ?? row.title),
         link = el("a", "release-news-link");
       const linkIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       for (const [name,value] of Object.entries({viewBox:"0 0 24 24",width:"18",height:"18",fill:"none",stroke:"currentColor","stroke-width":"1.7","stroke-linecap":"round","stroke-linejoin":"round","aria-hidden":"true",focusable:"false"})) linkIcon.setAttribute(name,value);
@@ -325,13 +327,13 @@
       });
       const separator = el("span", "release-news-separator", "·"); separator.setAttribute("aria-hidden","true");
       meta.insertBefore(separator, versionBadge); meta.insertBefore(link, versionBadge);
-      content.append(meta, title, el("div", "post-body", row.description));
+      content.append(meta, title, window.BG3RO_CONTENT.render(row.news_body ?? row.description));
       layout.append(authorAvatar(row), content); article.append(layout);
       news.append(article);
+      if(moderator && index>0)window.BG3RO_NEWS.releaseEditor(article,row,client,load);
     });
     $("#release-editor").hidden = !moderator;
-    $("#release-updates").hidden = !localizationUpdates.length;
-    syncNewsEmpty();
+    window.BG3RO_NEWS.commit("releases",[...news.children]);
     const latest = rows.find(
       (r) => r.kind === "translation" && archiveURL(r.download_url),
     );
@@ -372,14 +374,6 @@
     if (rows.length) draw();
     load();
   });
-  function syncNewsEmpty() {
-    const list = $("#updates-list");
-    const empty = list.querySelector(".release-empty-news");
-    const hasLocalization = rows.some((row) => row.kind === "translation");
-    if (empty) empty.hidden = hasLocalization;
-    list.closest(".card").hidden = hasLocalization && !!empty && list.children.length === 1;
-  }
-  window.addEventListener("bg3ro:updates-loaded", syncNewsEmpty);
   $("#upload-release-file").addEventListener("click", async () => {
     if (!client || !moderator) return;
     const button = $("#upload-release-file"),

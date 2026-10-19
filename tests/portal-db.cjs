@@ -151,6 +151,15 @@ const M = '33333333-3333-3333-3333-333333333333';
     await db.query("update public.bg3ro_project_updates set link_url='',link_label='',badge_label='' where id=$1",[manual.id]);
     await db.query('delete from public.bg3ro_project_updates where id=$1',[manual.id]);
     assert.equal((await db.query('select id from public.bg3ro_releases where id=$1',[release.id])).rows.length,1,'Manual news edits never remove release records');
+    await role(B);
+    assert.equal((await db.query("update public.bg3ro_releases set news_title='Unauthorized' where id=$1 returning id",[release.id])).rows.length,0);
+    await role(M);
+    const releaseBefore=(await db.query('select title,description,version,download_url,published_at from public.bg3ro_releases where id=$1',[release.id])).rows[0];
+    await db.query("update public.bg3ro_releases set news_title='Anunț revizuit',news_body='Conținut revizuit',news_badge='Arhivă' where id=$1",[release.id]);
+    assert.deepEqual((await db.query('select title,description,version,download_url,published_at from public.bg3ro_releases where id=$1',[release.id])).rows[0],releaseBefore,'News overrides preserve archive metadata and date');
+    await role();
+    assert.equal((await db.query('select news_title,news_body,news_badge from public.bg3ro_releases where id=$1',[release.id])).rows[0].news_badge,'Arhivă');
+    await denied("update public.bg3ro_releases set news_badge='Anonymous' where id=$1",[release.id]);
     console.log('PASS: portal migrations, role isolation, column privileges, rate limits, contact inbox, screenshots, manual update metadata validation, administrator-only editing/deletion and release isolation.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

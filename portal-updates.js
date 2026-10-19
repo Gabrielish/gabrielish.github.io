@@ -26,7 +26,7 @@
  if(publish){const save=publish.querySelector('[type=submit]'),status=publish.querySelector('.form-status');extras(publish);publish.append(save,status);}
  window.BG3RO_UPDATES={values,render(client,data,target,moderator,userId,reload){
   data.forEach(update=>{
-   const article=el('article','manual-update'),layout=el('div','post'),content=el('div','post-content'),header=el('div','manual-update-header'),meta=el('div','post-meta'),avatar=el('img','post-avatar');
+   const article=el('article','card manual-update'),layout=el('div','post'),content=el('div','post-content'),header=el('div','manual-update-header'),meta=el('div','post-meta'),avatar=el('img','post-avatar');
    const remote=/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(update.author_avatar_url||'');
    avatar.src=remote?update.author_avatar_url:'./assets/discussion-avatar.svg';avatar.classList.toggle('post-avatar-default',!remote);avatar.alt='';avatar.width=44;avatar.height=44;avatar.loading='lazy';avatar.referrerPolicy='no-referrer';
    if(remote)avatar.addEventListener('error',()=>{avatar.classList.add('post-avatar-default');avatar.src='./assets/discussion-avatar.svg';},{once:true});
@@ -35,6 +35,7 @@
    const url=safeURL(update.link_url);if(url&&update.link_label){const a=el('a','release-news-link');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon(chain),el('span','',update.link_label));meta.append(a);}
    if(update.badge_label)meta.append(el('span','release-version-badge',update.badge_label));
    header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(avatar,content);article.append(layout);target.append(article);
+   article.dataset.newsDate=update.published_at;article.dataset.newsId=update.id;
    if(!moderator)return;
    const toolbar=el('div','manual-update-toolbar');
    if(update.author_id===userId){

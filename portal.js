@@ -219,14 +219,13 @@
   let updatesRequest = 0;
   async function loadUpdates() {
     const ticket = ++updatesRequest;
-    const target = $('#updates-list');
-    if (!client) { target.replaceChildren(element('p', 'small', 'Nicio actualizare publicată încă în acest portal. Istoricul versiunilor publice este pe Nexus Mods.')); return; }
+    const target = document.createElement('div');
+    if (!client) { window.BG3RO_NEWS.commit('manual', []); return; }
     const { data, error } = await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label').order('published_at', { ascending: false }).limit(30);
     if (ticket !== updatesRequest) return;
-    if (error) { target.replaceChildren(element('p', 'small', 'Actualizările nu au putut fi încărcate. Consultă istoricul pe Nexus Mods.')); return; }
-    target.replaceChildren();
-    if (!data.length) target.append(element('p', 'small release-empty-news', 'Nu sunt încă anunțuri separate publicate în acest portal. Versiunile publicate apar automat mai sus.'));
-    window.BG3RO_UPDATES.render(client, data, target, moderator, user?.id, loadUpdates);
+    if (error) { target.append(element('p', 'card small', 'Actualizările nu au putut fi încărcate.')); }
+    else window.BG3RO_UPDATES.render(client, data, target, moderator, user?.id, loadUpdates);
+    window.BG3RO_NEWS.commit('manual', [...target.children]);
     window.dispatchEvent(new Event('bg3ro:updates-loaded'));
   }
   function buttonIcon(button, paths) {
