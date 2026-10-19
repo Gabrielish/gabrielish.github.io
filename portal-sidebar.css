@@ -34,6 +34,8 @@
 .recent-compatibility li strong{display:block}.recent-compatibility li span{font-size:10px;color:#a9aaa9}
 .recent-compatibility li:is(.is-working,.is-broken){display:flex;align-items:flex-start;gap:10px;border:0;border-radius:8px;padding:12px;background:#1a1b1e;margin-top:8px}
 .recent-compatibility li>.compatibility-icon{margin-top:2px}.recent-compatibility li>div{min-width:0}
+.recent-compatibility .compatibility-report-meta{font-size:10px;color:#a9aaa9;margin-top:3px}
+.recent-compatibility .compatibility-author{display:inline;color:#eee7d7;font-weight:600}
 .sidebar-report-link{display:inline-block;font-size:11px;margin-top:16px}.project-sidebar dl>div{align-items:start}
 .project-sidebar dd{max-width:47%;overflow-wrap:anywhere}.project-sidebar .support-actions{grid-template-columns:1fr 1fr}
 @media(min-width:1500px){.page-grid{grid-template-columns:minmax(0,1fr) 370px}}

@@ -70,7 +70,15 @@
       const reports = Array.isArray(data.recent) ? data.recent.slice(0, 10) : [];
       setText('#recent-count', `(${reports.length})`);const list = $('#recent-compatibility-list');list.replaceChildren();
       if (!reports.length) { const item = document.createElement('li');item.textContent = 'Nu sunt încă raportări.';list.append(item); }
-      reports.forEach(report => { const item = document.createElement('li'), title = document.createElement('strong'), detail = document.createElement('span'), content=document.createElement('div');item.className=report.works ? 'is-working' : 'is-broken';title.textContent = report.works ? 'Funcționează' : 'Nu funcționează';detail.textContent = `${platforms[report.platform] || 'Altă platformă'}${report.mod_version ? ` · ${report.mod_version}` : ''} · ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`;content.append(title,detail);item.append(thumbIcon(report.works),content);list.append(item); });
+      reports.forEach(report => {
+        const item=document.createElement('li'),title=document.createElement('strong'),detail=document.createElement('div'),author=document.createElement('strong'),content=document.createElement('div');
+        item.className=report.works ? 'is-working' : 'is-broken';
+        title.textContent=report.works ? 'Funcționează' : 'Nu funcționează';
+        detail.className='compatibility-report-meta';author.className='compatibility-author';
+        author.textContent=report.author_name || 'Utilizator';
+        detail.append(author,document.createTextNode(` • ${platforms[report.platform] || 'Altă platformă'} • ${report.mod_version || 'Versiune nespecificată'} • ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`));
+        content.append(title,detail);item.append(thumbIcon(report.works),content);list.append(item);
+      });
       drawOwn();
     } catch (_) { if (request !== statsRequest) return;setText('#rating-count', 'Date indisponibile');setText('#compatibility-total', 'Date indisponibile'); }
   }

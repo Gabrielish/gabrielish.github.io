@@ -6,7 +6,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.addInitScript(()=>{window.__sidebarTest={rating:null,vote:null,fail:false};});
  await page.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'test-key'};"}));
  await page.route('**/portal.js*',r=>r.fulfill({contentType:'text/javascript',body:"document.querySelectorAll('[data-auth-open]').forEach(b=>b.onclick=()=>document.querySelector('#auth-dialog').showModal());document.documentElement.classList.add('portal-ready');"}));
- await page.route('**/rest/v1/rpc/bg3ro_sidebar_stats',async r=>{const state=await page.evaluate(()=>window.__sidebarTest);await r.fulfill({contentType:'application/json',body:JSON.stringify({rating_count:state.rating?1:0,rating_average:state.rating?.rating||null,compatibility_count:state.vote?1:0,works_count:state.vote?.works?1:0,last_update:null,recent:state.vote?[{...state.vote,updated_at:'2026-10-17T10:00:00Z'}]:[]})});});
+ await page.route('**/rest/v1/rpc/bg3ro_sidebar_stats',async r=>{const state=await page.evaluate(()=>window.__sidebarTest);await r.fulfill({contentType:'application/json',body:JSON.stringify({rating_count:state.rating?1:0,rating_average:state.rating?.rating||null,compatibility_count:state.vote?1:0,works_count:state.vote?.works?1:0,last_update:null,recent:state.vote?[{...state.vote,author_name:'<img src=x> User',updated_at:'2026-10-17T10:00:00Z'}]:[]})});});
  await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
  assert.equal(await page.locator('.rating-star').count(),5);assert.equal(await page.locator('.sidebar .author-line').count(),0);
  assert.equal(await page.locator('.quick-download a').count(),2,'Only the two download links remain');
@@ -41,6 +41,12 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.locator('[data-works="true"]').click();await page.waitForFunction(()=>document.querySelector('#compatibility-percent').textContent==='100%');
  await page.locator('.recent-compatibility summary').click();assert.equal(await page.locator('#recent-compatibility-list img').count(),0);assert((await page.locator('#recent-compatibility-list').textContent()).includes('<img src=x>'));
  assert.equal(await page.locator('#recent-compatibility-list .is-working>svg').count(),1);
+ assert.equal(await page.locator('#recent-compatibility-list .compatibility-author').textContent(),'<img src=x> User');
+ const reportMeta=await page.locator('#recent-compatibility-list .compatibility-report-meta').textContent();
+ assert(reportMeta.includes('User • macOS • <img src=x> test • 17.10.2026'));
+ const outcomeBox=await page.locator('#recent-compatibility-list li>div>strong').boundingBox();
+ const metaBox=await page.locator('#recent-compatibility-list .compatibility-report-meta').boundingBox();
+ assert(metaBox.y>outcomeBox.y,'Result and metadata occupy separate rows');
  assert.equal(await page.locator('.compatibility-counts svg').count(),2,'Counter icons survive refreshed totals');
  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-updated',{detail:{versions:['v0.9.0','v0.8.0']}})));
  assert.equal(await page.locator('#compatibility-version').inputValue(),'<img src=x> test','An existing historical vote is retained');
