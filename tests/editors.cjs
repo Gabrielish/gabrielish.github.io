@@ -16,15 +16,15 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.locator('#auth-consent').check();await page.locator('#discord-login').click();
   await page.waitForSelector('#auth-dialog',{state:'hidden'});
   await page.waitForSelector('#about-editor > button',{state:'visible'});
-  assert.equal(await page.locator('#despre .edit-pencil:visible').count(),2);
+  assert.equal(await page.locator('#despre .edit-pencil:visible').count(),3);
   for(const selector of ['.progress-card','.about-copy','#current-work']){
-   if(selector==='#current-work')await page.locator('#tab-actualizari').click();
    const positions=await page.locator(selector).evaluate(card=>{
     const row=card.querySelector('.editable-header'),title=row.querySelector(':scope > h2'),button=row.querySelector(':scope > .edit-control > button');
     const a=title.getBoundingClientRect(),b=button.getBoundingClientRect(),r=row.getBoundingClientRect();return {titleRight:a.right,x:b.x,y:b.y,top:r.y,right:b.right,rowRight:r.right};
    });
    assert(positions.rowRight>0);assert(positions.x>=positions.titleRight);assert(Math.abs(positions.right-positions.rowRight)<1);assert(Math.abs(positions.y-positions.top)<1);
   }
+  await page.locator('#tab-actualizari').click();
   await page.locator('#admin-tools').screenshot({path:`.qa/editor-admin-position-${width}.png`});
   await page.locator('#tab-despre').click();
   await page.locator('#progress-editor > button').click();

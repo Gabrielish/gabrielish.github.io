@@ -9,9 +9,11 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'public-test'};"}));
   await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
   await p.addInitScript(isOwner=>window.__qaOwner=isOwner,owner);
-  await p.goto('http://127.0.0.1:4173/#actualizari',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
+  await p.goto('http://127.0.0.1:4173/#despre',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
   assert.equal(await p.locator('#actualizari > .card-header').count(),0);assert.equal(await p.locator('#actualizari a[href*="tab=logs"]').count(),0);
   assert.equal(await p.locator('#work-editor').isVisible(),false);
+  assert.equal(await p.locator('#despre .about-copy + #current-work').count(),1);
+  assert.equal(await p.locator('#actualizari #current-work').count(),0);
   await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
   assert.equal(await p.locator('#work-editor').isVisible(),owner);
   if(owner){
