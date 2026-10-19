@@ -89,6 +89,7 @@
   window.addEventListener('bg3ro:auth',event=>{
     client=event.detail.client;moderator=event.detail.moderator===true;
     progress.hidden=aboutEditor.hidden=!moderator;
+    document.querySelector('#work-editor').hidden=!moderator;
     if(!moderator){dirty=false;for(const dialog of dialogs){if(dialog.open)dialog.close();if(!dialog.isConnected)dialogs.delete(dialog);}}
     if(client)loadAbout();
   });
