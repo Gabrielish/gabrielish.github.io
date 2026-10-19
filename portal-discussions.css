@@ -1,25 +1,25 @@
 .post-thread{padding:26px 0;border-top:1px solid var(--line)}
 .post-thread:last-of-type{padding-bottom:0}
-#discussion-list .post{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;padding:0;border:0}
+:is(#discussion-list,#reports-list) .post{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;padding:0;border:0}
 .post-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#24221e;flex-shrink:0}
 .post-avatar-default{padding:8px;object-fit:contain;background:#25221c}
 .post-content{min-width:0}
-#discussion-list .post-meta{gap:10px;margin:0 0 12px;line-height:1.5;font-size:12px}
-#discussion-list .post-meta strong{font-size:15px;color:var(--text)}
-#discussion-list .post-meta time{color:var(--muted)}
-#discussion-list .post-body{font-size:14px;line-height:1.85}
-#discussion-list .post-title{font-size:17px;margin-bottom:12px}
+:is(#discussion-list,#reports-list) .post-meta{gap:10px;margin:0 0 12px;line-height:1.5;font-size:12px}
+:is(#discussion-list,#reports-list) .post-meta strong{font-size:15px;color:var(--text)}
+:is(#discussion-list,#reports-list) .post-meta time{color:var(--muted)}
+:is(#discussion-list,#reports-list) .post-body{font-size:14px;line-height:1.85}
+:is(#discussion-list,#reports-list) .post-title{font-size:17px;margin:0 0 12px}
 .post-replies{margin-left:60px}
 .post-replies:empty{display:none}
 .post-replies>.post{margin-top:28px}
 #discussion-list .reply{margin-left:0;padding-left:0;border-left:0}
 .post-mention{color:var(--gold)!important;font-size:13px;font-weight:600;margin:0 0 12px;overflow-wrap:anywhere}
-#discussion-list .post-actions{margin-top:16px}
+:is(#discussion-list,#reports-list) .post-actions{margin-top:16px}
 .replies-more{margin-top:22px}
 @media(max-width:600px){
- #discussion-list .post{grid-template-columns:36px minmax(0,1fr);gap:10px}
+ :is(#discussion-list,#reports-list) .post{grid-template-columns:36px minmax(0,1fr);gap:10px}
  .post-avatar{width:36px;height:36px}.post-avatar-default{padding:7px}
  .post-replies{margin-left:16px}.post-replies>.post{margin-top:24px}
- #discussion-list .post-meta{gap:5px 9px;flex-wrap:wrap}
- #discussion-list .post-meta strong{font-size:14px}
+ :is(#discussion-list,#reports-list) .post-meta{gap:5px 9px;flex-wrap:wrap}
+ :is(#discussion-list,#reports-list) .post-meta strong{font-size:14px}
 }

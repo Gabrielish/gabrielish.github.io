@@ -14,11 +14,19 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.waitForSelector('#auth-dialog',{state:'hidden'});
   assert.equal(await page.locator('.report-item > form').count(),0);
   assert.equal(await page.locator('#report-name').isVisible(),false);
-  assert.equal(await page.locator('.report-author img').count(),1);
+  assert.equal(await page.locator('.report-item .post-avatar').count(),1);
   assert(!(await page.locator('.report-header').textContent()).includes('Raportare publică'));
-  assert.equal(await page.locator('.report-author time').getAttribute('datetime'),'2026-10-19T10:00:00Z');
-  assert.equal(await page.locator('.report-author .post-status').textContent(),'Nou');
+  assert.equal(await page.locator('.report-header time').getAttribute('datetime'),'2026-10-19T10:00:00Z');
+  assert.equal(await page.locator('.report-header .post-status').textContent(),'Nou');
   assert.equal(await page.locator('.report-title-row').textContent(),'Raport de test · windows · test');
+  const shared=await page.evaluate(()=>{
+   const fixture=document.createElement('div');fixture.className='post-thread';fixture.innerHTML='<div class="post"><img class="post-avatar post-avatar-default"><div class="post-content"><div class="post-meta"><strong>Jucător</strong></div><h3 class="post-title">Titlu</h3><div class="post-body">Text</div></div></div>';
+   document.querySelector('#discussion-list').append(fixture);
+   const pairs=[['.post',['display','gap','padding','borderTopWidth']],['.post-avatar',['width','height','padding','borderRadius']],['.post-meta',['gap','marginBottom','fontSize','lineHeight']],['.post-meta strong',['fontSize','color']],['.post-title',['fontSize','marginTop','marginBottom']],['.post-body',['fontSize','lineHeight','color']]];
+   const result=pairs.map(([selector,props])=>{const a=getComputedStyle(fixture.querySelector(selector)),b=getComputedStyle(document.querySelector('.report-item '+selector));return [props.map(p=>a[p]),props.map(p=>b[p])];});
+   fixture.remove();return result;
+  });
+  for(const [discussion,report] of shared)assert.deepEqual(report,discussion,'Shared discussion/report styles must match');
   const toolbar=page.locator('.report-toolbar');
   const edit=toolbar.getByRole('button',{name:'Editează raportarea'}),remove=toolbar.getByRole('button',{name:'Șterge raportarea'});
   const a=await edit.boundingBox(),b=await remove.boundingBox();assert(Math.abs(a.y-b.y)<1&&b.x>=a.x+a.width,'Icon buttons share top row');

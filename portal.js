@@ -349,23 +349,24 @@
     target.replaceChildren(); $('#more-reports').hidden = reportsLimit >= count;
     if (!data.length) target.append(element('p', 'small', 'Nu a fost raportată nicio eroare.'));
     data.forEach(report => {
-      const article = element('article', 'report-item');
+      const article = element('article', 'report-item post-thread');
+      const layout = element('div', 'post'), content = element('div', 'post-content');
       const avatar = element('img', 'post-avatar');
       const remote = !report.is_guest && /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(report.author_avatar_url || '');
       avatar.src = remote ? report.author_avatar_url : './assets/discussion-avatar.svg';
       avatar.classList.toggle('post-avatar-default', !remote); avatar.alt = ''; avatar.width = 44; avatar.height = 44; avatar.loading = 'lazy'; avatar.referrerPolicy = 'no-referrer';
       if (remote) avatar.addEventListener('error', () => { avatar.classList.add('post-avatar-default'); avatar.src = './assets/discussion-avatar.svg'; }, { once: true });
-      const header = element('div', 'report-header'), author = element('div', 'report-author'), copy = element('div', 'report-author-copy report-meta');
+      const header = element('div', 'report-header'), copy = element('div', 'post-meta');
       const date = element('time', '', dateText(report.created_at)); date.dateTime = report.created_at;
       copy.append(element('strong', '', report.author_name || 'Jucător'), date);
       if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete · nume neverificat'));
       if (!report.is_public) copy.append(element('span', 'post-status', 'Privată'));
       copy.append(element('span', 'post-status', statusLabels[report.status]));
-      author.append(avatar, copy); header.append(author); article.append(header);
-      const title = element('h3', 'report-title-row');
+      header.append(copy); content.append(header); layout.append(avatar, content); article.append(layout);
+      const title = element('h3', 'post-title report-title-row');
       title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${report.mod_version}`));
-      article.append(title, element('p', 'report-body', report.body));
-      if (report.moderator_reply) article.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
+      content.append(title, element('div', 'post-body report-body', report.body));
+      if (report.moderator_reply) content.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
       if (moderator) {
         const form = element('form'); const field = element('div', 'field');
         const label = element('label', '', 'Stadiul raportării'); label.htmlFor = `state-${report.id}`;
@@ -397,7 +398,7 @@
         toolbar.append(editor, remove); header.append(toolbar);
       }
       target.append(article);
-      window.BG3RO_REPORT_PHOTO.show(client, report, article).catch(() => {});
+      window.BG3RO_REPORT_PHOTO.show(client, report, content).catch(() => {});
     });
   }
   $('#more-reports').addEventListener('click', async () => { reportsLimit += 20; await loadReports(); });
