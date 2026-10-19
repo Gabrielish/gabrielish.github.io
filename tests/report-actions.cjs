@@ -14,7 +14,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.waitForSelector('#auth-dialog',{state:'hidden'});
   const select=page.locator('.report-item select'),actions=page.locator('.report-actions');
   const style=await select.evaluate(el=>{const s=getComputedStyle(el);return {appearance:s.appearance,image:s.backgroundImage,position:s.backgroundPosition,padding:s.paddingRight};});
-  assert.equal(style.appearance,'none');assert(style.image.includes('select-chevron.svg'));assert.equal(style.padding,'44px');assert(style.position.includes('14px'));
+  assert.equal(style.appearance,'base-select');assert.equal(style.padding,'14px');
+  assert((await select.evaluate(el=>getComputedStyle(el,'::picker-icon').backgroundImage)).includes('select-chevron.svg'));
   assert.equal(await actions.locator('svg[aria-hidden=true]').count(),2);
   const save=actions.getByRole('button',{name:'Salvează răspunsul'}),remove=actions.getByRole('button',{name:'Șterge raportul'});
   const a=await save.boundingBox(),b=await remove.boundingBox();assert(Math.abs(a.y-b.y)<1&&b.x>=a.x+a.width,'Buttons share a row');

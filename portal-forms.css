@@ -7,6 +7,24 @@
 .field :is(input,textarea)::selection{background:var(--field-selection);color:var(--text)}
 .field select option{background:var(--field-bg);color:var(--field-text)}
 .field select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;background-image:url('./assets/select-chevron.svg');background-repeat:no-repeat;background-size:18px 18px;background-position:right 14px center;padding-right:44px;cursor:pointer}
+/* Native form semantics, with a fully themed top-layer picker where supported. */
+@supports (appearance:base-select){
+ .field select:not([multiple]):not([size]),.field select:not([multiple]):not([size])::picker(select){appearance:base-select}
+ .field select:not([multiple]):not([size]){background-image:none;padding-right:14px;gap:12px;transition:border-color .18s,border-radius .18s}
+ .field select:not([multiple]):not([size])::picker-icon{content:'';width:18px;height:18px;flex:none;margin-left:auto;background:url('./assets/select-chevron.svg') center/18px 18px no-repeat;transition:transform .18s ease}
+ .field select:not([multiple]):not([size]):open{border-color:var(--gold);border-radius:7px 7px 0 0;outline:none}
+ .field select:not([multiple]):not([size]):open::picker-icon{transform:rotate(180deg)}
+ .field select:not([multiple]):not([size])::picker(select){background:var(--field-bg);color:var(--field-text);border:1px solid var(--gold);border-top-color:var(--field-border);border-radius:0 0 7px 7px;margin:-1px 0 0;padding:4px;box-shadow:0 12px 24px #0006;max-height:min(280px,45dvh);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--field-border) var(--field-bg);width:anchor-size(width);box-sizing:border-box}
+ .field select:not([multiple]):not([size])::picker(select){position-anchor:auto;position-area:none;top:anchor(bottom);left:anchor(left);right:auto;bottom:auto;position-try-order:normal;position-try-fallbacks:flip-block}
+ .field select:not([multiple]):not([size])::picker(select):popover-open{animation:select-expand .16s ease-out}
+ .field select:not([multiple]):not([size]) option{display:flex;align-items:center;gap:10px;min-height:40px;padding:9px 10px;border:0;border-radius:4px;white-space:normal;overflow-wrap:anywhere;font:inherit;cursor:pointer}
+ .field select:not([multiple]):not([size]) option:hover,.field select:not([multiple]):not([size]) option:focus{background:var(--field-selection);color:var(--text);outline:none}
+ .field select:not([multiple]):not([size]) option:checked{background:#2b271e;color:var(--gold)}
+ .field select:not([multiple]):not([size]) option:disabled{opacity:.5;cursor:not-allowed}
+ .field select:not([multiple]):not([size]) option::checkmark{color:var(--gold);margin-left:auto;order:1}
+ @keyframes select-expand{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+ @media(prefers-reduced-motion:reduce){.field select:not([multiple]):not([size])::picker(select):popover-open{animation:none}.field select:not([multiple]):not([size])::picker-icon{transition:none}}
+}
 .report-actions{display:flex;align-items:stretch;gap:10px}
 .report-actions>.btn{min-width:0;gap:8px}
 .report-actions svg{width:18px;height:18px;flex:none}
