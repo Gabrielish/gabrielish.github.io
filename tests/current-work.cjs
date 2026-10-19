@@ -15,7 +15,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
   assert.equal(await p.locator('#work-editor').isVisible(),owner);
   if(owner){
-   await p.locator('#work-editor summary').click();assert.equal(await p.locator('#work-title').inputValue(),'La ce lucrez acum');
+   await p.locator('#work-editor > .edit-pencil').click();assert.equal(await p.locator('#work-title').inputValue(),'La ce lucrez acum');
    await p.locator('#work-title').fill('Etapa curentă');await p.locator('#work-body').fill('<img src=x onerror=alert(1)>\nRevizuiesc traducerea.');await p.locator('#work-note').fill('');
    await p.evaluate(()=>window.__communityTest.failWork=true);await p.locator('#work-form button[type=submit]').click();await p.waitForSelector('#work-form .form-status.error');
    assert.equal(await p.locator('#current-work-title').textContent(),'La ce lucrez acum');assert.equal(await p.locator('#work-title').inputValue(),'Etapa curentă');
@@ -23,7 +23,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    assert.equal(await p.locator('#current-work-body img').count(),0);assert.equal(await p.locator('#current-work-note').isVisible(),false);
    await p.locator('#work-note').fill('Notă publică');await p.locator('#work-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#current-work-note').textContent==='Notă publică');
    assert(await p.locator('#current-work-note').isVisible());
-   await clickNav(p,'#sign-out');await p.waitForSelector('#work-editor',{state:'hidden'});assert.equal(await p.locator('#current-work-title').textContent(),'Etapa curentă');
+   await p.keyboard.press('Escape');await clickNav(p,'#sign-out');await p.waitForSelector('#work-editor',{state:'hidden'});assert.equal(await p.locator('#current-work-title').textContent(),'Etapa curentă');
   }
   assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await p.close();
  }

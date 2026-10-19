@@ -1,0 +1,11 @@
+.edit-control{flex:none;display:inline-flex;align-items:center}
+.edit-pencil{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:8px;background:#181919;color:var(--gold)}
+.edit-pencil:hover{background:#29251e;border-color:var(--gold)}
+.edit-pencil svg{flex:none}
+.edit-dialog{width:min(680px,calc(100% - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:26px}
+.edit-dialog form{margin:0}.edit-dialog textarea{min-height:160px}
+.edit-dialog .btn:not(.secondary):hover{background:#e4d6b7}
+.edit-dialog .release-edit{border-top:1px solid var(--line);margin-top:24px;padding-top:20px}
+.edit-dialog input[type=file]{display:block;max-width:100%;margin:12px 0}
+.about-copy #about-project-body p{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:480px){.edit-dialog{padding:20px}.edit-dialog .dialog-title h2{font-size:20px}}

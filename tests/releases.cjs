@@ -79,9 +79,9 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
       if(owner){
         await p.waitForSelector('#release-editor',{state:'visible'});
-        await p.locator('#translation-releases .release-edit summary').click();
+        await p.locator('#translation-releases .edit-control > .edit-pencil').click();
         await p.locator('#translation-releases textarea').fill('<img src=x onerror=alert(1)> Notă editată.');
-        await p.locator('#translation-releases .release-edit form button').click();
+        await p.locator('#translation-releases .edit-dialog form button').click();
         await p.waitForFunction(()=>document.querySelector('#release-updates').textContent.includes('Notă editată.'));
         assert.equal(await p.locator('#release-updates img').count(),0);
         await p.locator('#release-editor summary').click();
@@ -97,9 +97,9 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
         await p.locator('#release-publish-form button').click();
         await p.waitForFunction(()=>document.querySelector('#release-updates').textContent.includes('Noua versiune 0.2'));
         assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.2','0.1'],'New publications update the compatibility dropdown');
-        assert.match(await p.locator('#translation-releases h2').textContent(),/Versiune nouă de test/);
+        assert.match(await p.locator('#translation-releases .release-head h2').textContent(),/Versiune nouă de test/);
         await p.locator('.hero-cta').click();assert.equal(await p.locator('.hero-cta').getAttribute('href'),'#descarcari');
-        assert(await p.locator('#translation-releases h2').isVisible(),'Hero continues navigating to the latest version after publication');
+        assert(await p.locator('#translation-releases .release-head h2').isVisible(),'Hero continues navigating to the latest version after publication');
         await p.locator('#tab-actualizari').click();
         await p.locator('#release-updates').screenshot({path:'.qa/releases-updates-desktop.png'});
         await p.locator('#release-updates a').first().click();assert(await p.locator('#descarcari').isVisible());

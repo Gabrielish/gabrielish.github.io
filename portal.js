@@ -109,7 +109,7 @@
     $('#my-reports').hidden = !client;
     $('#admin-tools').hidden = !moderator;
     $('#work-editor').hidden = !moderator;
-    if (!moderator) { $('#work-editor').open = false; workDirty = false; $('#work-form').reset(); }
+    if (!moderator) { workDirty = false; $('#work-form').reset(); }
     $('#reports-heading').textContent = moderator ? 'Raportări publice și private' : 'Raportări publice';
     $('#discussion-form button[type="submit"]').textContent = 'Publică mesajul';
     $('#discord-login').disabled = !client || !authEnabled;
@@ -368,8 +368,8 @@
     submit(event.currentTarget, async () => {
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
       for (const field of ['translation_percent','review_percent','testing_percent']) values[field] = Number(values[field]);
-      const { error } = await client.from('bg3ro_project_status').update(values).eq('id', 1);
-      if (error) throw error; formStatus(form, 'Progres actualizat.'); await loadProgress();
+      const { data, error } = await client.from('bg3ro_project_status').update(values).eq('id', 1).select('translation_percent,review_percent,testing_percent').maybeSingle();
+      if (error || !data) throw error || new Error('Progress not saved'); formStatus(form, 'Progres actualizat.'); await loadProgress();
     });
   });
   async function initialize() {

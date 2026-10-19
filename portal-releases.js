@@ -218,7 +218,7 @@
       }
     });
     details.append(replacement);
-    return details;
+    return window.BG3RO_EDITORS.mount(details, "Editează versiunea");
   }
   function card(row) {
     const article = el("article", "card release-card"),
