@@ -87,6 +87,7 @@
     const target = form.querySelector('.form-status'); target.textContent = message; target.classList.toggle('error', error);
   }
   function readableError(error) {
+    if (error?.code === 'REPORT_PHOTO') return error.message;
     const message = error?.message || '';
     if (/rate|limit|too many|30 de secunde|zilnic/i.test(message)) return 'Prea multe încercări. Așteaptă puțin înainte să trimiți din nou.';
     if (/expired|invalid.*token|otp/i.test(message)) return 'Conectarea a expirat. Încearcă din nou cu Discord.';
@@ -327,8 +328,7 @@
     submit(event.currentTarget, async () => {
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form)); delete values.website; delete values.public_consent;
       Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
-      const { error } = await client.from('bg3ro_bug_reports').insert({ ...values, author_id: user.id, is_public: true });
-      if (error) throw error;
+      await window.BG3RO_REPORT_PHOTO.publish(client, { ...values, author_id: user.id, is_public: true });
       form.reset(); formStatus(form, 'Raportarea a fost trimisă și este publică. O poți urmări mai jos.'); await loadReports();
     });
   });
@@ -336,7 +336,7 @@
     const request = ++reportsRequest;
     if (!client) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     target.replaceChildren(); $('#more-reports').hidden = reportsLimit >= count;
@@ -366,12 +366,14 @@
           if (!confirm('Ștergi definitiv această raportare?')) return;
           const result = await client.from('bg3ro_bug_reports').delete().eq('id', report.id);
           if (result.error) throw result.error;
+          await window.BG3RO_REPORT_PHOTO.cleanup(client, report.screenshot_path);
           await loadReports();
         });
         buttonIcon(remove, ['M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14','M10 10v6m4-6v6']);
         actions.append(remove);
       }
       target.append(article);
+      window.BG3RO_REPORT_PHOTO.show(client, report, article).catch(() => {});
     });
   }
   $('#more-reports').addEventListener('click', async () => { reportsLimit += 20; await loadReports(); });
