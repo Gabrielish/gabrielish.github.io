@@ -97,7 +97,7 @@
     const a = el("a", featured ? "btn release-download" : "btn");
     if (featured) {
       const format = /\.(zip|rar|7z)$/i.exec(row.file_name)?.[1].toUpperCase();
-      a.append(outlineIcon(["M12 3v12m-5-5 5 5 5-5", "M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4"]), el("span", "", format ? `Descărcați fișierul ${format}` : "Descărcați fișierul"));
+      a.append(outlineIcon(["M12 3v12m-5-5 5 5 5-5", "M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4"]), el("span", "", format ? `Descarcă fișier ${format}` : "Descarcă fișier"));
     } else a.textContent = "Descarcă arhiva";
     a.href = row.download_url;
     a.download = row.file_name;
@@ -324,15 +324,6 @@
     const latest = rows.find(
       (r) => r.kind === "translation" && archiveURL(r.download_url),
     );
-    document.querySelectorAll("[data-primary-download]").forEach((a) => {
-      if (latest) {
-        a.href = latest.download_url;
-        a.download = latest.file_name;
-        a.dataset.releaseId = latest.id;
-        a.removeAttribute("target");
-        a.removeAttribute("data-go-tab");
-      }
-    });
     $("#github-quick-download").hidden = !latest;
     if (latest) {
       $("#github-quick-download").href = latest.download_url;

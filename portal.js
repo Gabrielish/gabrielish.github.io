@@ -37,7 +37,6 @@
   if (informationIds.includes(location.hash.slice(1))) requestAnimationFrame(() => tablist.scrollIntoView({ block: 'start', behavior: 'instant' }));
   tabs.forEach((tab, i) => tab.addEventListener('click', event => { event.preventDefault(); goTab(ids[i]); }));
   $$('[data-go-tab]').forEach(link => link.addEventListener('click', event => {
-    if (link.hasAttribute('data-primary-download') && link.href.startsWith('https://')) return;
     event.preventDefault();
     if (link.closest('#auth-dialog')) $('#auth-dialog').close();
     goTab(link.dataset.goTab, true);

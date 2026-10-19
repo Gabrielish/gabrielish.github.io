@@ -2,7 +2,7 @@
 .project-sidebar{gap:20px;grid-template-columns:1fr}
 .project-sidebar .card{padding:23px}.project-sidebar h2{font:600 17px/1.4 var(--sans);letter-spacing:-.2px;margin:0 0 18px}
 .project-sidebar .sidebar-note{font-size:11px;line-height:1.8;color:#a9aaa9;margin:10px 0 0}
-.project-sidebar .quick-download .small{font-size:11px;color:#d7bc8a;margin:0 0 10px}
+.project-sidebar .quick-download .small{font-size:11px;color:#d7bc8a;margin:12px 0 0}
 .project-sidebar .quick-download .sidebar-note{margin:0 0 17px}
 .project-sidebar .btn{font-size:12px;padding:11px 12px;gap:8px}
 .rating-summary{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}

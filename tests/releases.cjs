@@ -34,11 +34,17 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.deepEqual(await badge.evaluate(el=>{const s=getComputedStyle(el);return [s.borderRadius,s.padding,s.fontSize,s.lineHeight,s.gap,s.color];}),['9999px','2px 8px','12px','16px','4px','oklch(0.723 0.219 149.579)']);
       assert.equal(await p.locator('#extra-releases .release-card').count(),3);
       assert.equal(await p.locator('#release-editor:visible').count(),0);
-      assert.match(await p.locator('.hero-cta').getAttribute('href'),/github.com.*test-translation.zip/);
+      assert.equal(await p.locator('.hero-cta').getAttribute('href'),'#descarcari');
+      assert.equal(await p.locator('.hero-cta').getAttribute('download'),null);
+      assert.equal(await p.locator('.hero-cta').getAttribute('data-release-id'),null,'Navigation is not a download event');
       assert.match(await p.locator('#github-quick-download').getAttribute('href'),/test-translation.zip/);
-      await p.locator('#tab-descarcari').click();
+      await p.locator('.hero-cta').click();
+      assert.equal(await p.evaluate(()=>location.hash),'#descarcari');
+      assert(await p.locator('#descarcari').isVisible());
+      const latestBox=await p.locator('#translation-releases').boundingBox();
+      assert(latestBox.y>=0 && latestBox.y<950,'Hero scrolls to the latest translation');
       const downloadButton=p.locator('#translation-releases .release-download');
-      assert.equal(await downloadButton.textContent(),'Descărcați fișierul ZIP');
+      assert.equal(await downloadButton.textContent(),'Descarcă fișier ZIP');
       assert.equal(await downloadButton.locator('svg[aria-hidden="true"]').count(),1);
       assert.equal(await downloadButton.getAttribute('download'),'test-translation.zip');
       assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundImage),'none');
@@ -53,6 +59,8 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(25, 24, 21)','Warm charcoal, without the previous violet cast');
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopColor),'rgb(57, 52, 41)','Subtle warm gold border');
+      const earlyAccessBox=await p.locator('.quick-download .small').boundingBox(),nexusBox=await p.locator('.quick-download a[href*="nexusmods"]').boundingBox();
+      assert(earlyAccessBox.y-(nexusBox.y+nexusBox.height)>=11.5,'Early Access label has space above it');
       assert.equal(await p.locator('#release-load-status').isVisible(),false,'Empty status must not shift the release');
       assert.equal(await p.locator('#translation-releases a[href*="nexusmods"]').count(),0,'Nexus download belongs only in the sidebar');
       if(owner){
@@ -83,6 +91,8 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
         await p.waitForFunction(()=>document.querySelector('#release-updates').textContent.includes('Noua versiune 0.2'));
         assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.2','0.1'],'New publications update the compatibility dropdown');
         assert.match(await p.locator('#translation-releases h2').textContent(),/Versiune nouă de test/);
+        await p.locator('.hero-cta').click();assert.equal(await p.locator('.hero-cta').getAttribute('href'),'#descarcari');
+        assert(await p.locator('#translation-releases h2').isVisible(),'Hero continues navigating to the latest version after publication');
         await p.locator('#tab-actualizari').click();
         await p.locator('#release-updates').screenshot({path:'.qa/releases-updates-desktop.png'});
         await p.locator('#release-updates a').first().click();assert(await p.locator('#descarcari').isVisible());
