@@ -57,7 +57,11 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.equal(await p.locator('#translation-releases .release-notes h3 svg').count(),1);
       assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Noua versiune 0.1');
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
-      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(25, 24, 21)','Warm charcoal, without the previous violet cast');
+      const nexusRestingBackground=await p.locator('.quick-download a[href*="nexusmods"]').evaluate(el=>getComputedStyle(el).backgroundColor);
+      assert.equal(nexusRestingBackground,'rgb(24, 25, 25)');
+      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).backgroundColor),nexusRestingBackground,'Release notes match the non-hovered Nexus button');
+      await p.locator('#translation-releases .release-notes').hover();
+      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).backgroundColor),nexusRestingBackground,'Release notes do not acquire a button hover state');
       assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopColor),'rgb(57, 52, 41)','Subtle warm gold border');
       const earlyAccessBox=await p.locator('.quick-download .small').boundingBox(),nexusBox=await p.locator('.quick-download a[href*="nexusmods"]').boundingBox();
       assert(earlyAccessBox.y-(nexusBox.y+nexusBox.height)>=11.5,'Early Access label has space above it');

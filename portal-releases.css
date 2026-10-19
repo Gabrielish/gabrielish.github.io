@@ -65,7 +65,7 @@
   padding: 16px;
   border: 1px solid #393429;
   border-radius: 12px;
-  background: #191815;
+  background: #181919; /* Same resting surface as .btn.secondary (Nexus download). */
 }
 .release-notes h3 {
   display: flex;
