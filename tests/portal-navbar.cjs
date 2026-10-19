@@ -15,17 +15,22 @@ try{for(const width of [320,390,820,1100,1280,1440,1920]){
   assert.equal(await page.locator('.nav-toggle .dot-grid i').count(),9,'Original nine-dot menu icon');
   assert.equal(await page.locator('.nav-toggle .menu-icon').count(),0);
   assert.equal(await page.locator('.dot-grid i').first().evaluate(el=>getComputedStyle(el).borderRadius),'50%');
+  assert.equal(await page.locator('.dot-grid i').first().evaluate(el=>getComputedStyle(el).width),'5px');
+  assert.equal(await page.locator('.dot-grid').evaluate(el=>getComputedStyle(el).transform),'none');
   assert(!await header.locator('[data-auth-open]').isVisible());assert(!await page.locator('.nav-support').isVisible());assert(await header.locator('.wordmark').isVisible());
   const logo=await header.locator('.wordmark').boundingBox(),toggle=await page.locator('.nav-toggle').boundingBox();assert(toggle.width>=44&&toggle.height>=44);assert(logo.x+logo.width<toggle.x);
   if(width<=760)assert((await header.locator('.topbar-inner').boundingBox()).height<=76);
   await page.locator('.nav-toggle').click();assert(await page.locator('.main-navigation').isVisible());assert(await header.locator('[data-auth-open]').isVisible());assert(await page.locator('.nav-support').isVisible());
+  assert.equal(await page.locator('.dot-grid').evaluate(el=>getComputedStyle(el).transform),'none','Open grid must not rotate into a diamond');
+  const dots=await page.locator('.dot-grid i').evaluateAll(nodes=>nodes.map(node=>({scale:new DOMMatrix(getComputedStyle(node).transform).a,color:getComputedStyle(node).backgroundColor,duration:getComputedStyle(node).transitionDuration})));
+  dots.forEach((dot,i)=>{assert(Math.abs(dot.scale-([1,3,5,7].includes(i) ? 0.35 : 1))<.001);assert.equal(dot.color,'rgb(214, 181, 119)');assert.equal(dot.duration,'0s','Reduced-motion mode stays instant');});
   const menu=await page.locator('.main-navigation').boundingBox();
   for(const selector of ['.main-navigation>a','.main-navigation [data-auth-open]','.main-navigation .nav-support']){
    const box=await page.locator(selector).boundingBox();assert(Math.abs(box.x+box.width/2-menu.x-menu.width/2)<2,`Centered mobile action ${selector} at ${width}`);
   }
   assert.equal(await page.locator('.main-navigation .navbar-actions').evaluate(el=>getComputedStyle(el).borderTopWidth),'0px');
   await page.screenshot({path:`.qa/navbar-open-${width}.png`});
-  await page.keyboard.press('Escape');assert.equal(await page.locator('.nav-toggle').getAttribute('aria-expanded'),'false');await page.locator('.nav-toggle').click();
+  await page.keyboard.press('Escape');assert.equal(await page.locator('.nav-toggle').getAttribute('aria-expanded'),'false');assert(await page.locator('.dot-grid i').evaluateAll(nodes=>nodes.every(node=>getComputedStyle(node).transform==='none')));await page.locator('.nav-toggle').click();
  }
  const actions=await page.locator('.navbar-actions').boundingBox();assert(actions.x+actions.width<=width,`Actions inside viewport ${width}`);
  assert.equal(await header.locator('[data-go-tab]').count(),0);

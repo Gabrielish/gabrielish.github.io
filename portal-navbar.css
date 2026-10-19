@@ -19,9 +19,11 @@
 .nav-support:after{background:#fff;opacity:0;transition:opacity .4s}
 .nav-support:is(:hover,:focus-visible):after{opacity:1}
 .nav-toggle{display:none;align-items:center;justify-content:center;width:44px;height:44px;background:none;border:0;padding:9px;color:#ddc9a7}
-.dot-grid{display:grid;grid-template-columns:repeat(3,4px);gap:5px;transition:transform .2s}
-.dot-grid i{display:block;width:4px;height:4px;background:currentColor;border-radius:50%}
-.nav-toggle[aria-expanded=true] .dot-grid{transform:rotate(45deg)}
+/* Restored from bg3ro-old/controls.css: fixed grid, four shrinking edge dots. */
+.dot-grid{display:grid;grid-template-columns:repeat(3,5px);gap:5px;transform:none}
+.dot-grid i{display:block;width:5px;height:5px;background:#f2e8d6;border-radius:50%;transition:background .2s,transform .2s}
+.nav-toggle:is(:hover,:focus-visible) .dot-grid i,.nav-toggle[aria-expanded=true] .dot-grid i{background:#d6b577}
+.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(2),.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(4),.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(6),.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(8){transform:scale(.35)}
 .project-banner.hero{height:clamp(600px,100svh,1000px)}
 .project-banner.hero .project-badges{top:145px}
 /* Fade the media itself through a soft, irregular alpha mask. No cropped
@@ -62,7 +64,7 @@
   .navbar-actions{gap:8px}.nav-support{font-size:12px;min-height:50px;padding-inline:14px;max-width:106px;white-space:normal;text-align:center}
   .nav-login{font-size:13px}.nav-toggle{width:44px;padding:9px}
 }
-@media(prefers-reduced-motion:reduce){.main-navigation a,.main-navigation a:after,.nav-login,.nav-login:after,.nav-support:after,.dot-grid{transition:none}}
+@media(prefers-reduced-motion:reduce){.main-navigation a,.main-navigation a:after,.nav-login,.nav-login:after,.nav-support:after,.dot-grid i{transition:none}}
 @media(max-width:360px){
   .topbar .topbar-inner{width:calc(100% - 20px);gap:6px}
   .topbar .wordmark{font-size:27px;gap:7px}.topbar .wordmark img{width:30px;height:30px}
