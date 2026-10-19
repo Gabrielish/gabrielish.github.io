@@ -63,7 +63,7 @@ function syntheticSDK(){
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].status),'approved');
       assert.equal(await p.locator('#discussion-form .form-status').textContent(),'Mesajul a fost publicat.');
       assert.equal(await p.locator('#discussion-form button[type=submit]').textContent(),'Publică mesajul');
-      await p.locator('#tab-erori').click();await p.locator('#report-title').fill('O eroare în traducere');await p.locator('#report-version').fill('Versiune de test');await p.locator('#report-body').fill('Un context de test care descrie suficient de clar eroarea.');await p.locator('[name=public_consent]').check();
+      await p.locator('#tab-erori').click();await p.locator('#report-title').fill('O eroare în traducere');await p.locator('#report-version').selectOption('Nespecificată');await p.locator('#report-body').fill('Un context de test care descrie suficient de clar eroarea.');await p.locator('[name=public_consent]').check();
       await p.evaluate(()=>window.__communityTest.failInsert=true);await p.locator('#report-form button[type=submit]').click();await p.waitForSelector('#report-form .form-status.error');assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),0);
       assert.equal(await p.locator('#report-title').inputValue(),'O eroare în traducere');
       await p.evaluate(()=>window.__communityTest.failInsert=false);await p.locator('#report-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#report-form .form-status').textContent.includes('trimis'));
