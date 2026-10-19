@@ -2,7 +2,8 @@
   'use strict';
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
-  const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori'];
+  const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori', 'mesaje'];
+  let messagesAllowed = false;
   const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni'];
   const routeIds = [...ids, ...informationIds];
   const tabs = $$('.tab-list a');
@@ -13,7 +14,7 @@
   tabs.forEach(tab => tab.setAttribute('role', 'tab'));
   panels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
   function setTab(id, focus = false) {
-    const selected = routeIds.includes(id) ? id : 'despre';
+    const selected = routeIds.includes(id) && (id !== 'mesaje' || messagesAllowed) ? id : 'despre';
     tabs.forEach((tab, index) => {
       const active = ids[index] === selected;
       tab.setAttribute('aria-selected', String(active));
@@ -27,9 +28,10 @@
       const panel = document.getElementById(route);panel.hidden = route !== selected;panel.tabIndex = 0;
       if (route === selected && focus) panel.focus({ preventScroll: true });
     });
+    window.dispatchEvent(new CustomEvent('bg3ro:tab', {detail:{id:selected}}));
   }
   function goTab(id, focus = false) {
-    if (!routeIds.includes(id)) return;
+    if (!routeIds.includes(id) || (id === 'mesaje' && !messagesAllowed)) return;
     history.pushState(null, '', `#${id}`);
     setTab(id, focus);
   }
@@ -44,12 +46,13 @@
     target?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }));
   tablist.addEventListener('keydown', event => {
-    const index = tabs.indexOf(document.activeElement);
+    const availableTabs = tabs.filter(tab => !tab.hidden);
+    const index = availableTabs.indexOf(document.activeElement);
     if (index < 0 || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
-    const target = event.key === 'Home' ? 0 : event.key === 'End' ? ids.length - 1
-      : (index + (event.key === 'ArrowRight' ? 1 : -1) + ids.length) % ids.length;
-    goTab(ids[target], true);
+    const target = event.key === 'Home' ? 0 : event.key === 'End' ? availableTabs.length - 1
+      : (index + (event.key === 'ArrowRight' ? 1 : -1) + availableTabs.length) % availableTabs.length;
+    goTab(availableTabs[target].id.replace('tab-', ''), true);
   });
   addEventListener('popstate', () => setTab(location.hash.slice(1)));
   addEventListener('hashchange', () => { if (routeIds.includes(location.hash.slice(1))) setTab(location.hash.slice(1)); });
@@ -108,6 +111,12 @@
     $('#sign-out').textContent = user?.is_anonymous ? 'Ieși din modul oaspete' : 'Deconectare';
     $('#my-reports').hidden = !client;
     $('#admin-tools').hidden = !moderator;
+    messagesAllowed = moderator;
+    $('#tab-mesaje').hidden = !moderator;
+    if (location.hash === '#mesaje') {
+      if (!moderator) history.replaceState(null, '', location.pathname + location.search + '#despre');
+      setTab(moderator ? 'mesaje' : 'despre');
+    } else if (!moderator) $('#mesaje').hidden = true;
     $('#work-editor').hidden = !moderator;
     if (!moderator) { workDirty = false; $('#work-form').reset(); }
     $('#reports-heading').textContent = moderator ? 'Raportări publice și private' : 'Raportări publice';

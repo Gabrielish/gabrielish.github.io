@@ -8,7 +8,7 @@ const assert=require('node:assert/strict');
     const failures=[];page.on('response',r=>{if(r.url().startsWith(base)&&r.status()>=400)failures.push(r.url())});
     await page.goto(base,{waitUntil:'networkidle'});await page.waitForSelector('html.portal-ready');
     assert.equal(await page.locator('h1').textContent(),'Baldur’s Gate 3');
-    assert.equal(await page.locator('[role=tab]').count(),5);
+    assert.equal(await page.locator('[role=tab]:visible').count(),5);
     assert((await page.locator('meta[name=robots]').getAttribute('content')).startsWith('index,'));
     assert.equal(await page.locator('.boot-message').count(),0,'No preview notice on home');
     assert.equal(await page.locator('[src^="../"],[href^="../"]').count(),0);

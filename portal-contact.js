@@ -2,19 +2,32 @@
   'use strict';
   const form = document.querySelector('#contact-form');
   const inbox = document.querySelector('#contact-inbox');
+  const messagesTab = document.querySelector('#tab-mesaje');
   if (!form && !inbox) return;
   let client = null, owner = false, offset = 0, generation = 0, sending = false;
+  let unreadRequest = 0, unreadTimer;
+  async function loadUnread(){
+    if(!owner||!client||!messagesTab)return;
+    const ticket=++unreadRequest;
+    try{
+      const {count,error}=await client.from('bg3ro_contact_messages').select('id',{count:'exact',head:true}).eq('is_read',false);
+      if(ticket!==unreadRequest||!owner||error||!Number.isFinite(count))return;
+      messagesTab.textContent=count>0?`Mesaje (${count})`:'Mesaje';
+      messagesTab.setAttribute('aria-label',count>0?`Mesaje (${count} necitite)`:'Mesaje');
+    }catch(_){/* Keep the last known count on transient network failures. */}
+  }
   const pageSize = 20;
   const node = (tag, text, className) => { const el=document.createElement(tag); if(text!==undefined)el.textContent=text; if(className)el.className=className; return el; };
   function status(target,message,error=false){const el=target.querySelector('.form-status');el.textContent=message;el.classList.toggle('error',error);}
   function authChanged(detail){
-    generation++; client=detail.client;owner=detail.moderator===true;offset=0;
+    generation++; unreadRequest++;clearInterval(unreadTimer);client=detail.client;owner=detail.moderator===true;offset=0;
+    if(messagesTab){messagesTab.textContent='Mesaje';messagesTab.setAttribute('aria-label','Mesaje');}
     if(form){
       form.querySelector('[type=submit]').disabled=!client||sending;
       if(!client)status(form,'Formularul este indisponibil momentan. Scrie la gabrielish@proton.me.',true);
       else if(form.querySelector('.form-status').textContent.startsWith('Se pregătește'))status(form,'');
     }
-    if(inbox){inbox.hidden=!owner;inbox.querySelector('.contact-messages').replaceChildren();if(owner)loadInbox();}
+    if(inbox){inbox.hidden=!owner;inbox.querySelector('.contact-messages').replaceChildren();status(inbox,'');if(owner){loadInbox();loadUnread();unreadTimer=setInterval(()=>{if(!document.hidden)loadUnread();},60000);}}
   }
   async function loadInbox(){
     if(!client||!owner||!inbox)return;
@@ -42,6 +55,7 @@
       inbox.querySelector('[data-contact-prev]').disabled=offset===0;
       inbox.querySelector('[data-contact-next]').disabled=offset+pageSize>=(count||0);
       status(inbox,(count||0)+' mesaje private. Pagina '+(offset/pageSize+1)+'.');
+      loadUnread();
     }catch(_){if(request===generation&&owner)status(inbox,'Mesajele nu au putut fi încărcate. Încearcă din nou.',true);}
   }
   async function change(button,action){
@@ -57,6 +71,9 @@
   }
   // Reuse the main page client, session and server-verified moderator state.
   addEventListener('bg3ro:auth',event=>authChanged(event.detail));
+  addEventListener('bg3ro:tab',event=>{if(owner&&event.detail.id==='mesaje'){loadInbox();loadUnread();}});
+  addEventListener('focus',()=>{if(owner)loadUnread();});
+  document.addEventListener('visibilitychange',()=>{if(owner&&!document.hidden)loadUnread();});
   if(!form)return;
   const button=form.querySelector('[type=submit]');button.disabled=true;
   form.addEventListener('submit',async event=>{

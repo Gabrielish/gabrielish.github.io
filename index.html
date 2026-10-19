@@ -42,7 +42,7 @@
   <link rel="stylesheet" href="./portal-hero.css?v=20261018-full-fireflies">
   <link rel="stylesheet" href="./portal-footer.css?v=20261019-bottom-reversed">
   <link rel="stylesheet" href="./information.css?v=20261018-clean-footer">
-  <script src="./portal-contact.js?v=20261018-integrated" defer></script>
+  <script src="./portal-contact.js?v=20261019-private-messages-tab" defer></script>
   <link rel="stylesheet" href="./portal-navbar.css?v=20261019-original-dot-animation">
   <script src="./portal-config.js?v=20261017-discord" defer></script>
   <link rel="stylesheet" href="./portal-sidebar.css?v=20261019-download-spacing">
@@ -55,7 +55,7 @@
   <link rel="stylesheet" href="./portal-discussions.css?v=20261018-threads-avatars">
   <link rel="stylesheet" href="./portal-forms.css?v=20261019-centered-select-content">
   <script src="./portal-auth-storage.js?v=20261018-remember-session" defer></script>
-  <script src="./portal.js?v=20261019-dropdown-report-actions" defer></script>
+  <script src="./portal.js?v=20261019-private-messages-tab" defer></script>
   <script src="./portal-navbar.js?v=20261018-compact-mobile" defer></script>
   <script src="./portal-video.js?v=20261018-no-dice" defer></script>
   <title>Baldur’s Gate 3 | Traducere în Limba Română</title>
@@ -99,7 +99,7 @@
     </section>
     <div class="container portal-shell" id="continut">
       <nav class="tab-list" aria-label="Secțiunile proiectului">
-        <a href="#despre" id="tab-despre">Despre</a><a href="#actualizari" id="tab-actualizari">Actualizări</a><a href="#descarcari" id="tab-descarcari">Descărcări</a><a href="#discutii" id="tab-discutii">Discuții</a><a href="#erori" id="tab-erori">Raportare erori</a>
+        <a href="#despre" id="tab-despre">Despre</a><a href="#actualizari" id="tab-actualizari">Actualizări</a><a href="#descarcari" id="tab-descarcari">Descărcări</a><a href="#discutii" id="tab-discutii">Discuții</a><a href="#erori" id="tab-erori">Raportare erori</a><a href="#mesaje" id="tab-mesaje" hidden>Mesaje</a>
       </nav>
       <noscript><p class="noscript">JavaScript este necesar pentru autentificare și comunitate. Descrierea, progresul și descărcarea de pe Nexus sunt disponibile mai jos.</p></noscript>
       <div class="page-grid">
@@ -126,6 +126,8 @@
               <details><summary>Publică o actualizare</summary><form id="update-form"><div class="field"><label for="update-title">Titlu</label><input id="update-title" name="title" required maxlength="160"></div><div class="field"><label for="update-body">Conținut</label><textarea id="update-body" name="body" required maxlength="12000"></textarea></div><button class="btn" type="submit">Publică actualizarea</button><p class="form-status" role="status"></p></form></details>
               <details><summary>Modifică progresul</summary><form id="progress-form"><div class="field"><label for="progress-value">Traducere (%)</label><input id="progress-value" name="translation_percent" type="number" min="0" max="100" value="80" required></div><div class="form-grid"><div class="field"><label for="progress-review-value">Corectură (%)</label><input id="progress-review-value" name="review_percent" type="number" min="0" max="100" value="20" required></div><div class="field"><label for="progress-testing-value">Testare (%)</label><input id="progress-testing-value" name="testing_percent" type="number" min="0" max="100" value="20" required></div></div><button class="btn" type="submit">Salvează progresul</button><p class="form-status" role="status"></p></form></details>
             </section>
+          </section>
+          <section id="mesaje" class="tab-panel panel-stack" aria-labelledby="tab-mesaje" hidden>
             <section class="card contact-inbox" id="contact-inbox" hidden aria-labelledby="inbox-title"><h2 id="inbox-title">Mesaje de contact</h2><p class="small">Căsuță privată, accesibilă doar moderatorului. Formularul salvează mesajele aici; nu trimite notificări prin e-mail. „Răspunde” deschide aplicația ta de e-mail.</p><div class="pager"><button type="button" class="btn secondary" data-contact-refresh>Reîncarcă</button><button type="button" class="btn secondary" data-contact-prev disabled>Înapoi</button><button type="button" class="btn secondary" data-contact-next disabled>Înainte</button></div><p class="form-status" role="status"></p><div class="contact-messages"></div></section>
           </section>
           <section id="descarcari" class="tab-panel panel-stack" aria-labelledby="tab-descarcari">

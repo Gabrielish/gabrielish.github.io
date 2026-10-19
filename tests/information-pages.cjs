@@ -12,7 +12,7 @@ function fakeSDK(){
  const found=state.rows.filter(row=>!this.filter||row[this.filter[0]]===this.filter[1]);
  if(this.op==='update')found.forEach(row=>Object.assign(row,this.payload));
  if(this.op==='delete')state.rows=state.rows.filter(row=>!found.includes(row));
- return{data:this.op==='select'?state.rows.slice(this.bounds[0],this.bounds[1]+1):found,count:state.rows.length,error:null};
+ return{data:this.op==='select'?found.slice(this.bounds[0],this.bounds[1]+1):found,count:found.length,error:null};
  }).then(resolve,reject);}};return q;}};
 }
 (async()=>{
@@ -47,7 +47,7 @@ function fakeSDK(){
  }
  const p=await browser.newPage();await p.addInitScript(()=>window.__qaContactOwner=true);
  await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:'export const createClient=()=>('+fakeSDK.toString()+')();'}));
- await p.goto(base+'#actualizari',{waitUntil:'networkidle'});await p.waitForSelector('#contact-inbox:visible');await p.waitForSelector('.contact-message');
+ await p.goto(base+'#mesaje',{waitUntil:'networkidle'});await p.waitForSelector('#contact-inbox:visible');await p.waitForSelector('.contact-message');
  assert.equal(await p.locator('.contact-message img').count(),0,'Message rendered as text, not HTML');
  await p.getByRole('button',{name:'Marchează citit',exact:true}).click();await p.waitForFunction(()=>__contactQA.rows[0].is_read===true);
  p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Șterge',exact:true}).click();await p.waitForFunction(()=>__contactQA.rows.length===0);await p.close();

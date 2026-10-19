@@ -14,7 +14,7 @@ const fs = require('node:fs');
       await page.goto(base,{waitUntil:'networkidle'});
       await page.waitForSelector('html.portal-ready');
       assert.equal(await page.locator('h1').textContent(),'Baldur’s Gate 3');
-      assert.equal(await page.locator('[role=tab]').count(),5);
+      assert.equal(await page.locator('[role=tab]:visible').count(),5);
       assert.equal(await page.locator('[role=tabpanel]:visible').count(),1);
       assert.equal(await page.locator('#despre [role=progressbar]').count(),3);
       assert.deepEqual(await page.locator('#despre [role=progressbar]').evaluateAll(nodes=>nodes.map(el=>el.getAttribute('aria-valuenow'))),['80','20','20']);
