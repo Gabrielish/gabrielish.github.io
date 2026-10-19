@@ -9,6 +9,7 @@ const assert=require('node:assert/strict');
   await page.setContent('<form id="report-form"><input name="title" value="Test"><div id="report-photo-drop"><strong id="report-photo-label"></strong><input id="report-photo" type="file"><img id="report-photo-preview" hidden><button type="button" id="report-photo-remove" hidden>Remove</button><p id="report-photo-status"></p><button type="submit">Send</button></div></form><article id="report"><form></form></article>');
   await page.addScriptTag({content:fs.readFileSync(require('node:path').join(__dirname,'../portal-report-photo.js'),'utf8')});
   const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=64;c.height=32;c.getContext('2d').fillRect(0,0,64,32);return c.toDataURL('image/png').split(',')[1]});
+  await page.route('https://test.supabase.co/**',route=>route.fulfill({contentType:'image/png',body:Buffer.from(png,'base64')}));
   await page.locator('#report-photo').setInputFiles({name:'bad.png',mimeType:'image/png',buffer:Buffer.from('<svg onload="alert(1)"/>')});
   await page.waitForFunction(()=>document.querySelector('#report-photo-status').textContent.includes('validă'));
   assert.equal(await page.locator('#report-photo').inputValue(),'');
@@ -44,6 +45,19 @@ const assert=require('node:assert/strict');
    return{...calls,beforeForm,reset:document.querySelector('#report-photo-preview').hidden&&!document.querySelector('#report-photo').disabled};
   });
   assert.deepEqual(results,{inserts:1,uploads:2,attaches:2,removes:1,beforeForm:true,reset:true});
+  const beforeURL=page.url(),popups=[];page.on('popup',popup=>popups.push(popup));
+  const thumbnail=page.locator('.report-photo-link');
+  assert.equal(await thumbnail.evaluate(el=>el.tagName),'BUTTON');
+  // Synthetic signed URL serves a local generated PNG, never real user content.
+  await page.route('https://test.supabase.co/**',route=>route.fulfill({contentType:'image/png',body:Buffer.from(png,'base64')}));
+  await thumbnail.click();await page.waitForSelector('.report-photo-viewer[open]');
+  await page.getByRole('button',{name:'Închide fotografia'}).click();
+  assert.equal(await page.locator('.report-photo-viewer').evaluate(el=>el.open),false);
+  await thumbnail.focus();await page.keyboard.press('Enter');await page.waitForSelector('.report-photo-viewer[open]');
+  await page.keyboard.press('Escape');assert.equal(await page.locator('.report-photo-viewer').evaluate(el=>el.open),false);
+  await thumbnail.click();await page.waitForSelector('.report-photo-viewer[open]');
+  await page.mouse.click(1,1);assert.equal(await page.locator('.report-photo-viewer').evaluate(el=>el.open),false);
+  assert.equal(page.url(),beforeURL);assert.equal(popups.length,0);
   console.log('PASS: valid screenshot preview/removal, invalid image rejection, JPEG conversion, upload and RPC retries without duplicate reports, signed image display, cleanup and reset.');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
