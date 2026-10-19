@@ -16,16 +16,18 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await p.locator('#work-editor').isVisible(),owner);
   if(owner){
    await p.locator('#work-editor > .edit-pencil').click();assert.equal(await p.locator('#work-title').inputValue(),'La ce lucrez acum');
-   await p.locator('#work-title').fill('Etapa curentă');await p.locator('#work-body').fill('<img src=x onerror=alert(1)>\nRevizuiesc traducerea.');await p.locator('#work-note').fill('');
+   assert.deepEqual(await p.locator('#work-form [name]').evaluateAll(nodes=>nodes.map(n=>n.name)),['work_title','work_body']);
+   assert.equal(await p.locator('#work-form .help,#work-note').count(),0);
+   const existingNote=await p.locator('#current-work-note').textContent();
+   await p.locator('#work-title').fill('Etapa curentă');await p.locator('#work-body').fill('<img src=x onerror=alert(1)>\nRevizuiesc traducerea.');
    await p.evaluate(()=>window.__communityTest.failWork=true);await p.locator('#work-form button[type=submit]').click();await p.waitForSelector('#work-form .form-status.error');
    assert.equal(await p.locator('#current-work-title').textContent(),'La ce lucrez acum');assert.equal(await p.locator('#work-title').inputValue(),'Etapa curentă');
    await p.evaluate(()=>window.__communityTest.failWork=false);await p.locator('#work-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#current-work-title').textContent==='Etapa curentă');
-   assert.equal(await p.locator('#current-work-body img').count(),0);assert.equal(await p.locator('#current-work-note').isVisible(),false);
-   await p.locator('#work-note').fill('Notă publică');await p.locator('#work-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#current-work-note').textContent==='Notă publică');
-   assert(await p.locator('#current-work-note').isVisible());
+   assert.equal(await p.locator('#current-work-body img').count(),0);
+   assert.equal(await p.locator('#current-work-note').textContent(),existingNote,'Removing the modal field does not overwrite existing content');
    await p.keyboard.press('Escape');await clickNav(p,'#sign-out');await p.waitForSelector('#work-editor',{state:'hidden'});assert.equal(await p.locator('#current-work-title').textContent(),'Etapa curentă');
   }
   assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await p.close();
  }
- console.log('PASS: updates heading/Nexus row removed; only moderator edits work title/body/note; save/error/empty-note/logout and safe text. Synthetic SDK.');
+ console.log('PASS: moderator work modal contains title and text only; save/error/logout, existing content preservation and safe text. Synthetic SDK.');
 }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});

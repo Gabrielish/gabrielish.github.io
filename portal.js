@@ -202,7 +202,7 @@
       const output = $(`#current-work-${field}`), value = data[`work_${field}`];
       if (typeof value === 'string') output.textContent = value;
       if (field === 'note') output.hidden = !output.textContent.trim();
-      if (!workDirty) $(`#work-${field}`).value = output.textContent;
+      if (!workDirty && field !== 'note') $(`#work-${field}`).value = output.textContent;
     }
   }
   $('#work-form').addEventListener('input', () => { workDirty = true; });
