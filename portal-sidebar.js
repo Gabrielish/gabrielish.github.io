@@ -20,14 +20,15 @@
   const platforms = { windows: 'Windows', macos: 'macOS', linux: 'Linux / Steam Deck', ps5: 'PS5', other: 'Altă platformă' };
   const setText = (selector, text) => { $(selector).textContent = text; };
   let releaseVersions = [], versionsState = 'loading';
-  const versionKey = value => String(value || '').trim().toLowerCase();
+  const versionKey = window.BG3RO_VERSIONS.key;
   function drawVersions(preferred = $('#compatibility-version').value) {
+    preferred = window.BG3RO_VERSIONS.version(preferred);
     const select = $('#compatibility-version');
     const placeholder = document.createElement('option');placeholder.value = '';
     placeholder.textContent = versionsState === 'loading' ? 'Se încarcă…' : versionsState === 'error' && !releaseVersions.length ? 'Versiuni indisponibile' : releaseVersions.length ? 'Nespecificată' : 'Nicio versiune publicată';
     select.replaceChildren(placeholder);
     const choices = [...releaseVersions];
-    const previous = String(myVote?.mod_version || '').trim();
+    const previous = window.BG3RO_VERSIONS.version(myVote?.mod_version);
     if (previous && !choices.some(value => versionKey(value) === versionKey(previous))) choices.push(previous);
     for (const value of choices) {
       const option = document.createElement('option');option.value = value;option.textContent = value;
@@ -39,7 +40,7 @@
   window.addEventListener('bg3ro:releases-updated', event => {
     if (!Array.isArray(event.detail?.versions)) return;
     const unique = new Map();
-    event.detail.versions.forEach(value => { if (typeof value === 'string' && value.trim() && value.trim().length <= 80 && !unique.has(versionKey(value))) unique.set(versionKey(value),value.trim()); });
+    event.detail.versions.forEach(value => { if (typeof value === 'string' && value.trim() && value.trim().length <= 80 && !unique.has(versionKey(value))) unique.set(versionKey(value),window.BG3RO_VERSIONS.version(value)); });
     releaseVersions = [...unique.values()];versionsState = 'ready';drawVersions();
   });
   window.addEventListener('bg3ro:releases-unavailable', () => { versionsState = 'error';drawVersions(); });
@@ -76,7 +77,7 @@
         title.textContent=report.works ? 'Funcționează' : 'Nu funcționează';
         detail.className='compatibility-report-meta';author.className='compatibility-author';
         author.textContent=report.author_name || 'Utilizator';
-        detail.append(author,document.createTextNode(` • ${platforms[report.platform] || 'Altă platformă'} • ${report.mod_version || 'Versiune nespecificată'} • ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`));
+        detail.append(author,document.createTextNode(` • ${platforms[report.platform] || 'Altă platformă'} • ${window.BG3RO_VERSIONS.version(report.mod_version) || 'Versiune nespecificată'} • ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`));
         content.append(title,detail);item.append(thumbIcon(report.works),content);list.append(item);
       });
       drawOwn();

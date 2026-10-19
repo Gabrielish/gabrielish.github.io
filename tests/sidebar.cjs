@@ -50,9 +50,9 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.equal(await page.locator('.compatibility-counts svg').count(),2,'Counter icons survive refreshed totals');
  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-updated',{detail:{versions:['v0.9.0','v0.8.0']}})));
  assert.equal(await page.locator('#compatibility-version').inputValue(),'<img src=x> test','An existing historical vote is retained');
- await page.locator('#compatibility-version').selectOption('v0.8.0');
+ await page.locator('#compatibility-version').selectOption('v0.7.9');
  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-unavailable')));
- assert.equal(await page.locator('#compatibility-version').inputValue(),'v0.8.0','A temporary release error preserves the selected version');
+ assert.equal(await page.locator('#compatibility-version').inputValue(),'v0.7.9','A temporary release error preserves the selected version');
  await page.locator('[data-works="false"]').click();await page.waitForFunction(()=>document.querySelector('#compatibility-percent').textContent==='0%');
  assert.equal(await page.locator('#recent-compatibility-list .is-broken>svg.is-down').count(),1);
  assert.equal(await page.locator('#works-count').textContent(),'0 funcționează');assert.equal(await page.locator('#broken-count').textContent(),'1 nu funcționează');

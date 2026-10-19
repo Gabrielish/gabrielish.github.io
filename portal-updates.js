@@ -25,7 +25,8 @@
  const publish=document.querySelector('#update-form');
  if(publish){const save=publish.querySelector('[type=submit]'),status=publish.querySelector('.form-status');extras(publish);publish.append(save,status);}
  window.BG3RO_UPDATES={values,render(client,data,target,moderator,userId,reload){
-  data.forEach(update=>{
+  data.forEach(stored=>{
+   const update={...stored};for(const field of ['title','body','badge_label'])update[field]=window.BG3RO_VERSIONS.text(update[field]);
    const article=el('article','card manual-update'),layout=el('div','post'),content=el('div','post-content'),header=el('div','manual-update-header'),meta=el('div','post-meta'),avatar=el('img','post-avatar');
    const remote=/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(update.author_avatar_url||'');
    avatar.src=remote?update.author_avatar_url:'./assets/discussion-avatar.svg';avatar.classList.toggle('post-avatar-default',!remote);avatar.alt='';avatar.width=44;avatar.height=44;avatar.loading='lazy';avatar.referrerPolicy='no-referrer';

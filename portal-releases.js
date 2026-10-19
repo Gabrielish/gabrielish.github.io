@@ -355,7 +355,12 @@
         .limit(100);
       if (ticket !== request) return;
       if (result.error) throw result.error;
-      rows = result.data || [];
+      rows = (result.data || []).map(row => {
+        const copy={...row};
+        for(const field of ['version','title','description','tags','news_title','news_body','news_badge'])copy[field]=window.BG3RO_VERSIONS.text(copy[field]);
+        copy.version=window.BG3RO_VERSIONS.version(copy.version);
+        return copy;
+      });
       draw();
       $("#release-load-status").textContent = "";
       window.dispatchEvent(new CustomEvent("bg3ro:releases-updated", { detail: { versions: rows.filter(row => row.kind === "translation").map(row => row.version) } }));

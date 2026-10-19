@@ -363,7 +363,7 @@
       copy.append(element('span', 'post-status', statusLabels[report.status]));
       header.append(copy); content.append(header); layout.append(avatar, content); article.append(layout);
       const title = element('h3', 'post-title report-title-row');
-      title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${report.mod_version}`));
+      title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${window.BG3RO_VERSIONS.version(report.mod_version)}`));
       content.append(title, element('div', 'post-body report-body', report.body));
       if (report.moderator_reply) content.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
       if (moderator) {

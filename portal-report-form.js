@@ -3,9 +3,9 @@
  const select=document.querySelector('#report-version');
  if(!select)return;
  let versions=[];
- const key=value=>String(value).trim().toLowerCase();
+ const key=window.BG3RO_VERSIONS.key;
  function render(state){
-  const selected=select.value,first=document.createElement('option');first.value='';
+  const selected=window.BG3RO_VERSIONS.version(select.value),first=document.createElement('option');first.value='';
   first.textContent=state==='error'&&!versions.length?'Versiuni indisponibile':versions.length?'Alege versiunea':'Nicio versiune publicată';
   select.replaceChildren(first);
   const choices=[...versions];
@@ -17,7 +17,7 @@
  window.addEventListener('bg3ro:releases-updated',event=>{
   if(!Array.isArray(event.detail?.versions))return;
   const unique=new Map();
-  for(const value of event.detail.versions)if(typeof value==='string'&&value.trim()&&value.trim().length<=80&&!unique.has(key(value)))unique.set(key(value),value.trim());
+  for(const value of event.detail.versions)if(typeof value==='string'&&value.trim()&&value.trim().length<=80&&!unique.has(key(value)))unique.set(key(value),window.BG3RO_VERSIONS.version(value));
   versions=[...unique.values()];render('ready');
  });
  window.addEventListener('bg3ro:releases-unavailable',()=>render('error'));
