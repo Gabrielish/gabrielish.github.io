@@ -59,5 +59,6 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.evaluate(()=>window.__sidebarTest.fail=true);await page.locator('[data-rating="2"]').click();await page.waitForSelector('#rating-status.error');assert.equal(await page.locator('#rating-average').textContent(),'4.0');
  assert((await page.locator('.quick-download a[href*="nexusmods"]').getAttribute('href')).includes('tab=files'));assert.equal(await page.locator('#github-quick-download:visible').count(),0);assert.equal(await page.locator('#statistics-updated').textContent(),'Nicio actualizare');
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ assert.equal(await page.locator('.sidebar-share,.sidebar-support,#share-project').count(),0,'Removed sidebar cards stay absent');
  await page.locator('.sidebar').screenshot({path:`.qa/sidebar-${width}.png`});await page.close();
 }console.log('PASS: sidebar responsive, quick download, empty state, login gating, star/vote save/error, anonymous recent reports and text-only rendering.');}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

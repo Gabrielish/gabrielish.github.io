@@ -117,7 +117,6 @@
     const payload = { works: button.dataset.works === 'true', platform: $('#compatibility-platform').value, mod_version: $('#compatibility-version').value.trim() };
     if (await save('bg3ro_compatibility', payload, '#compatibility-status')) { myVote = payload;drawOwn();await loadStats(); }
   }));
-  $('#share-project').addEventListener('click', async () => { try { await navigator.clipboard.writeText('https://gabrielish.github.io/');status('#share-status', 'Link copiat.'); } catch (_) { status('#share-status', 'https://gabrielish.github.io/'); } });
   window.addEventListener('bg3ro:releases-updated', loadStats);
   loadStats();
 })();
