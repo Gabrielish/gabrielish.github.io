@@ -355,12 +355,16 @@
       avatar.src = remote ? report.author_avatar_url : './assets/discussion-avatar.svg';
       avatar.classList.toggle('post-avatar-default', !remote); avatar.alt = ''; avatar.width = 44; avatar.height = 44; avatar.loading = 'lazy'; avatar.referrerPolicy = 'no-referrer';
       if (remote) avatar.addEventListener('error', () => { avatar.classList.add('post-avatar-default'); avatar.src = './assets/discussion-avatar.svg'; }, { once: true });
-      const header = element('div', 'report-header'), author = element('div', 'report-author'), copy = element('div', 'report-author-copy');
-      copy.append(element('strong', '', report.author_name || 'Jucător'));
-      if (report.is_guest) copy.append(element('p', 'small', 'Oaspete'));
-      if (!report.is_public) copy.append(element('p', 'small', 'Privată'));
+      const header = element('div', 'report-header'), author = element('div', 'report-author'), copy = element('div', 'report-author-copy report-meta');
+      const date = element('time', '', dateText(report.created_at)); date.dateTime = report.created_at;
+      copy.append(element('strong', '', report.author_name || 'Jucător'), date);
+      if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete · nume neverificat'));
+      if (!report.is_public) copy.append(element('span', 'post-status', 'Privată'));
+      copy.append(element('span', 'post-status', statusLabels[report.status]));
       author.append(avatar, copy); header.append(author); article.append(header);
-      article.append(element('span', 'post-status', statusLabels[report.status]), element('h3', '', report.title), element('p', 'small', `${dateText(report.created_at)} · ${report.platform} · ${report.mod_version}`), element('p', '', report.body));
+      const title = element('h3', 'report-title-row');
+      title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${report.mod_version}`));
+      article.append(title, element('p', 'report-body', report.body));
       if (report.moderator_reply) article.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
       if (moderator) {
         const form = element('form'); const field = element('div', 'field');

@@ -32,4 +32,11 @@
 .report-toolbar>.btn{width:40px;height:40px;min-height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center}
 .report-toolbar svg{width:18px;height:18px;margin:0}
 .report-item>h3{margin-top:12px}
+.report-author-copy.report-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0;line-height:1.5}
+.report-author-copy time{font-size:12px;color:var(--muted)}
+.report-author-copy .post-status{font-weight:400}
+.report-item>.report-title-row,.report-item>.report-body,.report-item>strong,.report-item>strong+p,.report-item>.report-photo-link{margin-left:56px}
+.report-title-row{overflow-wrap:anywhere}
+.report-title-row .report-platform-version{font-size:13px;font-weight:400;color:var(--muted)}
+@media(max-width:600px){.report-item>.report-title-row,.report-item>.report-body,.report-item>strong,.report-item>strong+p,.report-item>.report-photo-link{margin-left:42px}.report-author-copy.report-meta{gap:6px 8px}.report-author-copy time{font-size:11px}}
 @media(max-width:600px){.report-context{grid-template-columns:1fr}.report-context>.report-photo-field{order:2}.report-photo-field{padding:14px}.report-author{gap:8px}.report-author .post-avatar{width:34px;height:34px}.report-toolbar{gap:5px}.report-toolbar>.btn,.report-toolbar .edit-pencil{width:34px;height:34px;min-height:34px}.report-header{gap:8px}.report-author-copy strong{font-size:14px}}

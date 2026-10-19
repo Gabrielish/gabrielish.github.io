@@ -16,6 +16,9 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await page.locator('#report-name').isVisible(),false);
   assert.equal(await page.locator('.report-author img').count(),1);
   assert(!(await page.locator('.report-header').textContent()).includes('Raportare publică'));
+  assert.equal(await page.locator('.report-author time').getAttribute('datetime'),'2026-10-19T10:00:00Z');
+  assert.equal(await page.locator('.report-author .post-status').textContent(),'Nou');
+  assert.equal(await page.locator('.report-title-row').textContent(),'Raport de test · windows · test');
   const toolbar=page.locator('.report-toolbar');
   const edit=toolbar.getByRole('button',{name:'Editează raportarea'}),remove=toolbar.getByRole('button',{name:'Șterge raportarea'});
   const a=await edit.boundingBox(),b=await remove.boundingBox();assert(Math.abs(a.y-b.y)<1&&b.x>=a.x+a.width,'Icon buttons share top row');
