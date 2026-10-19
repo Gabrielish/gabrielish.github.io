@@ -187,7 +187,7 @@
   }
   async function loadProgress() {
     if (!client) return;
-    const { data, error } = await client.from('bg3ro_project_status').select('translation_percent,review_percent,testing_percent,work_title,work_body,work_note').eq('id', 1).maybeSingle();
+    const { data, error } = await client.from('bg3ro_project_status').select('translation_percent,review_percent,testing_percent,work_title,work_body').eq('id', 1).maybeSingle();
     if (error || !data) return;
     for (const [kind, field, input] of [['translation','translation_percent','progress-value'],['review','review_percent','progress-review-value'],['testing','testing_percent','progress-testing-value']]) {
       const value = Number(data[field]);
@@ -198,11 +198,10 @@
       $(`#${kind}-progress`).setAttribute('aria-valuenow', String(percent));
       $(`#${input}`).value = percent;
     }
-    for (const field of ['title','body','note']) {
+    for (const field of ['title','body']) {
       const output = $(`#current-work-${field}`), value = data[`work_${field}`];
       if (typeof value === 'string') output.textContent = value;
-      if (field === 'note') output.hidden = !output.textContent.trim();
-      if (!workDirty && field !== 'note') $(`#work-${field}`).value = output.textContent;
+      if (!workDirty) $(`#work-${field}`).value = output.textContent;
     }
   }
   $('#work-form').addEventListener('input', () => { workDirty = true; });
@@ -212,7 +211,7 @@
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
       Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
       if (!values.work_title || !values.work_body) throw new Error('Empty work content');
-      const { data, error } = await client.from('bg3ro_project_status').update(values).eq('id', 1).select('work_title,work_body,work_note').maybeSingle();
+      const { data, error } = await client.from('bg3ro_project_status').update(values).eq('id', 1).select('work_title,work_body').maybeSingle();
       if (error || !data) throw error || new Error('Work section not saved');
       workDirty = false; await loadProgress(); formStatus(form, 'Secțiunea a fost salvată.');
     });

@@ -18,13 +18,13 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    await p.locator('#work-editor > .edit-pencil').click();assert.equal(await p.locator('#work-title').inputValue(),'La ce lucrez acum');
    assert.deepEqual(await p.locator('#work-form [name]').evaluateAll(nodes=>nodes.map(n=>n.name)),['work_title','work_body']);
    assert.equal(await p.locator('#work-form .help,#work-note').count(),0);
-   const existingNote=await p.locator('#current-work-note').textContent();
+   assert.equal(await p.locator('#current-work-note').count(),0);
    await p.locator('#work-title').fill('Etapa curentă');await p.locator('#work-body').fill('<img src=x onerror=alert(1)>\nRevizuiesc traducerea.');
    await p.evaluate(()=>window.__communityTest.failWork=true);await p.locator('#work-form button[type=submit]').click();await p.waitForSelector('#work-form .form-status.error');
    assert.equal(await p.locator('#current-work-title').textContent(),'La ce lucrez acum');assert.equal(await p.locator('#work-title').inputValue(),'Etapa curentă');
    await p.evaluate(()=>window.__communityTest.failWork=false);await p.locator('#work-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#current-work-title').textContent==='Etapa curentă');
    assert.equal(await p.locator('#current-work-body img').count(),0);
-   assert.equal(await p.locator('#current-work-note').textContent(),existingNote,'Removing the modal field does not overwrite existing content');
+   assert.equal(await p.locator('#current-work-note').count(),0,'Saving must not restore the removed note');
    await p.keyboard.press('Escape');await clickNav(p,'#sign-out');await p.waitForSelector('#work-editor',{state:'hidden'});assert.equal(await p.locator('#current-work-title').textContent(),'Etapa curentă');
   }
   assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await p.close();
