@@ -271,7 +271,8 @@
         target.append(placeholder);
       }
     });
-    rows.forEach((row) => {
+    const localizationUpdates = rows.filter((row) => row.kind === "translation");
+    localizationUpdates.forEach((row) => {
       const article = el("article", "card release-news"),
         meta = el("div", "release-meta"),
         time = el("time", "", date(row.published_at));
@@ -319,7 +320,7 @@
       news.append(article);
     });
     $("#release-editor").hidden = !moderator;
-    $("#release-updates").hidden = !rows.length;
+    $("#release-updates").hidden = !localizationUpdates.length;
     syncNewsEmpty();
     const latest = rows.find(
       (r) => r.kind === "translation" && archiveURL(r.download_url),
@@ -364,8 +365,9 @@
   function syncNewsEmpty() {
     const list = $("#updates-list");
     const empty = list.querySelector(".release-empty-news");
-    if (empty) empty.hidden = rows.length > 0;
-    list.closest(".card").hidden = rows.length > 0 && !!empty && list.children.length === 1;
+    const hasLocalization = rows.some((row) => row.kind === "translation");
+    if (empty) empty.hidden = hasLocalization;
+    list.closest(".card").hidden = hasLocalization && !!empty && list.children.length === 1;
   }
   window.addEventListener("bg3ro:updates-loaded", syncNewsEmpty);
   $("#upload-release-file").addEventListener("click", async () => {
@@ -415,7 +417,9 @@
       if (result.error || !result.data?.length) throw Error();
       form.reset();
       await load();
-      status.textContent = "Versiunea și anunțul ei au fost publicate.";
+      status.textContent = values.kind === "translation"
+        ? "Versiunea și anunțul ei au fost publicate."
+        : "Versiunea modului a fost publicată în Descărcări.";
     } catch (_) {
       status.textContent =
         "Publicarea nu a reușit. Verifică drepturile, câmpurile și dacă această versiune există deja.";

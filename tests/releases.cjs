@@ -27,6 +27,9 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       const errors=[];p.on('pageerror',e=>errors.push(e.message));
       await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
       await p.waitForSelector('#release-updates .release-news',{state:'attached'});
+      assert.equal(await p.locator('#release-updates .release-news').count(),1,'Only localization appears in Updates');
+      assert((await p.locator('#release-updates').textContent()).includes('Versiune de test translation'));
+      for(const kind of ['search','item_gender','combat_log'])assert(!(await p.locator('#release-updates').textContent()).includes(`Versiune de test ${kind}`),'Mod announcements are excluded');
       assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.1'],'Version dropdown uses published base translations only');
       const badge=p.locator('#release-updates .release-version-badge').first();
       assert.equal(await badge.textContent(),'Versiunea 0.1');
