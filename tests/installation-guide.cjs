@@ -12,8 +12,17 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    assert.equal(await guide.locator('.installation-platform').count(),3);
    const panelColors=await guide.locator('.installation-platform,.installation-backup').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).backgroundColor));
    assert.deepEqual(panelColors,Array(4).fill('rgb(24, 25, 25)'),'Windows, macOS, PS5 and backup match release notes');
-   assert.equal(await guide.locator('.installation-platform summary svg,.installation-platform summary img,#install-ps5 img').count(),3);
+   assert.equal(await guide.locator('.installation-platform-name svg,.installation-platform-name img,#install-ps5 img').count(),3);
+   assert.equal(await guide.locator('svg.installation-chevron[aria-hidden="true"]').count(),2);
    for(const platform of ['windows','macos']){
+    const accordion=guide.locator(`#install-${platform}`);
+    assert.equal(await accordion.getAttribute('open'),null,'Guide starts collapsed');
+    assert.equal(await accordion.locator('.installation-content').isVisible(),false);
+    await accordion.locator('summary').focus();await page.keyboard.press('Enter');
+    assert.notEqual(await accordion.getAttribute('open'),null);
+    assert(await accordion.locator('.installation-content').isVisible());
+    await page.keyboard.press('Enter');
+    assert.equal(await accordion.getAttribute('open'),null);
     assert.equal(await guide.locator(`#install-${platform} .installation-content section`).count(),2);
     assert.equal(await guide.locator(`#install-${platform}-localization`).textContent(),'Localizare');
     assert.equal(await guide.locator(`#install-${platform}-mods`).textContent(),'Moduri suplimentare');
@@ -24,9 +33,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    assert((await page.locator('.installation-backup').textContent()).includes('copie'));
    assert((await page.locator('#install-windows-mods').locator('..').textContent()).includes('Nu pune English.pak în acest folder'));
    assert((await page.locator('#install-macos-mods').locator('..').textContent()).includes('nu este încă confirmată'));
-   const summary=page.locator('#install-macos summary');await summary.focus();await page.keyboard.press('Enter');
-   assert.equal(await page.locator('#install-macos').getAttribute('open'),null);
-   await page.keyboard.press('Enter');assert.notEqual(await page.locator('#install-macos').getAttribute('open'),null);
+   const summary=page.locator('#install-macos summary');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
    assert.deepEqual(errors,[]);
    if(width===390||width===1440){await summary.blur();await guide.screenshot({path:`.qa/installation-guide-${width}.png`,style:'.topbar,.skip-link{visibility:hidden!important}'});}
@@ -34,6 +41,8 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   }
   const page=await browser.newPage({javaScriptEnabled:false,viewport:{width:390,height:900}});
   await page.goto('http://127.0.0.1:4173/#descarcari');assert(await page.locator('#installation-guide').isVisible());
+  assert.equal(await page.locator('#install-windows').getAttribute('open'),null);
+  await page.locator('#install-windows summary').click();assert.notEqual(await page.locator('#install-windows').getAttribute('open'),null);
   await page.locator('#install-windows summary').click();assert.equal(await page.locator('#install-windows').getAttribute('open'),null);
   await page.close();console.log('PASS: platform logos, separate localization/mods, source paths, PS5 coming soon, responsive 320–1440, keyboard/native no-JS details.');
  }finally{await browser.close()}
