@@ -217,6 +217,13 @@
     });
     window.dispatchEvent(new Event('bg3ro:updates-loaded'));
   }
+  function buttonIcon(button, paths) {
+    const label = element('span', '', button.textContent);
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    for (const [key,value] of Object.entries({viewBox:'0 0 24 24',width:'18',height:'18',fill:'none',stroke:'currentColor','stroke-width':'1.7','stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false'})) svg.setAttribute(key,value);
+    paths.forEach(d=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',d);svg.append(path);});
+    button.replaceChildren(svg,label);
+  }
   function actionButton(label, action) {
     const button = element('button', 'btn secondary small-btn', label); button.type = 'button';
     button.addEventListener('click', async () => {
@@ -338,17 +345,22 @@
         field.append(label, select);
         const replyField = element('div', 'field'), replyLabel = element('label', '', report.is_public ? 'Răspuns public' : 'Răspuns privat pentru autor'), textarea = element('textarea');
         textarea.name = 'reply'; textarea.id = `answer-${report.id}`; replyLabel.htmlFor = textarea.id; textarea.maxLength = 4000; textarea.value = report.moderator_reply || ''; replyField.append(replyLabel, textarea);
-        const button = element('button', 'btn secondary small-btn', 'Salvează răspunsul'); button.type = 'submit'; form.append(field, replyField, button, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
+        const button = element('button', 'btn secondary small-btn', 'Salvează răspunsul'); button.type = 'submit';
+        buttonIcon(button, ['M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2Z','M7 3v6h10V3M7 21v-8h10v8']);
+        const actions = element('div', 'report-actions'); actions.append(button);
+        form.append(field, replyField, actions, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
         form.addEventListener('submit', event => { event.preventDefault(); submit(form, async () => {
           const { error: updateError } = await client.from('bg3ro_bug_reports').update({ status: select.value, moderator_reply: textarea.value.trim() }).eq('id', report.id);
           if (updateError) throw updateError; toast('Raport actualizat.'); await loadReports();
         }); }); article.append(form);
-        article.append(actionButton('Șterge raportul', async () => {
+        const remove = actionButton('Șterge raportul', async () => {
           if (!confirm('Ștergi definitiv această raportare?')) return;
           const result = await client.from('bg3ro_bug_reports').delete().eq('id', report.id);
           if (result.error) throw result.error;
           await loadReports();
-        }));
+        });
+        buttonIcon(remove, ['M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14','M10 10v6m4-6v6']);
+        actions.append(remove);
       }
       target.append(article);
     });

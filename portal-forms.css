@@ -6,6 +6,12 @@
 .field :is(input,textarea,select):focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .field :is(input,textarea)::selection{background:var(--field-selection);color:var(--text)}
 .field select option{background:var(--field-bg);color:var(--field-text)}
+.field select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;background-image:url('./assets/select-chevron.svg');background-repeat:no-repeat;background-size:18px 18px;background-position:right 14px center;padding-right:44px;cursor:pointer}
+.report-actions{display:flex;align-items:stretch;gap:10px}
+.report-actions>.btn{min-width:0;gap:8px}
+.report-actions svg{width:18px;height:18px;flex:none}
+@media(max-width:480px){.report-actions>.btn{flex:1;padding:9px 8px;font-size:11px;line-height:1.5}.report-actions>.btn span{min-width:0}}
+@media(forced-colors:active){.field select:not([multiple]):not([size]){appearance:auto;background-image:none;padding-right:12px}}
 input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
 /* Chromium's autofill background is !important; an inset surface masks it. */
 .field :is(input,textarea,select):-webkit-autofill{
