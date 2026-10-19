@@ -32,7 +32,7 @@ const fs = require('node:fs');
       assert.equal(await page.locator('#tab-despre').getAttribute('aria-selected'),'true');
       await page.keyboard.press('End');assert.equal(await page.locator('#tab-erori').getAttribute('aria-selected'),'true');
       await page.keyboard.press('Home');assert.equal(await page.locator('#tab-despre').getAttribute('aria-selected'),'true');
-      await page.locator('.sidebar [data-go-tab="descarcari"]').click();assert(await page.locator('#descarcari').isVisible());
+      await page.locator('.hero-cta').click();assert(await page.locator('#descarcari').isVisible());
       await page.goBack();assert(await page.locator('#despre').isVisible());
       await clickNav(page,'.topbar [data-auth-open]');assert(await page.locator('#auth-dialog').isVisible());
       assert(await page.locator('#auth-unavailable').isVisible());await page.keyboard.press('Escape');
