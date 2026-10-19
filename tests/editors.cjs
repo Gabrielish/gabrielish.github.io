@@ -18,6 +18,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.waitForSelector('#about-editor > button',{state:'visible'});
   assert.equal(await page.locator('#despre .edit-pencil:visible').count(),2);
   await page.locator('#progress-editor > button').click();
+  assert.equal(await page.locator('#progress-form input').count(),3,'Only progress percentages remain');
+  assert.equal(await page.locator('#progress-review,#progress-testing').count(),0);
   await page.locator('#progress-value').fill('84');await page.locator('#progress-form button[type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('#translation-percent').textContent==='84%');
   await page.keyboard.press('Escape');assert(await page.locator('#progress-editor > button').evaluate(el=>el===document.activeElement));

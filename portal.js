@@ -168,7 +168,7 @@
   }
   async function loadProgress() {
     if (!client) return;
-    const { data, error } = await client.from('bg3ro_project_status').select('translation_percent,review_percent,testing_percent,review_state,testing_state,work_title,work_body,work_note').eq('id', 1).maybeSingle();
+    const { data, error } = await client.from('bg3ro_project_status').select('translation_percent,review_percent,testing_percent,work_title,work_body,work_note').eq('id', 1).maybeSingle();
     if (error || !data) return;
     for (const [kind, field, input] of [['translation','translation_percent','progress-value'],['review','review_percent','progress-review-value'],['testing','testing_percent','progress-testing-value']]) {
       const value = Number(data[field]);
@@ -179,7 +179,6 @@
       $(`#${kind}-progress`).setAttribute('aria-valuenow', String(percent));
       $(`#${input}`).value = percent;
     }
-    $('#progress-review').value = data.review_state; $('#progress-testing').value = data.testing_state;
     for (const field of ['title','body','note']) {
       const output = $(`#current-work-${field}`), value = data[`work_${field}`];
       if (typeof value === 'string') output.textContent = value;
