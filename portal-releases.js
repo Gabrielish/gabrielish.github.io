@@ -275,7 +275,7 @@
           el(
             "p",
             "",
-            "Nu este încă publicat un fișier pentru acest modul în site.",
+            "Nu este încă publicat un fișier pentru acest mod în site.",
           ),
         );
         target.append(placeholder);
