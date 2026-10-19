@@ -10,6 +10,8 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    const guide=page.locator('#installation-guide');
    assert(await guide.isVisible());
    assert.equal(await guide.locator('.installation-platform').count(),3);
+   const panelColors=await guide.locator('.installation-platform,.installation-backup').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).backgroundColor));
+   assert.deepEqual(panelColors,Array(4).fill('rgb(24, 25, 25)'),'Windows, macOS, PS5 and backup match release notes');
    assert.equal(await guide.locator('.installation-platform summary svg,.installation-platform summary img,#install-ps5 img').count(),3);
    for(const platform of ['windows','macos']){
     assert.equal(await guide.locator(`#install-${platform} .installation-content section`).count(),2);

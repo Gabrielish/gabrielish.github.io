@@ -65,8 +65,9 @@
   padding: 16px;
   border: 1px solid #393429;
   border-radius: 12px;
-  background: #181919; /* Same resting surface as .btn.secondary (Nexus download). */
 }
+/* Shared resting surface, matching the Nexus download button. */
+.release-notes,.installation-platform,.installation-backup{background:#181919}
 .release-notes h3 {
   display: flex;
   align-items: center;
@@ -171,9 +172,9 @@
   color: var(--muted);
 }
 .installation-guide .installation-intro{font-size:14px;color:var(--muted);margin:0 0 20px}
-.installation-backup{padding:14px 16px;border:1px solid #75604466;border-radius:9px;background:#211d17;font-size:13px;line-height:1.8;margin:0 0 22px}
+.installation-backup{padding:14px 16px;border:1px solid #75604466;border-radius:9px;font-size:13px;line-height:1.8;margin:0 0 22px}
 .installation-backup>strong{color:#e6b68d;margin-right:7px}
-.installation-platform{border:1px solid var(--line);border-radius:12px;background:#191815;overflow:hidden;margin-top:16px;min-width:0}
+.installation-platform{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:16px;min-width:0}
 .installation-platform summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;padding:18px 20px;cursor:pointer;min-height:64px;font-size:17px;font-weight:600;color:var(--text)}
 .installation-platform summary::-webkit-details-marker{display:none}
 .installation-platform summary:focus-visible{outline:2px solid var(--gold);outline-offset:-4px;border-radius:12px}
