@@ -1,0 +1,11 @@
+/* The same quiet, warm surfaces as the rest of the portal. */
+.auth-required{background:transparent;border:1px solid var(--line);border-radius:10px;padding:16px;gap:16px;flex-wrap:wrap;align-items:center}
+.auth-required>p{flex:1;min-width:160px;max-width:none;font-size:13px;color:var(--muted)}
+.auth-gate-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.auth-gate-actions>.btn{font-size:12px;padding:11px 16px}
+#auth-dialog .dialog-copy{line-height:1.7;margin-bottom:22px}
+#auth-dialog #discord-login,#auth-dialog #auth-guest{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
+#auth-dialog .form-status:empty{display:none}
+.auth-choice-divider{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:12px;margin:18px 0}
+.auth-choice-divider::before,.auth-choice-divider::after{content:'';height:1px;flex:1;background:var(--line)}
+@media(max-width:600px){.auth-gate-actions{width:100%}.auth-gate-actions>.btn{flex:1;white-space:normal}.auth-required>p{flex-basis:100%}}

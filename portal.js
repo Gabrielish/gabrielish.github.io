@@ -103,6 +103,7 @@
     finally { button.disabled = false; }
   }
   function dateText(value) { return new Intl.DateTimeFormat('ro-RO', { dateStyle: 'medium' }).format(new Date(value)); }
+  let guestStarting = false;
   function syncAuth() {
     const member = !!user && !user.is_anonymous;
     $('#report-name').closest('.field').hidden = member;
@@ -125,6 +126,7 @@
     $('#reports-heading').textContent = 'Erori raportate';
     $('#discussion-form button[type="submit"]').textContent = 'Publică mesajul';
     $('#discord-login').disabled = !client || !authEnabled;
+    $$('[data-guest-start]').forEach(button => { button.disabled = guestStarting || !client || !authEnabled; });
     window.dispatchEvent(new CustomEvent('bg3ro:auth', { detail: { client, userId: member ? user.id : null, moderator, guest: !!user?.is_anonymous } }));
     if (dialog.open && !user) {
       $('#auth-unavailable').hidden = !!client && authEnabled;
@@ -138,15 +140,20 @@
   }));
   dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
   $$('[data-guest-start]').forEach(button => button.addEventListener('click', async () => {
-    if (!client || button.disabled) return;
-    button.disabled = true;
+    if (!client || !authEnabled || button.disabled || guestStarting) return;
+    const destination = button.dataset.guestStart === 'auto' ? (location.hash === '#erori' ? 'report' : 'discussion') : button.dataset.guestStart;
+    guestStarting = true; $$('[data-guest-start]').forEach(el => { el.disabled = true; });
     try {
-      const { data, error } = await client.auth.signInAnonymously();
-      if (error || !data.session) throw error || new Error('Guest session unavailable');
-      await sessionChanged(data.session);
-      $('#'+button.dataset.guestStart+'-name').focus();
+      if (!user) {
+        const { data, error } = await client.auth.signInAnonymously();
+        if (error || !data.session) throw error || new Error('Guest session unavailable');
+        await sessionChanged(data.session);
+      }
+      if (dialog.open) dialog.close();
+      goTab(destination === 'report' ? 'erori' : 'discutii');
+      $('#'+destination+'-name').focus();
     } catch (_) { toast('Modul oaspete nu a putut fi pornit. Încearcă din nou sau conectează-te cu Discord.'); }
-    finally { button.disabled = false; }
+    finally { guestStarting = false; $$('[data-guest-start]').forEach(el => { el.disabled = !client || !authEnabled; }); }
   }));
   $('#discord-login-form').addEventListener('submit', event => {
     event.preventDefault(); if (!client || !authEnabled) return;
@@ -268,7 +275,7 @@
       const content = element('div', 'post-content');
       const meta = element('div', 'post-meta'); meta.append(element('strong', '', post.author_name), element('time', '', dateText(post.created_at)));
       meta.querySelector('time').dateTime = post.created_at;
-      if (post.is_guest) meta.append(element('span', 'post-status', 'Oaspete · nume neverificat'));
+      if (post.is_guest) meta.append(element('span', 'post-status', 'Oaspete'));
       if (post.status !== 'approved') meta.append(element('span', 'post-status', statusLabels[post.status]));
       content.append(meta);
       if (parent) content.append(element('p', 'post-mention', `@${parent.author_name}`));
@@ -359,7 +366,7 @@
       const header = element('div', 'report-header'), copy = element('div', 'post-meta');
       const date = element('time', '', dateText(report.created_at)); date.dateTime = report.created_at;
       copy.append(element('strong', '', report.author_name || 'Jucător'), date);
-      if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete · nume neverificat'));
+      if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete'));
       if (!report.is_public) copy.append(element('span', 'post-status', 'Privată'));
       copy.append(element('span', 'post-status', statusLabels[report.status]));
       header.append(copy); content.append(header); layout.append(avatar, content); article.append(layout);
