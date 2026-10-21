@@ -155,7 +155,6 @@
     } else if (!moderator) $('#mesaje').hidden = true;
     $('#work-editor').hidden = !moderator;
     if (!moderator) { workDirty = false; $('#work-form').reset(); }
-    $('#reports-heading').textContent = 'Erori raportate';
     $('#discussion-form button[type="submit"]').textContent = 'Publică mesajul';
     $('#discord-login').disabled = !client || !authEnabled;
     $$('[data-guest-start]').forEach(button => { button.disabled = guestStarting || !client || !authEnabled; });

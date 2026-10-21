@@ -27,6 +27,9 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    fixture.remove();return result;
   });
   for(const [discussion,report] of shared)assert.deepEqual(report,discussion,'Shared discussion/report styles must match');
+  assert(await page.locator('#reports-list').evaluate(el=>el.closest('.card')===document.querySelector('#report-form').closest('.card')),'Report list follows the form inside the same card');
+  assert.equal(await page.locator('.report-item').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
+  await page.locator('.report-compose').screenshot({path:`.qa/shared-report-card-${width}.png`});
   const toolbar=page.locator('.report-toolbar');
   const edit=toolbar.getByRole('button',{name:'Editează raportarea'}),remove=toolbar.getByRole('button',{name:'Șterge raportarea'});
   const a=await edit.boundingBox(),b=await remove.boundingBox();assert(Math.abs(a.y-b.y)<1&&b.x>=a.x+a.width,'Icon buttons share top row');
@@ -45,7 +48,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   page.once('dialog',d=>d.dismiss());await remove.click();assert.equal(await page.locator('.report-item').count(),1);
   page.once('dialog',d=>d.accept());await remove.click();await page.waitForFunction(()=>window.__communityTest.reports.length===0);
   await page.waitForFunction(()=>document.querySelector('#reports-list .empty-state h3')?.textContent==='Ai găsit o problemă?');
-  assert.equal(await page.locator('#reports-heading').textContent(),'Erori raportate');
+  assert.equal(await page.locator('#reports-heading').count(),0);
+  assert.equal(await page.locator('#my-reports').getAttribute('aria-label'),'Erori raportate');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }
  console.log('PASS: inset dropdown chevron; icon buttons share a row at 320/390/1440px; save, delete cancellation/confirmation and no JS errors. Synthetic reports only.');
