@@ -104,7 +104,7 @@
   }
   function dateText(value) { return new Intl.DateTimeFormat('ro-RO', { dateStyle: 'medium' }).format(new Date(value)); }
   function tabCount(selector, label, count) {
-    $(selector).textContent = Number.isSafeInteger(count) && count >= 0 ? `${label} (${count})` : label;
+    $(selector).textContent = Number.isSafeInteger(count) && count > 0 ? `${label} (${count})` : label;
   }
   let guestStarting = false;
   let guestSessionPromise = null;

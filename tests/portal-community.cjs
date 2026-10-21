@@ -51,8 +51,8 @@ function syntheticSDK(){
       await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'test-public-key'};"}));
       await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${syntheticSDK.toString()})();`}));
       await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
-      assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții (0)');
-      assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (0)');
+      assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții');
+      assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori');
       assert.equal(await p.locator('#discussion-count').count(),0);
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-dialog a[data-go-tab="confidentialitate"]').click();
       assert(!await p.locator('#auth-dialog').isVisible());assert(await p.locator('#confidentialitate.information-panel').isVisible());assert.equal(await p.locator('#date-personale').count(),0);await p.locator('#tab-despre').click();
