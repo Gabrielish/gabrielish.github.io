@@ -13,6 +13,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
  await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
  await p.locator('#tab-erori').click();assert.equal(await p.locator('.report-item').count(),1);assert(!(await p.locator('#reports-list').textContent()).includes('Conținut privat.'));
  await p.locator('#tab-discutii').click();await p.locator('[data-guest-start=discussion]').click();await p.waitForSelector('#discussion-form',{state:'visible'});
+ assert.equal(await p.locator('#discussion-name').evaluate(el=>el.readOnly),false,'Guests can choose their name');
  await p.locator('#discussion-name').fill('Vizitator');await p.locator('#discussion-title').fill('Întrebare fără cont');await p.locator('#discussion-body').fill('<img src=x onerror=alert(1)> Mesaj anonim de test.');await p.locator('#discussion-form button[type=submit]').click();await p.waitForSelector('#discussion-list .post');
  assert.equal(await p.evaluate(()=>window.__communityTest.guestCalls),1);assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].is_guest),true);assert((await p.locator('#discussion-list .post-meta').textContent()).includes('Oaspete'));assert.equal(await p.locator('#discussion-list .post-body img').count(),0);
  assert.equal(await p.locator('#admin-tools:visible').count(),0);assert.equal(await p.locator('.topbar [data-auth-open]').getAttribute('hidden'),null);

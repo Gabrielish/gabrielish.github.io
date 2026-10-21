@@ -104,8 +104,15 @@
   }
   function dateText(value) { return new Intl.DateTimeFormat('ro-RO', { dateStyle: 'medium' }).format(new Date(value)); }
   let guestStarting = false;
+  function discordName() {
+    const metadata = user?.user_metadata || {};
+    const name = String(metadata.preferred_username || metadata.user_name || metadata.full_name || metadata.name || 'Jucător Discord').replace(/[\u0000-\u001f]/g, '').trim().slice(0,40);
+    return name.includes('@') || name.length < 2 ? 'Jucător Discord' : name;
+  }
   function syncAuth() {
     const member = !!user && !user.is_anonymous;
+    $('#discussion-name').readOnly = member;
+    if (member) $('#discussion-name').value = discordName();
     $('#report-name').closest('.field').hidden = member;
     $('#report-name').disabled = member;
     $$('[data-auth-gate]').forEach(gate => { gate.hidden = !!user || !client || !authEnabled; });
@@ -179,7 +186,6 @@
       try { localStorage.setItem('bg3ro-discord-authorized', '1'); } catch (_) {}
       const { data, error } = await client.rpc('bg3ro_is_moderator');
       if (!error) moderator = data === true;
-      if (!$('#discussion-name').value) $('#discussion-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
       if (!$('#report-name').value) $('#report-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
     }
     if (user && !user.is_anonymous && dialog.open) dialog.close();
@@ -319,7 +325,7 @@
     event.preventDefault(); if (!client || !user) return;
     submit(event.currentTarget, async () => {
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
-      const { error } = await client.from('bg3ro_discussion_posts').insert({ author_id: user.id, author_name: values.author_name.trim(), title: values.title.trim(), body: values.body.trim(), parent_id: values.parent_id || null });
+      const { error } = await client.from('bg3ro_discussion_posts').insert({ author_id: user.id, author_name: user.is_anonymous ? values.author_name.trim() : discordName(), title: values.title.trim(), body: values.body.trim(), parent_id: values.parent_id || null });
       if (error) throw error;
       form.elements.body.value = ''; cancelReply(); formStatus(form, 'Mesajul a fost publicat.'); if (!values.parent_id) page = 0; await loadComments();
     });
@@ -330,9 +336,7 @@
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form)); delete values.website; delete values.public_consent;
       Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
       if (!user.is_anonymous) {
-        const metadata = user.user_metadata || {};
-        values.author_name = String(metadata.preferred_username || metadata.user_name || metadata.full_name || metadata.name || 'Jucător Discord').replace(/[\u0000-\u001f]/g, '').trim().slice(0,40);
-        if (values.author_name.includes('@') || values.author_name.length < 2) values.author_name = 'Jucător Discord';
+        values.author_name = discordName();
       }
       await window.BG3RO_REPORT_PHOTO.publish(client, { ...values, author_id: user.id, is_public: true });
       form.reset(); formStatus(form, 'Raportarea a fost trimisă și este publică. O poți urmări mai jos.'); await loadReports();

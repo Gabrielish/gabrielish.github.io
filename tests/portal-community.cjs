@@ -56,10 +56,14 @@ function syntheticSDK(){
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
       assert.equal(await p.evaluate(()=>window.__communityTest.oauth.provider),'discord');
       assert.equal(await p.locator('#discussion-name').inputValue(),'Jucător Discord');
-      await p.locator('#tab-discutii').click();await p.locator('#discussion-name').fill('Jucător de test');await p.locator('#discussion-title').fill('O întrebare');await p.locator('#discussion-body').fill('<img src=x onerror="window.injected=true"> Text de test.');
+      assert.equal(await p.locator('#discussion-name').evaluate(el=>el.readOnly),true,'Discord name cannot be edited');
+      await p.locator('#tab-discutii').click();
+      await p.locator('#discussion-name').evaluate(el=>el.value='Nume modificat manual');
+      await p.locator('#discussion-title').fill('O întrebare');await p.locator('#discussion-body').fill('<img src=x onerror="window.injected=true"> Text de test.');
       await p.locator('#discussion-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#discussion-form .form-status').textContent.includes('Mesaj'));
       assert.equal(await p.locator('#discussion-list .post-body img').count(),0);assert.equal(await p.evaluate(()=>window.injected),undefined);
       assert.equal(await p.evaluate(()=>window.__communityTest.comments.length),1);
+      assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].author_name),'Jucător Discord','Submission uses the account name, not the form value');
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].status),'approved');
       assert.equal(await p.locator('#discussion-form .form-status').textContent(),'Mesajul a fost publicat.');
       assert.equal(await p.locator('#discussion-form button[type=submit]').textContent(),'Publică mesajul');
