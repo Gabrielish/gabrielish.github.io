@@ -5,6 +5,7 @@ select id,'translation','statistics-test','Test','test.zip',1,
 'https://github.com/Gabrielish/bg3ro/releases/download/test/test.zip','Test'
 from auth.users where id=auth.uid();
 select set_config('test.release_id',(select id::text from public.bg3ro_releases where version='statistics-test'),true);
+select set_config('test.moderator_id',auth.uid()::text,true);
 update public.bg3ro_download_statistics set site_downloads=0,sync_attempt_at=null where id=1;
 set local role anon;
 select * from public.bg3ro_download_statistics;
@@ -28,6 +29,10 @@ do $$ declare release uuid; begin
   if public.bg3ro_record_download(release,repeat('a',64)) then raise exception 'Duplicate counted'; end if;
   if public.bg3ro_record_download('11111111-1111-1111-1111-111111111111',repeat('a',64)) then raise exception 'Unknown release counted'; end if;
   if (select site_downloads from public.bg3ro_download_statistics where id=1)<>1 then raise exception 'Incorrect total'; end if;
+  if public.bg3ro_record_download(release,repeat('b',64),current_setting('test.moderator_id')::uuid) then raise exception 'Admin download counted'; end if;
+  if exists(select 1 from bg3ro_private.download_windows where fingerprint=repeat('b',64)) then raise exception 'Admin deduplication row created'; end if;
+  if (select site_downloads from public.bg3ro_download_statistics where id=1)<>1 then raise exception 'Admin changed total'; end if;
+  if not public.bg3ro_record_download(release,repeat('b',64),'22222222-2222-2222-2222-222222222222') then raise exception 'Member download not counted'; end if;
   if not public.bg3ro_claim_nexus_sync() then raise exception 'First sync not claimed'; end if;
   if public.bg3ro_claim_nexus_sync() then raise exception 'Sync rate limit failed'; end if;
 end $$;

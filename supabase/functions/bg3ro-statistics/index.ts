@@ -54,7 +54,7 @@ export async function handler(req: Request) {
     if (body.action !== 'view' && body.action !== 'download') return reply({error:'Invalid event'},400);
     if (body.action === 'download' && (typeof body.release_id !== 'string' || !/^[a-f0-9-]{36}$/i.test(body.release_id))) return reply({error:'Invalid event'},400);
     let userId: string | null = null;
-    if (body.action === 'view' && req.headers.has('authorization')) {
+    if (req.headers.has('authorization')) {
       const auth = await fetch(`${endpoint}/auth/v1/user`, {headers:{apikey:PUBLIC_KEY,Authorization:req.headers.get('authorization')!},signal:AbortSignal.timeout(10000)});
       if(!auth.ok) return reply({error:'Invalid session'},401);
       const user=await auth.json();
@@ -69,7 +69,7 @@ export async function handler(req: Request) {
     const digest = await crypto.subtle.sign('HMAC',key,encoder.encode(`${new Date().toISOString().slice(0,10)}:${ip}`));
     const fingerprint = Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
     if(body.action === 'view') return reply({counted:await db('rpc/bg3ro_record_view',{p_fingerprint:fingerprint,p_user_id:userId})});
-    return reply({counted:await db('rpc/bg3ro_record_download',{p_release_id:body.release_id,p_fingerprint:fingerprint})});
+    return reply({counted:await db('rpc/bg3ro_record_download',{p_release_id:body.release_id,p_fingerprint:fingerprint,p_user_id:userId})});
   } catch (_) { return reply({error:'Statistics unavailable'},503); }
 }
 Deno.serve(handler);
