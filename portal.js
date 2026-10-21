@@ -371,7 +371,7 @@
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     target.replaceChildren(); tabCount('#tab-erori', 'Raportare erori', count); $('#more-reports').hidden = reportsLimit >= count;
-    if (!data.length) target.append(emptyState('Ai găsit o problemă?', 'Nu a fost raportată încă nicio eroare. Dacă observi ceva în joc, poți trimite o raportare folosind formularul de mai sus.'));
+    if (!data.length) target.append(emptyState('Ai găsit o problemă?', 'Nu a fost raportată încă nicio eroare. Poți fi primul care semnalează o problemă.'));
     data.forEach(report => {
       const article = element('article', 'report-item post-thread');
       const layout = element('div', 'post'), content = element('div', 'post-content');
