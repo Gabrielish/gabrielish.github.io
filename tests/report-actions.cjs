@@ -44,7 +44,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.locator('.report-item').screenshot({path:`.qa/report-actions-${width}.png`});
   page.once('dialog',d=>d.dismiss());await remove.click();assert.equal(await page.locator('.report-item').count(),1);
   page.once('dialog',d=>d.accept());await remove.click();await page.waitForFunction(()=>window.__communityTest.reports.length===0);
-  await page.waitForFunction(()=>document.querySelector('#reports-list').textContent==='Nu a fost raportată nicio eroare.');
+  await page.waitForFunction(()=>document.querySelector('#reports-list .empty-state h3')?.textContent==='Ai găsit o problemă?');
   assert.equal(await page.locator('#reports-heading').textContent(),'Erori raportate');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }

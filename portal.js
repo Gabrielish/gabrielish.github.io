@@ -79,6 +79,11 @@
     if (text !== undefined) node.textContent = text;
     return node;
   }
+  function emptyState(title, description) {
+    const empty = element('div', 'empty-state');
+    empty.append(element('h3', '', title), element('p', 'small', description));
+    return empty;
+  }
   function toast(message) {
     clearTimeout(toastTimer); $('#toast').textContent = message; $('#toast').hidden = false;
     toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 6500);
@@ -278,7 +283,7 @@
     target.replaceChildren(); tabCount('#tab-discutii', 'Discuții', count);
     $('#previous-comments').hidden = page === 0; $('#next-comments').hidden = (page + 1) * 20 >= count;
     $('#comments-page').textContent = count ? `Pagina ${page + 1}` : '';
-    if (!data.length) { const empty = element('div', 'empty-state'); empty.append(element('h3', '', 'Deschide conversația'), element('p', 'small', 'Nu sunt încă mesaje publicate. Poți fi primul care lasă o întrebare sau o sugestie.')); target.append(empty); }
+    if (!data.length) target.append(emptyState('Deschide conversația', 'Nu sunt încă mesaje publicate. Poți fi primul care lasă o întrebare sau o sugestie.'));
     const threads = new Map();
     function renderPost(post, parent) {
       const article = element('article', parent ? 'post reply' : 'post'); article.id = `post-${post.id}`;
@@ -367,7 +372,7 @@
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     target.replaceChildren(); tabCount('#tab-erori', 'Raportare erori', count); $('#more-reports').hidden = reportsLimit >= count;
-    if (!data.length) target.append(element('p', 'small', 'Nu a fost raportată nicio eroare.'));
+    if (!data.length) target.append(emptyState('Ai găsit o problemă?', 'Nu a fost raportată încă nicio eroare. Dacă observi ceva în joc, poți trimite o raportare folosind formularul de mai sus.'));
     data.forEach(report => {
       const article = element('article', 'report-item post-thread');
       const layout = element('div', 'post'), content = element('div', 'post-content');

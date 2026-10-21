@@ -54,6 +54,12 @@ function syntheticSDK(){
       assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții');
       assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori');
       assert.equal(await p.locator('#discussion-count').count(),0);
+      assert.equal(await p.locator('#discussion-list .empty-state h3').textContent(),'Deschide conversația');
+      assert.equal(await p.locator('#reports-list .empty-state h3').textContent(),'Ai găsit o problemă?');
+      for(const selector of ['#discussion-list .empty-state','#reports-list .empty-state']){
+        assert.deepEqual(await p.locator(selector).evaluate(el=>{const s=getComputedStyle(el);return [s.textAlign,s.padding]}),['center','30px 0px']);
+        assert.equal(await p.locator(selector+' > p.small').count(),1);
+      }
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-dialog a[data-go-tab="confidentialitate"]').click();
       assert(!await p.locator('#auth-dialog').isVisible());assert(await p.locator('#confidentialitate.information-panel').isVisible());assert.equal(await p.locator('#date-personale').count(),0);await p.locator('#tab-despre').click();
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
