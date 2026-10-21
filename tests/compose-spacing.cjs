@@ -19,6 +19,18 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
     return {padding:getComputedStyle(el).padding,titleX:hr.x-c.x,titleY:hr.y-c.y,font:getComputedStyle(h).fontSize,titleToDescription:pr.y-hr.bottom,descriptionToForm:fr.y-pr.bottom};
    }));
    await card.screenshot({path:`.qa/compose-${id}-${width}.png`});
+   for(const message of ['', 'Publicat.']){
+    const gaps=await card.evaluate((el,message)=>{
+     const form=el.querySelector('form');form.querySelector('.form-status').textContent=message;
+     const list=el.querySelector('#discussion-list,#reports-list');
+     list.closest('#my-reports')?.removeAttribute('hidden');
+     list.replaceChildren(Object.assign(document.createElement('article'),{className:'post-thread',textContent:'Test'}));
+     const line=list.firstElementChild.getBoundingClientRect().top,button=form.querySelector('[type=submit]').getBoundingClientRect();
+     return {form:line-form.getBoundingClientRect().bottom,button:line-button.bottom};
+    },message);
+    assert.equal(gaps.form,16,`Consistent form-to-separator gap for ${id} at ${width}px`);
+    if(!message)assert.equal(gaps.button,16,'Empty status does not affect button spacing');
+   }
   }
   assert.deepEqual(measurements[0],measurements[1],`Identical header spacing at ${width}px`);
   assert.equal(measurements[0].titleToDescription,12);

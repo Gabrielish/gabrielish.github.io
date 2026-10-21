@@ -3,6 +3,8 @@
 /* Shared introduction spacing for discussion and error-report composers. */
 .community-compose>h2{margin:0 0 12px}
 .community-compose>p.small{margin:0 0 18px}
+.community-compose>form{display:flow-root;margin-bottom:16px}
+.community-compose>form>.form-status:empty{display:none}
 /* Repeated clicks/drags on controls must not start a document text selection.
    Leave prose, paths and editable fields selectable for intentional copying. */
 :is(summary,button,select,option,.btn,[role=button],[role=tab]){
