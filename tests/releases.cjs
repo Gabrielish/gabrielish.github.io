@@ -36,6 +36,11 @@ sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,op
       assert.equal(await badge.locator('svg[aria-hidden="true"] path').count(),1);
       assert.deepEqual(await badge.evaluate(el=>{const s=getComputedStyle(el);return [s.borderRadius,s.padding,s.fontSize,s.lineHeight,s.gap,s.color];}),['9999px','2px 8px','12px','16px','4px','oklch(0.723 0.219 149.579)']);
       assert.equal(await p.locator('#extra-releases .release-card').count(),3);
+      assert.equal(await p.locator('#extra-releases .release-card-mod').count(),3);
+      assert.equal(await p.locator('#extra-releases .release-notes,#extra-releases .release-notes-title').count(),0,'Mods have no nested changelog or duplicate title');
+      assert.equal(await p.locator('#extra-releases .release-description').count(),3,'Each mod keeps its description');
+      assert.equal(await p.locator('#extra-releases .release-download').count(),3,'All downloads remain available');
+      assert.equal(await p.locator('#extra-releases .release-card').first().evaluate(el=>getComputedStyle(el).padding),owner?'20px 22px':'18px');
       assert.equal(await p.locator('#release-editor:visible').count(),0);
       assert.equal(await p.locator('.hero-cta').getAttribute('href'),'#descarcari');
       assert.equal(await p.locator('.hero-cta').getAttribute('download'),null);

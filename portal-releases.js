@@ -133,7 +133,7 @@
     [
       ["title", "Titlu", 160],
       ["tags", "Taguri (separate prin virgulă)", 240],
-      ["description", "Ce este nou în această versiune", 12000],
+      ["description", row.kind === "translation" ? "Ce este nou în această versiune" : "Descriere", 12000],
     ].forEach(([key, label, max]) => {
       const wrap = el("div", "field"),
         id = `release-${sequence}-${row.id}-${key}`,
@@ -246,6 +246,11 @@
     actions.append(download(row, true));
     if (moderator) actions.append(editor(row));
     head.append(info, actions);
+    if (row.kind !== "translation") {
+      article.classList.add("release-card-mod");
+      article.append(head, el("p", "release-description", row.description));
+      return article;
+    }
     const notes = el("div", "release-notes"),
       notesHeading = el("h3", "");
     notesHeading.append(outlineIcon(["M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z", "M14 2v6h6", "M8 13h8m-8 4h8M8 9h2"], 14), el("span", "", "Ce este nou în această versiune"));

@@ -87,6 +87,18 @@
   margin: 0;
 }
 .release-notes p { color: var(--muted); }
+.release-card-mod.card { padding: 20px 22px; }
+.release-card-mod .release-head { gap: 16px; }
+.release-card-mod .release-head h2 { font-size: 18px; line-height: 1.4; margin: 0 0 6px; overflow-wrap: anywhere; }
+.release-card-mod .release-file { font-size: 12px; line-height: 1.6; margin: 0; }
+.release-card-mod .release-tags { gap: 6px; margin-top: 10px; }
+.release-card-mod .release-tag { font-size: 10px; padding: 3px 9px; }
+.release-card-mod .release-description { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.7; margin: 12px 0 0; }
+#extra-releases { gap: 14px; }
+@media (max-width: 760px) {
+  .release-card-mod.card { padding: 18px; }
+  .release-card-mod .release-head h2 { font-size: 17px; }
+}
 @media (prefers-reduced-motion: reduce) { .release-download { transition: none; } }
 .release-meta {
   display: flex;
