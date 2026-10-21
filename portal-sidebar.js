@@ -86,6 +86,7 @@
   window.addEventListener('bg3ro:auth', async event => {
     const changed = client !== event.detail.client || userId !== event.detail.userId;
     client = event.detail.client;userId = event.detail.userId;
+    $('.compatibility-fields').hidden = !client || !userId || !!event.detail.guest;
     if (!changed) return;
     const request = ++authRequest;myRating = null;myVote = null;drawOwn();drawVersions('');
     if (!client || !userId) return;

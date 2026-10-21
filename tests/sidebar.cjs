@@ -8,6 +8,10 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await page.route('**/portal.js*',r=>r.fulfill({contentType:'text/javascript',body:"document.querySelectorAll('[data-auth-open]').forEach(b=>b.onclick=()=>document.querySelector('#auth-dialog').showModal());document.documentElement.classList.add('portal-ready');"}));
  await page.route('**/rest/v1/rpc/bg3ro_sidebar_stats',async r=>{const state=await page.evaluate(()=>window.__sidebarTest);await r.fulfill({contentType:'application/json',body:JSON.stringify({rating_count:state.rating?1:0,rating_average:state.rating?.rating||null,compatibility_count:state.vote?1:0,works_count:state.vote?.works?1:0,last_update:null,recent:state.vote?[{...state.vote,author_name:'<img src=x> User',updated_at:'2026-10-17T10:00:00Z'}]:[]})});});
  await page.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
+ assert.equal(await page.locator('.compatibility-fields').isVisible(),false,'Platform/version hidden before Discord login');
+ await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client:null,userId:null,guest:true}})));
+ assert.equal(await page.locator('.compatibility-fields').isVisible(),false,'Guest mode cannot show the fields');
+ assert.equal(await page.locator('.compatibility-actions').isVisible(),true,'Voting buttons remain available to prompt login');
  assert.equal(await page.locator('.rating-star').count(),5);assert.equal(await page.locator('.sidebar .author-line').count(),0);
  assert.equal(await page.locator('.quick-download a').count(),2,'Only the two download links remain');
  assert(!(await page.locator('.quick-download').textContent()).includes('Fișierele și cerințele actualizate'));
@@ -25,9 +29,11 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
    const key=table==='bg3ro_ratings'?'rating':'vote';
    return{select(){return this},eq(){return this},maybeSingle:async()=>({data:s[key],error:null}),upsert:async payload=>{if(s.fail)return{error:{message:'Network failure'}};s[key]=payload;return{error:null}}};
   }};
+  window.__sidebarClient=client;
   window.dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client,userId:'alice'}}));
  });
  await page.locator('[data-rating="4"]').click();await page.waitForFunction(()=>document.querySelector('#rating-average').textContent==='4.0');
+ assert.equal(await page.locator('.compatibility-fields').isVisible(),true,'Fields shown for Discord member');
  assert.equal(await page.locator('[data-rating="4"]').getAttribute('aria-pressed'),'true');
  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:releases-updated',{detail:{versions:['v0.8.0','V0.8.0','v0.7.0','<img src=x> test']}})));
  assert.equal(await page.locator('#compatibility-version').evaluate(el=>el.tagName),'SELECT');
@@ -60,5 +66,10 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert((await page.locator('.quick-download a[href*="nexusmods"]').getAttribute('href')).includes('tab=files'));assert.equal(await page.locator('#github-quick-download:visible').count(),0);assert.equal(await page.locator('#statistics-updated').textContent(),'Nicio actualizare');
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
  assert.equal(await page.locator('.sidebar-share,.sidebar-support,#share-project').count(),0,'Removed sidebar cards stay absent');
- await page.locator('.sidebar').screenshot({path:`.qa/sidebar-${width}.png`});await page.close();
+ await page.locator('.sidebar').screenshot({path:`.qa/sidebar-${width}.png`});
+ await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client:window.__sidebarClient,userId:null,guest:true}})));
+ assert.equal(await page.locator('.compatibility-fields').isVisible(),false,'Active guest session hides both fields');
+ await page.evaluate(()=>window.dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client:null,userId:null,guest:false}})));
+ assert.equal(await page.locator('.compatibility-fields').isVisible(),false,'Logout hides both fields immediately');
+ await page.close();
 }console.log('PASS: sidebar responsive, quick download, empty state, login gating, star/vote save/error, anonymous recent reports and text-only rendering.');}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
