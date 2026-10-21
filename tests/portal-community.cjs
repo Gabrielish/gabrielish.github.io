@@ -79,7 +79,7 @@ function syntheticSDK(){
         await p.keyboard.press('Escape');assert.equal(await p.locator('#translation-percent').textContent(),'82%');assert.equal(await p.locator('#review-percent').textContent(),'25%');assert.equal(await p.locator('#testing-percent').textContent(),'30%');
         await p.locator('#tab-actualizari').click();await p.getByRole('button',{name:'Publică o actualizare',exact:true}).click();await p.locator('#update-title').fill('Actualizare de test');await p.locator('#update-body').fill('O actualizare sintetică pentru testarea interfeței.');await p.locator('#update-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#updates-feed').textContent.includes('Actualizare de test'));await p.keyboard.press('Escape');
       }else assert.equal(await p.locator('#admin-tools:visible').count(),0);
-      await clickNav(p,'#sign-out');await p.waitForSelector('#sign-out',{state:'hidden'});assert.equal(await p.locator('[data-user-form]:visible').count(),0);await p.locator('#tab-erori').click();assert.equal(await p.locator('#my-reports:visible').count(),1);assert.equal(await p.locator('.report-item').count(),1);
+      await clickNav(p,'#sign-out');await p.waitForSelector('#sign-out',{state:'hidden'});await p.waitForFunction(()=>window.__communityTest.user?.is_anonymous);await p.locator('#tab-erori').click();assert.equal(await p.locator('#report-form:visible').count(),1);assert.equal(await p.locator('#my-reports:visible').count(),1);assert.equal(await p.locator('.report-item').count(),1);
       assert.deepEqual(errors,[]);await p.close();
     }
     for(const outcome of ['success','expired','cancelled']){
@@ -96,7 +96,7 @@ function syntheticSDK(){
       assert(await p.evaluate(()=>window.__authOptions.auth.storage===window.BG3RO_AUTH_STORAGE));
       assert.equal(await p.locator('#admin-tools:visible').count(),0,'User metadata cannot grant moderator access');
       if(outcome==='success'){assert(await p.locator('#report-form').isVisible());assert.equal(await p.evaluate(()=>window.__communityTest.exchangeCode),'test-code');}
-      else {assert(await p.locator('#auth-dialog').isVisible());assert(await p.locator('#discord-login-form .form-status.error').isVisible());assert.equal(await p.locator('#report-form:visible').count(),0);assert(!(await p.locator('#auth-dialog').textContent()).includes('untrusted-message'));}
+      else {assert(await p.locator('#auth-dialog').isVisible());assert(await p.locator('#discord-login-form .form-status.error').isVisible());assert.equal(await p.locator('#report-form:visible').count(),1);assert(!(await p.locator('#auth-dialog').textContent()).includes('untrusted-message'));}
       await p.close();
     }
     console.log('PASS: synthetic Discord OAuth, PKCE callback success/expiry/cancel, query cleanup and tab restore, no metadata-based privileges, login/logout, posts, reports, XSS and moderation controls. Real Discord consent still requires owner verification.');
