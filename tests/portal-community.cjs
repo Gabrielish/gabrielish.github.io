@@ -51,6 +51,9 @@ function syntheticSDK(){
       await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'test-public-key'};"}));
       await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${syntheticSDK.toString()})();`}));
       await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
+      assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții (0)');
+      assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (0)');
+      assert.equal(await p.locator('#discussion-count').count(),0);
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-dialog a[data-go-tab="confidentialitate"]').click();
       assert(!await p.locator('#auth-dialog').isVisible());assert(await p.locator('#confidentialitate.information-panel').isVisible());assert.equal(await p.locator('#date-personale').count(),0);await p.locator('#tab-despre').click();
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
@@ -63,6 +66,7 @@ function syntheticSDK(){
       await p.locator('#discussion-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#discussion-form .form-status').textContent.includes('Mesaj'));
       assert.equal(await p.locator('#discussion-list .post-body img').count(),0);assert.equal(await p.evaluate(()=>window.injected),undefined);
       assert.equal(await p.evaluate(()=>window.__communityTest.comments.length),1);
+      assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții (1)');
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].author_name),'Jucător Discord','Submission uses the account name, not the form value');
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].status),'approved');
       assert.equal(await p.locator('#discussion-form .form-status').textContent(),'Mesajul a fost publicat.');
@@ -72,6 +76,7 @@ function syntheticSDK(){
       assert.equal(await p.locator('#report-title').inputValue(),'O eroare în traducere');
       await p.evaluate(()=>window.__communityTest.failInsert=false);await p.locator('#report-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#report-form .form-status').textContent.includes('trimis'));
       assert.equal(await p.locator('.report-item').count(),1);assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),1);
+      assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (1)');
       if(owner){
         await p.locator('.report-toolbar .edit-pencil').click();await p.locator('.report-item select').selectOption('resolved');await p.locator('.report-item textarea').fill('Corectat.');await p.locator('.report-item button[type=submit]').click();await p.waitForFunction(()=>window.__communityTest.reports[0].status==='resolved');
         await p.locator('#tab-despre').click();await p.locator('#progress-editor > .edit-pencil').click();

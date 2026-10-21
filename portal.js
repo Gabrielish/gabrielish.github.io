@@ -103,6 +103,9 @@
     finally { button.disabled = false; }
   }
   function dateText(value) { return new Intl.DateTimeFormat('ro-RO', { dateStyle: 'medium' }).format(new Date(value)); }
+  function tabCount(selector, label, count) {
+    $(selector).textContent = Number.isSafeInteger(count) && count >= 0 ? `${label} (${count})` : label;
+  }
   let guestStarting = false;
   let guestSessionPromise = null;
   // Restore a saved identity first and share one in-flight anonymous sign-in.
@@ -272,7 +275,7 @@
     if (ticket !== commentsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Discuțiile nu au putut fi încărcate. Încearcă din nou mai târziu.')); return; }
     if (!data.length && page > 0) { page--; return loadComments(); }
-    target.replaceChildren(); $('#discussion-count').textContent = `${count || 0} discuții`;
+    target.replaceChildren(); tabCount('#tab-discutii', 'Discuții', count);
     $('#previous-comments').hidden = page === 0; $('#next-comments').hidden = (page + 1) * 20 >= count;
     $('#comments-page').textContent = count ? `Pagina ${page + 1}` : '';
     if (!data.length) { const empty = element('div', 'empty-state'); empty.append(element('h3', '', 'Deschide conversația'), element('p', 'small', 'Nu sunt încă mesaje publicate. Poți fi primul care lasă o întrebare sau o sugestie.')); target.append(empty); }
@@ -363,7 +366,7 @@
     const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path,author_avatar_url', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
-    target.replaceChildren(); $('#more-reports').hidden = reportsLimit >= count;
+    target.replaceChildren(); tabCount('#tab-erori', 'Raportare erori', count); $('#more-reports').hidden = reportsLimit >= count;
     if (!data.length) target.append(element('p', 'small', 'Nu a fost raportată nicio eroare.'));
     data.forEach(report => {
       const article = element('article', 'report-item post-thread');

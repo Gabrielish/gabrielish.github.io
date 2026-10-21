@@ -26,6 +26,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
  await p.evaluate(()=>window.__qaOwner=true);await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===3);
  await p.locator('.report-item').first().getByRole('button',{name:'Șterge raportarea',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
  await p.locator('#tab-discutii').click();await p.locator('.post').first().getByRole('button',{name:'Șterge',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('#discussion-list .post').length===0);
+ assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții (0)','Counter updates after deletion');
+ assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (2)','Report counter updates after deletion');
  assert.deepEqual(errors,[]);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  console.log('PASS: public reads without login, guest name-only messages/reports, consent, private history hidden, guest rating/vote gating, text safety and moderator deletion. Synthetic SDK.');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});
