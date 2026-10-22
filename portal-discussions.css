@@ -19,8 +19,21 @@
 .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Scrie un comentariu…';color:var(--field-placeholder);float:left;height:0;pointer-events:none}
 .discussion-compose-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
 [id$="discussion-character-count"]{font-size:11px;color:var(--muted)}
-.discussion-compose-bottom .form-end{justify-content:flex-end;gap:8px}
+.discussion-compose-bottom .form-end{justify-content:flex-end;gap:8px;margin-left:auto}
 .discussion-compose-bottom .btn{min-height:40px;padding:9px 16px}
+.discussion-add-poll{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:3px 0;background:none;border:0;color:var(--muted);font-size:13px;text-align:left}
+.discussion-add-poll:hover{color:var(--gold)}.discussion-add-poll[hidden]{display:none}
+.discussion-poll-composer{min-width:0;border:1px solid var(--line);border-radius:12px;background:#101116;padding:14px 16px;margin:12px 0 0}
+.discussion-poll-composer[hidden]{display:none}.poll-heading{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px}
+.poll-heading>.poll-close{margin-left:auto}.poll-close{display:grid;place-items:center;flex:none;width:30px;height:32px;border:0;background:none;color:var(--muted);font-size:21px}.poll-close[hidden]{display:none}
+.discussion-poll-composer input[type=text]{width:100%;min-width:0;background:var(--field-bg);color:var(--text);border:1px solid var(--line);border-radius:9px;min-height:42px;padding:9px 12px;box-sizing:border-box;font:inherit;font-size:13px}
+.poll-option-row{display:flex;gap:6px;align-items:center;margin-top:8px}.poll-option-row input{flex:1}.poll-add-option,.poll-remove{background:none;border:0;color:var(--gold);min-height:36px;padding:5px 0;font-size:12px}
+.poll-multiple{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px}.poll-multiple input{accent-color:var(--gold);width:16px;height:16px}
+.discussion-poll{border:1px solid var(--line);border-radius:10px;padding:14px;margin:16px 0;min-width:0}.discussion-poll h3{font-size:15px;margin:0 0 12px;overflow-wrap:anywhere}
+.discussion-poll fieldset{border:0;padding:0;margin:0;min-width:0;display:grid;gap:8px}
+.poll-vote-option{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:7px;font-size:13px;overflow-wrap:anywhere}
+.poll-vote-option input{accent-color:var(--gold);flex:none}.poll-option-bar{position:absolute;inset:0 auto 0 0;background:#d7bc8a15;z-index:-1}.poll-option-total{margin-left:auto;white-space:nowrap;font-size:11px;color:var(--muted)}
+.poll-vote-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.poll-meta,.poll-status{font-size:11px;color:var(--muted);margin:10px 0}.poll-status:empty{display:none}
 [id$="discussion-editor-error"]:empty{display:none}[id$="discussion-editor-error"]{font-size:12px;margin:8px 0;color:#f3a9b7}
 .discussion-link-panel{padding:14px;margin-top:12px;border:1px solid var(--line);border-radius:8px}
 .discussion-link-panel label{display:block;font-size:12px;margin-bottom:6px}
