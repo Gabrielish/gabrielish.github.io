@@ -26,6 +26,11 @@
     $('.compatibility-fields').hidden=!active || !voteExpanded;
     $('#compatibility-panel-toggle').setAttribute('aria-expanded',String(active && voteExpanded));
     $('#compatibility-choice').textContent=draftWorks===false?'Nu funcționează':'Funcționează';
+    $('#compatibility-own').hidden=active || !client || !userId || !myVote;
+    $('#compatibility-own-text').setAttribute('role','status');
+    $('#compatibility-edit').setAttribute('aria-expanded',String(active));
+    $('#compatibility-own-text').textContent=myVote ? `Raportul tău: ${myVote.works ? 'Funcționează' : 'Nu funcționează'} (${platforms[myVote.platform] || 'Altă platformă'})` : '';
+    $('#compatibility-submit').textContent=myVote ? 'Actualizează raportarea' : 'Trimite raportarea';
     document.querySelectorAll('[data-works]').forEach(b=>{
       b.setAttribute('aria-controls','compatibility-vote-form');
       b.setAttribute('aria-expanded',String(active && draftWorks=== (b.dataset.works==='true')));
@@ -65,6 +70,7 @@
     $('#rating-own').hidden = !userId || !myRating;
     setText('#rating-hint', myRating ? `Evaluarea ta: ${myRating}/5` : '');
     document.querySelectorAll('[data-works]').forEach(b => b.setAttribute('aria-pressed', String(myVote !== null && String(myVote.works) === b.dataset.works)));
+    drawVotePanel();
   }
   function requireLogin() { if (client && userId) return true; $('.topbar [data-auth-open]')?.click(); return false; }
   async function loadStats() {
@@ -87,13 +93,15 @@
       setText('#recent-count', `(${reports.length})`);const list = $('#recent-compatibility-list');list.replaceChildren();
       if (!reports.length) { const item = document.createElement('li');item.textContent = 'Nu sunt încă raportări.';list.append(item); }
       reports.forEach(report => {
-        const item=document.createElement('li'),title=document.createElement('strong'),detail=document.createElement('div'),author=document.createElement('strong'),content=document.createElement('div');
+        const item=document.createElement('li'),detail=document.createElement('div'),author=document.createElement('strong'),content=document.createElement('div'),date=document.createElement('time');
         item.className=report.works ? 'is-working' : 'is-broken';
-        title.textContent=report.works ? 'Funcționează' : 'Nu funcționează';
+        item.setAttribute('aria-label',report.works ? 'Funcționează' : 'Nu funcționează');
         detail.className='compatibility-report-meta';author.className='compatibility-author';
         author.textContent=report.author_name || 'Utilizator';
-        detail.append(author,document.createTextNode(` • ${platforms[report.platform] || 'Altă platformă'} • ${window.BG3RO_VERSIONS.version(report.mod_version) || 'Versiune nespecificată'} • ${new Date(report.updated_at).toLocaleDateString('ro-RO')}`));
-        content.append(title,detail);item.append(thumbIcon(report.works),content);list.append(item);
+        const version=window.BG3RO_VERSIONS.version(report.mod_version);
+        detail.append(author,document.createTextNode(` • ${platforms[report.platform] || 'Altă platformă'}${version ? ` • ${version}` : ''}`));
+        date.dateTime=report.updated_at;date.textContent=new Date(report.updated_at).toLocaleDateString('ro-RO');
+        content.append(detail,date);item.append(thumbIcon(report.works),content);list.append(item);
       });
       drawOwn();
     } catch (_) { if (request !== statsRequest) return;setText('#rating-count', 'Date indisponibile');setText('#compatibility-total', 'Date indisponibile'); }
@@ -116,15 +124,15 @@
   });
   async function save(table, payload, statusId) {
     if (busy || !requireLogin()) return false;
-    const actor = userId;
-    busy = true;document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = true; });status(statusId, 'Se salvează…');
+    const actor = userId, request = authRequest;
+    busy = true;document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-edit,#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = true; });status(statusId, 'Se salvează…');
     try {
       const result = await client.from(table).upsert({ user_id: userId, ...payload }, { onConflict: 'user_id' });
+      if (actor !== userId || request !== authRequest) return false;
       if (result.error) throw result.error;
-      if (actor !== userId) { status(statusId, '');return false; }
-      status(statusId, statusId === '#rating-status' ? '' : 'Salvat. Mulțumesc pentru feedback!');return true;
-    } catch (error) { status(statusId, /rate|limit|10 secunde/i.test(error?.message || '') ? 'Așteaptă 10 secunde înainte să modifici din nou votul.' : 'Votul nu a fost salvat. Încearcă din nou.', true);return false; }
-    finally { busy = false;document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = false; }); }
+      status(statusId, '');return true;
+    } catch (error) { if(request===authRequest)status(statusId, /rate|limit|10 secunde/i.test(error?.message || '') ? 'Așteaptă 10 secunde înainte să modifici din nou votul.' : 'Votul nu a fost salvat. Încearcă din nou.', true);return false; }
+    finally { busy = false;document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-edit,#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = false; }); }
   }
   document.querySelectorAll('[data-rating]').forEach(button => {
     button.addEventListener('pointerenter', () => { if (!busy) drawStars(Number(button.dataset.rating)); });
@@ -135,7 +143,7 @@
     if (busy || !myRating || !requireLogin()) return;
     const actor = userId, request = authRequest;
     busy = true;
-    const controls = document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle');
+    const controls = document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-edit,#compatibility-submit,#compatibility-change,#compatibility-panel-toggle');
     controls.forEach(button => { button.disabled = true; });
     status('#rating-status', 'Se elimină…');
     try {
@@ -157,6 +165,12 @@
     status('#compatibility-status','');drawVotePanel();$('#compatibility-platform').focus({preventScroll:true});
   }));
   $('#compatibility-panel-toggle').addEventListener('click',()=>{voteExpanded=!voteExpanded;drawVotePanel();});
+  $('#compatibility-edit').addEventListener('click',()=>{
+    if(busy || !myVote || !requireLogin())return;
+    draftWorks=myVote.works;voteExpanded=true;
+    $('#compatibility-platform').value=myVote.platform;drawVersions(myVote.mod_version);
+    status('#compatibility-status','');drawVotePanel();$('#compatibility-platform').focus({preventScroll:true});
+  });
   $('#compatibility-change').addEventListener('click',()=>{
     const previous=draftWorks;draftWorks=null;voteExpanded=false;drawVotePanel();
     document.querySelector(`[data-works="${previous}"]`)?.focus({preventScroll:true});
@@ -165,7 +179,8 @@
     event.preventDefault();if(draftWorks===null || busy || !requireLogin())return;
     const payload={works:draftWorks,platform:$('#compatibility-platform').value,mod_version:$('#compatibility-version').value.trim()};
     if(await save('bg3ro_compatibility',payload,'#compatibility-status')){
-      myVote=payload;voteExpanded=false;drawOwn();drawVotePanel();await loadStats();
+      myVote=payload;draftWorks=null;voteExpanded=false;drawOwn();
+      $('#compatibility-edit').focus({preventScroll:true});await loadStats();
     }
   });
   drawVotePanel();
