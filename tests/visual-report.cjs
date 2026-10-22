@@ -12,6 +12,10 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
   ['.discussion-compose','.report-compose'],['#discussion-form .discussion-editor-shell','#report-form .discussion-editor-shell'],['#discussion-toolbar','#report-toolbar'],['#discussion-editor .discussion-prosemirror','#report-editor .discussion-prosemirror'],['#discussion-name','#report-name']
  ].map(pair=>pair.map(selector=>{const style=getComputedStyle(document.querySelector(selector));return [style.backgroundColor,style.color,style.borderTopColor];})));
  for(const [discussion,report]of palettes)assert.deepEqual(report,discussion,'Report and discussion palettes must match');
+ const geometry=await p.evaluate(()=>[
+  ['.discussion-editor-shell',['borderRadius','borderTopWidth']],['.discussion-toolbar',['padding','rowGap','columnGap']],['.discussion-tool-group',['padding','gap']],['.discussion-tool',['width','height']],['.discussion-tool-select',['minHeight','maxWidth','padding']],['.discussion-color',['width','height']],['.discussion-prosemirror',['minHeight','padding','lineHeight','fontSize']]
+ ].map(([selector,properties])=>['#discussion-form','#report-form'].map(form=>{const s=getComputedStyle(document.querySelector(form+' '+selector));return properties.map(property=>s[property]);})));
+ for(const [discussion,report]of geometry)assert.deepEqual(report,discussion,'Both tabs must share identical editor geometry');
  const actions=await p.evaluate(()=>['#discussion-form [type=submit]','#report-form .report-submit'].map(selector=>{const s=getComputedStyle(document.querySelector(selector));return [s.backgroundColor,s.color,s.borderTopColor];}));
  assert.deepEqual(actions[0],actions[1],'Report submit uses the standard theme button palette');
  assert.equal(await p.locator('.report-compose-heading svg').evaluate(el=>getComputedStyle(el).color),'rgb(215, 188, 138)','Bug icon uses theme gold');

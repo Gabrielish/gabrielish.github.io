@@ -148,13 +148,14 @@
 #discutii .discussion-identity{margin-bottom:10px;gap:4px}
 #discutii .discussion-identity input{min-height:38px;padding:7px 10px;font-size:13px}
 #discutii #discussion-own-name{margin-bottom:8px}
-#discutii .discussion-editor-shell{border-radius:9px}
-#discutii .discussion-toolbar{padding:5px;gap:4px 0}
-#discutii .discussion-tool-group{padding:0 4px;gap:1px}
-#discutii .discussion-tool{width:30px;height:32px}
-#discutii .discussion-tool-select{min-height:32px;max-width:96px;padding:4px 19px 4px 5px}
-#discutii .discussion-color{width:28px;height:32px}
-#discutii .discussion-prosemirror{min-height:132px;padding:12px 14px;line-height:1.65}
+/* Both tabs share this editor sizing so they cannot drift apart. */
+:is(#discutii,#erori) .discussion-editor-shell{border-radius:9px}
+:is(#discutii,#erori) .discussion-toolbar{padding:5px;gap:4px 0}
+:is(#discutii,#erori) .discussion-tool-group{padding:0 4px;gap:1px}
+:is(#discutii,#erori) .discussion-tool{width:30px;height:32px}
+:is(#discutii,#erori) .discussion-tool-select{min-height:32px;max-width:96px;padding:4px 19px 4px 5px}
+:is(#discutii,#erori) .discussion-color{width:28px;height:32px}
+:is(#discutii,#erori) .discussion-prosemirror{min-height:132px;padding:12px 14px;line-height:1.65}
 #discutii .discussion-compose-bottom{margin-top:8px;gap:8px}
 #discutii .discussion-composer .form-status:empty{display:none}
 #discutii .discussion-compose-bottom .btn{min-height:36px;padding:7px 14px}
@@ -185,9 +186,9 @@
  #discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:32px minmax(0,1fr);gap:8px}
  #discutii .discussion-composer>.post-avatar{width:32px;height:32px}
  #discutii .discussion-identity input{font-size:16px;min-height:40px}
- #discutii .discussion-tool{width:32px;height:34px}
- #discutii .discussion-tool-group{padding:0 3px}
- #discutii .discussion-prosemirror{min-height:120px;padding:11px;font-size:16px}
+ :is(#discutii,#erori) .discussion-tool{width:32px;height:34px}
+ :is(#discutii,#erori) .discussion-tool-group{padding:0 3px}
+ :is(#discutii,#erori) .discussion-prosemirror{min-height:120px;padding:11px;font-size:16px}
  #discutii #discussion-list>.post-thread{padding:12px}
  #discutii #discussion-list .post{grid-template-columns:32px minmax(0,1fr);gap:9px}
  #discutii #discussion-list .post-avatar{width:32px;height:32px}

@@ -42,7 +42,6 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 .report-translation-notice{border:1px solid #352731;border-radius:12px;padding:14px 16px;background:#25181f;color:#ef756e;margin-bottom:22px;font-size:13px;line-height:1.7}
 .report-translation-notice strong{font-weight:600}.report-translation-notice p{font-size:12px;color:#ce7f79;margin:4px 0 0;line-height:1.7}
 #report-form{margin:0}.report-guest-name{max-width:330px;margin-bottom:16px!important}
-#report-editor .discussion-prosemirror{min-height:220px}
 #report-editor.is-empty .discussion-prosemirror>p:first-child:before{content:'Descrie eroarea de traducere…'}
 #report-editor-error:empty{display:none}#report-editor-error{font-size:12px;color:#f3a9b7;margin:8px 0}
 #report-photo-drop{margin-top:18px;min-height:76px;padding:14px 16px;border-style:dashed;border-color:var(--line);background:var(--field-bg);border-radius:12px;align-items:stretch;text-align:left}
