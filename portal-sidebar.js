@@ -24,6 +24,8 @@
     $('.compatibility-actions').hidden=active;
     $('#compatibility-vote-body').hidden=!active || !voteExpanded;
     $('.compatibility-fields').hidden=!active || !voteExpanded;
+    $('#compatibility-problem-field').hidden=!active || draftWorks!==false;
+    $('#compatibility-problem').disabled=!active || draftWorks!==false;
     $('#compatibility-panel-toggle').setAttribute('aria-expanded',String(active && voteExpanded));
     $('#compatibility-choice').textContent=draftWorks===false?'Nu funcționează':'Funcționează';
     $('#compatibility-own').hidden=active || !client || !userId || !myVote;
@@ -99,9 +101,11 @@
         detail.className='compatibility-report-meta';author.className='compatibility-author';
         author.textContent=report.author_name || 'Utilizator';
         const version=window.BG3RO_VERSIONS.version(report.mod_version);
-        detail.append(author,document.createTextNode(` • ${platforms[report.platform] || 'Altă platformă'}${version ? ` • ${version}` : ''}`));
+        detail.append(author,document.createTextNode(` • ${platforms[report.platform] || 'Altă platformă'}${report.game_version ? ` • joc ${report.game_version}` : ''}${version ? ` • ${version}` : ''}`));
         date.dateTime=report.updated_at;date.textContent=new Date(report.updated_at).toLocaleDateString('ro-RO');
-        content.append(detail,date);item.append(thumbIcon(report.works),content);list.append(item);
+        content.append(detail);
+        if(!report.works && report.problem_description){const problem=document.createElement('p');problem.className='compatibility-problem';problem.textContent=report.problem_description;content.append(problem);}
+        content.append(date);item.append(thumbIcon(report.works),content);list.append(item);
       });
       drawOwn();
     } catch (_) { if (request !== statsRequest) return;setText('#rating-count', 'Date indisponibile');setText('#compatibility-total', 'Date indisponibile'); }
@@ -112,10 +116,11 @@
     if (!changed) return;
     draftWorks=null;voteExpanded=false;drawVotePanel();status('#compatibility-status','');status('#rating-status','');
     $('#compatibility-platform').value='windows';
+    $('#compatibility-game-version').value='';$('#compatibility-problem').value='';
     const request = ++authRequest;myRating = null;myVote = null;drawOwn();drawVersions('');
     if (!client || !userId) return;
     try {
-      const [rating, vote] = await Promise.all([client.from('bg3ro_ratings').select('rating').eq('user_id', userId).maybeSingle(),client.from('bg3ro_compatibility').select('works,platform,mod_version').eq('user_id', userId).maybeSingle()]);
+      const [rating, vote] = await Promise.all([client.from('bg3ro_ratings').select('rating').eq('user_id', userId).maybeSingle(),client.from('bg3ro_compatibility').select('works,platform,mod_version,game_version,problem_description').eq('user_id', userId).maybeSingle()]);
       if (request !== authRequest) return;
       if (!rating.error && rating.data) myRating = rating.data.rating;
       if (!vote.error && vote.data) { myVote = vote.data;if(draftWorks===null){$('#compatibility-platform').value = myVote.platform;drawVersions(myVote.mod_version);} }
@@ -164,22 +169,28 @@
     draftWorks=button.dataset.works==='true';voteExpanded=true;
     status('#compatibility-status','');drawVotePanel();$('#compatibility-platform').focus({preventScroll:true});
   }));
-  $('#compatibility-panel-toggle').addEventListener('click',()=>{voteExpanded=!voteExpanded;drawVotePanel();});
+  $('#compatibility-panel-toggle').addEventListener('click',()=>{
+    if(busy)return;const previous=draftWorks;draftWorks=null;voteExpanded=false;
+    status('#compatibility-status','');drawVotePanel();
+    (myVote?$('#compatibility-edit'):document.querySelector(`[data-works="${previous}"]`))?.focus({preventScroll:true});
+  });
   $('#compatibility-edit').addEventListener('click',()=>{
     if(busy || !myVote || !requireLogin())return;
     draftWorks=myVote.works;voteExpanded=true;
     $('#compatibility-platform').value=myVote.platform;drawVersions(myVote.mod_version);
+    $('#compatibility-game-version').value=myVote.game_version||'';$('#compatibility-problem').value=myVote.problem_description||'';
     status('#compatibility-status','');drawVotePanel();$('#compatibility-platform').focus({preventScroll:true});
   });
   $('#compatibility-change').addEventListener('click',()=>{
-    const previous=draftWorks;draftWorks=null;voteExpanded=false;drawVotePanel();
-    document.querySelector(`[data-works="${previous}"]`)?.focus({preventScroll:true});
+    if(busy || draftWorks===null)return;
+    draftWorks=!draftWorks;voteExpanded=true;status('#compatibility-status','');drawVotePanel();
   });
   $('#compatibility-vote-form').addEventListener('submit',async event=>{
     event.preventDefault();if(draftWorks===null || busy || !requireLogin())return;
-    const payload={works:draftWorks,platform:$('#compatibility-platform').value,mod_version:$('#compatibility-version').value.trim()};
+    const payload={works:draftWorks,platform:$('#compatibility-platform').value,mod_version:$('#compatibility-version').value.trim(),game_version:$('#compatibility-game-version').value.trim(),problem_description:draftWorks===false?$('#compatibility-problem').value.trim():''};
     if(await save('bg3ro_compatibility',payload,'#compatibility-status')){
       myVote=payload;draftWorks=null;voteExpanded=false;drawOwn();
+      $('#compatibility-problem').value=payload.problem_description;
       $('#compatibility-edit').focus({preventScroll:true});await loadStats();
     }
   });

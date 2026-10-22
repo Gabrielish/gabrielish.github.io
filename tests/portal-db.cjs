@@ -162,6 +162,7 @@ const M = '33333333-3333-3333-3333-333333333333';
     await denied("update public.bg3ro_releases set news_badge='Anonymous' where id=$1",[release.id]);
     await db.exec('reset role');
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/rating-removal.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/compatibility-details.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/discussion-reactions.sql'),'utf8'));
     console.log('PASS: portal migrations, role isolation, column privileges, rate limits, contact inbox, screenshots, manual update metadata validation, administrator-only editing/deletion, release isolation and private reaction aggregates/toggle permissions.');
   } finally { await db.close(); }
