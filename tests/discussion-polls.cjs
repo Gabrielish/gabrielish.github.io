@@ -19,6 +19,8 @@ const moduleSource=`export const createClient=()=>{const client=(${sdk})(),from=
  assert.equal(await page.locator('#reply-discussion-form .discussion-add-poll').count(),0,'Poll composer belongs only to root discussion');
  await page.locator('#discussion-name').fill('Vizitator sondaj');await page.getByRole('button',{name:'Adaugă un sondaj',exact:true}).click();
  assert(await page.locator('#discussion-poll-composer').isVisible());
+ const backgrounds=await page.evaluate(()=>['.discussion-compose','#discussion-poll-composer'].map(selector=>getComputedStyle(document.querySelector(selector)).backgroundColor));
+ assert.equal(backgrounds[0],backgrounds[1],'Poll composer uses the same theme background as its card');
  await page.locator('#poll-question').fill('Ce ai vrea să fie revizuit mai întâi?');
  await page.getByRole('textbox',{name:'Opțiunea 1',exact:true}).fill('Dialogurile');await page.getByRole('textbox',{name:'Opțiunea 2',exact:true}).fill('Interfața');
  await page.getByRole('button',{name:'+ Adaugă o opțiune',exact:true}).click();await page.getByRole('textbox',{name:'Opțiunea 3',exact:true}).fill('Obiectele');await page.locator('#poll-multiple').check();

@@ -23,7 +23,7 @@
 .discussion-compose-bottom .btn{min-height:40px;padding:9px 16px}
 .discussion-add-poll{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:3px 0;background:none;border:0;color:var(--muted);font-size:13px;text-align:left}
 .discussion-add-poll:hover{color:var(--gold)}.discussion-add-poll[hidden]{display:none}
-.discussion-poll-composer{min-width:0;border:1px solid var(--line);border-radius:12px;background:#101116;padding:14px 16px;margin:12px 0 0}
+.discussion-poll-composer{min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;margin:12px 0 0}
 .discussion-poll-composer[hidden]{display:none}.poll-heading{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px}
 .poll-heading>.poll-close{margin-left:auto}.poll-close{display:grid;place-items:center;flex:none;width:30px;height:32px;border:0;background:none;color:var(--muted);font-size:21px}.poll-close[hidden]{display:none}
 .discussion-poll-composer input[type=text]{width:100%;min-width:0;background:var(--field-bg);color:var(--text);border:1px solid var(--line);border-radius:9px;min-height:42px;padding:9px 12px;box-sizing:border-box;font:inherit;font-size:13px}
