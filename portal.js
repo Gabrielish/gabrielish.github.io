@@ -424,8 +424,13 @@
     const { error } = await client.from('bg3ro_discussion_posts').update({ status }).eq('id', id);
     if (error) throw error; await loadComments();
   }
-  function cancelReply() { parkComposer();replyContext=null;if($('#reply-discussion-form'))$('#reply-discussion-form').elements.parent_id.value = '';replyName=''; }
-  $('#reply-cancel-reply')?.addEventListener('click', cancelReply);
+  function cancelReply() {
+    parkComposer();replyContext=null;replyName='';
+    const form=$('#reply-discussion-form');if(form){form.elements.parent_id.value='';form.elements.body.value='';}
+    window.BG3RO_REPLY_EDITOR?.reset();
+    const label=$('#reply-reply-label');if(label){label.replaceChildren();label.hidden=true;}
+  }
+  $('#reply-cancel-reply')?.addEventListener('click', ()=>{if(!$('#reply-discussion-form [type=submit]').disabled)cancelReply();});
   $('#previous-comments').addEventListener('click', () => changeDiscussionPage(page - 1));
   $('#next-comments').addEventListener('click', () => changeDiscussionPage(page + 1));
   for(const form of [$('#discussion-form'),$('#reply-discussion-form')].filter(Boolean))form.addEventListener('submit', event => {

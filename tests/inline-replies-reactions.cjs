@@ -51,8 +51,26 @@ const moduleSource=`export const createClient=()=>{
   await page.locator('#post-root-two > .post-content > .post-actions').getByRole('button',{name:'Răspunde',exact:true}).click();
   assert(await page.locator('#post-root-two #reply-discussion-form').isVisible());assert((await editor.innerText()).includes('vreau să îl păstrez'));
   await page.locator('#reply-cancel-reply').click();assert(await page.locator('#discussion-composer-home #discussion-form').isVisible());assert((await mainEditor.innerText()).includes('Ciornă independentă'));
+  await root.locator(':scope > .post-content > .post-actions').getByRole('button',{name:'Răspunde',exact:true}).click();
+  assert.equal((await editor.innerText()).trim(),'','Cancelled reply text must not reappear');
+  await editor.press('ControlOrMeta+z');assert.equal((await editor.innerText()).trim(),'','Undo must not restore cancelled text');
+  await page.locator('#reply-cancel-reply').click();
   await root.locator(':scope > .post-content > .post-actions').getByRole('button',{name:'Citat',exact:true}).click();
   assert.equal(await editor.locator('blockquote').count(),1);
+  await editor.press('ControlOrMeta+a');await page.locator('#reply-discussion-toolbar').getByRole('button',{name:'Aldin',exact:true}).click();
+  await page.locator('#reply-cancel-reply').click();
+  await root.locator(':scope > .post-content > .post-actions').getByRole('button',{name:'Răspunde',exact:true}).click();
+  assert.equal(await editor.locator('blockquote').count(),0,'Reply after cancelled quote starts without quotation');
+  assert.equal((await editor.innerText()).trim(),'');
+  assert.equal(await page.evaluate(()=>window.BG3RO_REPLY_EDITOR.editor.isActive('bold')),false,'Formatting resets after cancellation');
+  assert.equal(await page.locator('#reply-discussion-toolbar').getByRole('button',{name:'Aldin',exact:true}).getAttribute('aria-pressed'),'false','Toolbar state resets too');
+  await page.locator('#reply-cancel-reply').click();
+  await root.locator(':scope > .post-content > .post-actions').getByRole('button',{name:'Citat',exact:true}).click();
+  assert.equal(await editor.locator('blockquote').count(),1);
+  assert(!(await editor.innerText()).includes('vreau să îl păstrez'),'Cancelled draft does not accumulate in next quote');
+  const cancelBox=await page.locator('#reply-cancel-reply').boundingBox(),sendBox=await page.locator('#reply-discussion-form [type=submit]').boundingBox();
+  assert(Math.abs(cancelBox.y-sendBox.y)<2,'Reply actions share one row at '+width);assert(sendBox.x>cancelBox.x);
+  assert.equal(await page.locator('#reply-cancel-reply').evaluate(el=>getComputedStyle(el).borderTopWidth),'0px');
   await page.evaluate(()=>window.__originalEditor=window.BG3RO_REPLY_EDITOR.editor);
   await page.getByRole('button',{name:'Pagina 1',exact:true}).click();
   assert(await page.locator('#post-root-one #reply-discussion-form').isVisible());
@@ -69,5 +87,5 @@ const moduleSource=`export const createClient=()=>{
   assert.equal(await page.locator('#tab-discutii').textContent(),'Discuții (2)');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }
- console.log('PASS: independent main/reply editors, inline quote, cancel/switch/rerender preserve separate drafts, action icons, real reaction toggle/change/remove, keyboard/Escape, failure retention and mobile popover bounds.');
+ console.log('PASS: independent editors; cancel clears reply text, quotes, formatting and undo history without clearing main draft; reply action layout, rerender, icons, reactions and mobile bounds.');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

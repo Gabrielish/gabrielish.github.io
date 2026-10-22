@@ -1,5 +1,6 @@
 /*! BG3.RO visual editor; Tiptap/ProseMirror MIT notices: ../editor/THIRD_PARTY_LICENSES.txt */
 import {Editor} from '@tiptap/core';
+import {EditorState} from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import {TextStyle,FontFamily,FontSize,Color} from '@tiptap/extension-text-style';
@@ -63,7 +64,12 @@ function plainDoc(doc){return doc.content.every(n=>n.type==='paragraph'&&!n.attr
 function serialize(doc){return plainDoc(doc)?doc.content.map(p=>(p.content||[]).map(t=>t.text).join('')).join('\n'):prefix+JSON.stringify(doc);}
 const api={render,documentFor,hasMention:body=>{
  const first=documentFor(body).content?.[0];return first?.type==='paragraph'&&first.content?.[0]?.text?.startsWith('@');
-},get editor(){return editor;},clear(){editor?.commands.clearContent();textarea.value='';},focus(){editor?.commands.focus();},
+},get editor(){return editor;},clear(){editor?.commands.clearContent();textarea.value='';},reset(){
+ if(editor){editor.commands.clearContent();editor.view.updateState(EditorState.create({schema:editor.schema,plugins:editor.state.plugins,doc:editor.state.doc}));editor.emit('selectionUpdate',{editor,transaction:editor.state.tr});}
+ textarea.value='';q('#discussion-character-count').textContent='';q('#discussion-editor-error').textContent='';
+ q('#discussion-link-panel').hidden=true;const url=q('#discussion-link-url');url.disabled=true;url.value='';url.setCustomValidity('');
+ const status=form.querySelector('.form-status');status.textContent='';status.classList.remove('error');
+},focus(){editor?.commands.focus();},
  value(name=''){
   if(!editor)return textarea.value;
   const doc=cleanDoc(editor.getJSON());
