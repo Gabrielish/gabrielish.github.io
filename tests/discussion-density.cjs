@@ -1,0 +1,14 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('comments:[]','comments:window.__densityPosts');
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{for(const width of [320,390,1440]){
+ const p=await browser.newPage({viewport:{width,height:1000},reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.addInitScript(()=>window.__densityPosts=Array.from({length:6},(_,i)=>({id:'density-'+i,author_id:'other',author_name:'Jucător de test',title:'Comentariu',body:'Un mesaj scurt pentru verificarea spațierii.',parent_id:null,status:'approved',is_guest:false,created_at:'2026-10-22T12:00:00Z'})));
+ await p.route('https://baldursgate3.game/**',r=>r.abort());await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test'};"}));await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
+ await p.goto('http://127.0.0.1:4173/#discutii',{waitUntil:'networkidle'});await p.waitForSelector('#post-density-0');
+ await p.addStyleTag({content:'.topbar{visibility:hidden!important}'});await p.locator('.discussion-compose').evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+scrollY-16));
+ const metrics=await p.evaluate(()=>{const height=s=>document.querySelector(s).getBoundingClientRect().height;return{composer:height('.discussion-compose'),editor:height('#discussion-editor .discussion-prosemirror'),thread:height('#discussion-list>.post-thread'),visibleThreads:[...document.querySelectorAll('#discussion-list>.post-thread')].filter(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}).length};});
+ console.log(JSON.stringify({width,...metrics}));
+ if(!process.env.BG3RO_DENSITY_BASELINE){assert(metrics.editor<=160,'Editor is compact');if(width===1440){assert(metrics.composer<390,'Composer uses at least 100px less height than the 498px baseline');assert(metrics.thread<155);assert(metrics.visibleThreads>=3,'Three complete short threads fit under the composer');}}
+ assert.equal(await p.locator('#discussion-list>.post-thread').count(),6);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ await p.screenshot({path:`.qa/discussion-density-${process.env.BG3RO_DENSITY_BASELINE?'before':'after'}-${width}.png`});await p.close();
+}console.log('PASS: discussion density, readable layout and viewport bounds.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

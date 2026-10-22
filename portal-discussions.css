@@ -140,3 +140,57 @@
  :is(#discussion-list,#reports-list,#updates-feed) .post-meta{gap:5px 9px;flex-wrap:wrap}
  :is(#discussion-list,#reports-list,#updates-feed) .post-meta strong{font-size:14px}
 }
+/* Compact discussion layout; other tabs retain their existing spacing. */
+#discutii{gap:16px}
+#discutii>.discussion-compose{padding:16px 18px}
+#discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:36px minmax(0,1fr);gap:12px}
+#discutii .discussion-composer>.post-avatar{width:36px;height:36px}
+#discutii .discussion-identity{margin-bottom:10px;gap:4px}
+#discutii .discussion-identity input{min-height:38px;padding:7px 10px;font-size:13px}
+#discutii #discussion-own-name{margin-bottom:8px}
+#discutii .discussion-editor-shell{border-radius:9px}
+#discutii .discussion-toolbar{padding:5px;gap:4px 0}
+#discutii .discussion-tool-group{padding:0 4px;gap:1px}
+#discutii .discussion-tool{width:30px;height:32px}
+#discutii .discussion-tool-select{min-height:32px;max-width:96px;padding:4px 19px 4px 5px}
+#discutii .discussion-color{width:28px;height:32px}
+#discutii .discussion-prosemirror{min-height:132px;padding:12px 14px;line-height:1.65}
+#discutii .discussion-compose-bottom{margin-top:8px;gap:8px}
+#discutii .discussion-composer .form-status:empty{display:none}
+#discutii .discussion-compose-bottom .btn{min-height:36px;padding:7px 14px}
+#discutii .discussion-add-poll{min-height:36px;font-size:12px}
+#discutii #discussion-list{display:block;border:1px solid var(--line);border-radius:11px;background:var(--panel);overflow:hidden}
+#discutii #discussion-list>.post-thread{padding:12px 16px;border:0;border-top:1px solid var(--line);border-radius:0;background:none}
+#discutii #discussion-list>.post-thread:first-child{border-top:0}
+#discutii #discussion-list .post{grid-template-columns:36px minmax(0,1fr);gap:12px}
+#discutii #discussion-list .post-avatar{width:36px;height:36px}
+#discutii #discussion-list .post-avatar-default{padding:7px}
+#discutii #discussion-list .post-meta{gap:8px;margin-bottom:6px;line-height:1.4}
+#discutii #discussion-list .post-meta strong{font-size:14px}
+#discutii #discussion-list .post-body{font-size:14px;line-height:1.65}
+#discutii .discussion-rich>*{margin-bottom:8px}
+#discutii .discussion-rich>:last-child{margin-bottom:0}
+#discutii .post-reactions{margin-top:6px;gap:6px}
+#discutii #discussion-list .post-actions{margin-top:4px;gap:14px}
+#discutii #discussion-list .post-actions>.btn{min-height:30px;padding-block:2px}
+#discutii .post-replies{margin-left:48px}
+#discutii .post-replies>.post{margin-top:16px}
+#discutii .post-mention{margin-bottom:6px}
+#discutii .is-inline-reply.discussion-composer{padding:12px;margin-top:10px}
+#discutii .is-inline-reply #reply-reply-label{margin-bottom:8px;padding-bottom:8px}
+#discutii .is-inline-reply .discussion-prosemirror{min-height:120px}
+#discutii .is-inline-reply .form-end>.btn{min-height:36px}
+@media(max-width:600px){
+ #discutii>.discussion-compose{padding:14px 12px}
+ #discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:32px minmax(0,1fr);gap:8px}
+ #discutii .discussion-composer>.post-avatar{width:32px;height:32px}
+ #discutii .discussion-identity input{font-size:16px;min-height:40px}
+ #discutii .discussion-tool{width:32px;height:34px}
+ #discutii .discussion-tool-group{padding:0 3px}
+ #discutii .discussion-prosemirror{min-height:120px;padding:11px;font-size:16px}
+ #discutii #discussion-list>.post-thread{padding:12px}
+ #discutii #discussion-list .post{grid-template-columns:32px minmax(0,1fr);gap:9px}
+ #discutii #discussion-list .post-avatar{width:32px;height:32px}
+ #discutii .post-replies{margin-left:12px}
+ #discutii .is-inline-reply.discussion-composer{padding:10px}
+}
