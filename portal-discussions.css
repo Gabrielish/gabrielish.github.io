@@ -69,7 +69,7 @@
 .discussion-page:disabled{opacity:.35;cursor:default}
 .page-ellipsis{color:var(--muted);font-size:12px}
 #comments-page{font-size:12px;color:var(--muted);margin:18px 0 0}
-@media(max-width:600px){.discussion-composer{grid-template-columns:32px minmax(0,1fr);gap:10px}.discussion-composer>.post-avatar{width:32px;height:32px}.discussion-compose.card{padding:18px 14px}.discussion-prosemirror{padding:12px;min-height:160px;font-size:16px}.discussion-toolbar{padding:6px;gap:2px}.discussion-tool{width:32px;height:34px}.discussion-tool:nth-child(n){margin-right:0}.discussion-compose-bottom{align-items:end}.discussion-compose-bottom .form-end{flex-direction:row;flex-wrap:wrap}.discussion-page{min-width:32px;height:36px;padding:0 8px}.discussion-pagination nav,#discussion-pages{gap:5px}.discussion-compose-bottom .btn{font-size:12px;padding:8px 12px}}
+@media(max-width:600px){.discussion-composer{grid-template-columns:32px minmax(0,1fr);gap:10px}.discussion-composer>.post-avatar{width:32px;height:32px}.discussion-compose.card{padding-block:18px}.discussion-prosemirror{padding:12px;min-height:160px;font-size:16px}.discussion-toolbar{padding:6px;gap:2px}.discussion-tool{width:32px;height:34px}.discussion-tool:nth-child(n){margin-right:0}.discussion-compose-bottom{align-items:end}.discussion-compose-bottom .form-end{flex-direction:row;flex-wrap:wrap}.discussion-page{min-width:32px;height:36px;padding:0 8px}.discussion-pagination nav,#discussion-pages{gap:5px}.discussion-compose-bottom .btn{font-size:12px;padding:8px 12px}}
 @media(max-width:600px){
  .discussion-compose-main{display:contents}
  .discussion-compose-main>*{grid-column:1/-1}
@@ -142,7 +142,7 @@
 }
 /* Compact discussion layout; other tabs retain their existing spacing. */
 #discutii{gap:16px}
-#discutii>.discussion-compose{padding:16px 18px}
+#discutii>.discussion-compose{padding-block:16px}
 #discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:36px minmax(0,1fr);gap:12px}
 #discutii .discussion-composer>.post-avatar{width:36px;height:36px}
 #discutii .discussion-identity{margin-bottom:10px;gap:4px}
@@ -182,7 +182,7 @@
 #discutii .is-inline-reply .discussion-prosemirror{min-height:120px}
 #discutii .is-inline-reply .form-end>.btn{min-height:36px}
 @media(max-width:600px){
- #discutii>.discussion-compose{padding:14px 12px}
+ #discutii>.discussion-compose{padding-block:14px}
  #discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:32px minmax(0,1fr);gap:8px}
  #discutii .discussion-composer>.post-avatar{width:32px;height:32px}
  #discutii .discussion-identity input{font-size:16px;min-height:40px}
