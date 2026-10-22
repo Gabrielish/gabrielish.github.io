@@ -64,23 +64,32 @@
   let replyName='';
   let replyContext=null;
   function parkComposer() {
-    const form=$('#discussion-form');
-    $('#discussion-composer-home').append(form);form.classList.remove('is-inline-reply');
-    $('.discussion-compose').hidden=false;
+    const form=$('#reply-discussion-form');
+    if(form){$('#discussion-reply-home').append(form);form.hidden=true;}
   }
+  function discussionIcon(type){
+    const paths={reply:'m9 10-5 5 5 5M4 15h9a7 7 0 0 0 0-14',quote:'M10 11H4V5h6v8c0 4-2 6-5 6m15-8h-6V5h6v8c0 4-2 6-5 6',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2m3 6a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',delete:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'};
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    for(const [key,value]of Object.entries({viewBox:'0 0 24 24',width:16,height:16,fill:'none',stroke:'currentColor','stroke-width':1.6,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false'}))svg.setAttribute(key,value);
+    const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[type]);svg.append(path);return svg;
+  }
+  function discussionAction(label,icon,callback){const button=actionButton(label,callback);button.prepend(discussionIcon(icon));return button;}
   function attachReply(post, quote=false, focus=true) {
     if(!user||post.status!=='approved')return;
     const content=document.getElementById('post-'+post.id)?.querySelector('.post-content');if(!content)return;
-    const form=$('#discussion-form');replyContext=post;replyName=post.author_name;
+    const form=$('#reply-discussion-form');if(!form)return;
+    if(form.querySelector('[type=submit]').disabled)return;
+    replyContext=post;replyName=post.author_name;
+    if(user.is_anonymous && !form.elements.author_name.value)form.elements.author_name.value=$('#discussion-name').value;
     form.elements.parent_id.value=post.parent_id||post.id;form.elements.title.value='Răspuns';
-    const label=$('#reply-label');label.hidden=false;label.replaceChildren(document.createTextNode('Răspuns către: '),element('strong','','@'+post.author_name));
+    const label=$('#reply-reply-label');label.hidden=false;label.replaceChildren(discussionIcon('reply'),document.createTextNode('Răspuns către: '),element('strong','','@'+post.author_name));
     const preview=window.BG3RO_DISCUSSION_EDITOR?.render(post.body).textContent||post.body;
     label.append(element('span','reply-excerpt',' „'+preview.slice(0,100)+(preview.length>100?'…':'')+'”'));
-    $('#cancel-reply').hidden=false;$('#cancel-reply').textContent='Anulează';
-    form.classList.add('is-inline-reply');content.closest('.post').append(form);$('.discussion-compose').hidden=true;
+    $('#reply-cancel-reply').hidden=false;$('#reply-cancel-reply').textContent='Anulează';
+    content.closest('.post').append(form);form.hidden=false;
     form.querySelector('[type=submit]').textContent='Răspunde';
-    if(quote)window.BG3RO_DISCUSSION_EDITOR?.quote(post.body,post.author_name);
-    if(focus){form.scrollIntoView({block:'nearest',behavior:'instant'});window.BG3RO_DISCUSSION_EDITOR?.focus();}
+    if(quote)window.BG3RO_REPLY_EDITOR?.quote(post.body,post.author_name);
+    if(focus){form.scrollIntoView({block:'nearest',behavior:'instant'});window.BG3RO_REPLY_EDITOR?.focus();}
   }
   function drawDiscussionPages(count) {
     const total = Math.ceil(count / discussionsPerPage), numbers = $('#discussion-pages');
@@ -191,6 +200,12 @@
     ownAvatar.src=member && /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(avatarURL) ? avatarURL : './assets/discussion-avatar.svg';
     ownAvatar.classList.toggle('post-avatar-default',ownAvatar.src.endsWith('discussion-avatar.svg'));
     $('#discussion-name').closest('.field').hidden=member;
+    if($('#reply-discussion-form')){
+      const name=$('#reply-discussion-name');name.readOnly=member;
+      if(member)name.value=discordName();
+      name.closest('.field').hidden=member;
+      $('#reply-discussion-form').hidden=!user || !replyContext;
+    }
     $('#discussion-own-name').hidden=!member;$('#discussion-own-name').textContent=member?discordName():'';
     ownAvatar.onerror=()=>{ownAvatar.onerror=null;ownAvatar.src='./assets/discussion-avatar.svg';ownAvatar.classList.add('post-avatar-default');};
     $('#report-name').closest('.field').hidden = member;
@@ -210,7 +225,7 @@
     } else if (!moderator) $('#mesaje').hidden = true;
     $('#work-editor').hidden = !moderator;
     if (!moderator) { workDirty = false; $('#work-form').reset(); }
-    $('#discussion-form button[type="submit"]').textContent = replyContext ? 'Răspunde' : 'Publică';
+    $('#discussion-form button[type="submit"]').textContent = 'Publică';
     $('#discord-login').disabled = !client || !authEnabled;
     $$('[data-guest-start]').forEach(button => { button.disabled = guestStarting || !client || !authEnabled; });
     window.dispatchEvent(new CustomEvent('bg3ro:auth', { detail: { client, userId: member ? user.id : null, moderator, guest: !!user?.is_anonymous } }));
@@ -252,7 +267,7 @@
     const { error } = await client.auth.signOut();
     if (error) { toast(readableError(error)); return; }
     user = null; moderator = false; syncAuth(); $('#reports-list').replaceChildren();
-    $('#discussion-form').reset(); $('#report-form').reset(); cancelReply();
+    $('#discussion-form').reset(); $('#reply-discussion-form')?.reset(); $('#report-form').reset(); cancelReply();
     await ensureGuestSession().catch(() => toast('Accesul ca oaspete nu este disponibil momentan. Poți reîncerca din formular.'));
     await Promise.all([loadComments(), loadReports(), loadUpdates()]); toast('Te-ai deconectat.');
   });
@@ -329,14 +344,14 @@
     const ticket = ++commentsRequest;
     const target = $('#discussion-list');
     // Never discard the live ProseMirror instance when refreshing its parent thread.
-    if($('#discussion-form').closest('#discussion-list'))parkComposer();
+    if($('#reply-discussion-form')?.closest('#discussion-list'))parkComposer();
     if (!client) { target.replaceChildren(element('p', 'small', 'Discuțiile vor apărea aici după conectarea comunității.')); return; }
     const fields = 'id,author_id,author_name,title,body,status,parent_id,created_at,is_guest,author_avatar_url';
     const { data, count, error } = await client.from('bg3ro_discussion_posts').select(fields, { count: 'exact' }).is('parent_id', null).order('created_at', { ascending: false }).order('id', { ascending: false }).range(page * discussionsPerPage, page * discussionsPerPage + discussionsPerPage - 1);
     if (ticket !== commentsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Discuțiile nu au putut fi încărcate. Încearcă din nou mai târziu.')); return; }
     if (!data.length && page > 0) { page=Math.max(0,Math.ceil((count||0)/discussionsPerPage)-1); return loadComments(); }
-    if($('#discussion-form').closest('#discussion-list'))parkComposer();
+    if($('#reply-discussion-form')?.closest('#discussion-list'))parkComposer();
     target.replaceChildren(); tabCount('#tab-discutii', 'Discuții', count);
     drawDiscussionPages(count || 0);
     if (!data.length) target.append(emptyState('Deschide conversația', 'Nu sunt încă mesaje publicate. Poți fi primul care lasă o întrebare sau o sugestie.'));
@@ -360,16 +375,16 @@
       if(post.status==='approved')window.BG3RO_REACTIONS?.mount(content,post.id);
       const actions = element('div', 'post-actions');
       if (user && post.status === 'approved') {
-        actions.append(actionButton('Răspunde', () => attachReply(post)));
-        actions.append(actionButton('Citează',()=>attachReply(post,true)));
+        actions.append(discussionAction('Răspunde','reply', () => attachReply(post)));
+        actions.append(discussionAction('Citat','quote',()=>attachReply(post,true)));
       }
-      actions.append(actionButton('Link',async()=>{
+      actions.append(discussionAction('Link','link',async()=>{
         const url=new URL(location.href);url.hash='discutii';url.searchParams.set('discutie',post.parent_id||post.id);url.searchParams.set('pagina',String(page+1));
         try{await navigator.clipboard.writeText(url.href);toast('Linkul discuției a fost copiat.');}catch(_){toast('Linkul nu a putut fi copiat.');}
       }));
       if (moderator && post.status !== 'approved') actions.append(actionButton('Aprobă', () => moderatePost(post.id, 'approved')));
       if (moderator && post.status !== 'rejected') actions.append(actionButton('Nu publica', () => moderatePost(post.id, 'rejected')));
-      if (moderator || post.author_id === user?.id) actions.append(actionButton('Șterge', async () => {
+      if (moderator || post.author_id === user?.id) actions.append(discussionAction('Șterge','delete', async () => {
         if (!confirm('Ștergi mesajul și răspunsurile asociate? Acțiunea nu poate fi anulată din site.')) return;
         const { error: deletionError } = await client.from('bg3ro_discussion_posts').delete().eq('id', post.id);
         if (deletionError) throw deletionError; await loadComments();
@@ -407,20 +422,21 @@
     const { error } = await client.from('bg3ro_discussion_posts').update({ status }).eq('id', id);
     if (error) throw error; await loadComments();
   }
-  function cancelReply() { parkComposer();replyContext=null;$('#discussion-form').elements.parent_id.value = ''; replyName=''; $('#reply-label').hidden = true; $('#cancel-reply').hidden = true; $('#discussion-title').value = 'Comentariu';$('#discussion-form [type=submit]').textContent='Publică'; }
-  $('#cancel-reply').addEventListener('click', cancelReply);
+  function cancelReply() { parkComposer();replyContext=null;if($('#reply-discussion-form'))$('#reply-discussion-form').elements.parent_id.value = '';replyName=''; }
+  $('#reply-cancel-reply')?.addEventListener('click', cancelReply);
   $('#previous-comments').addEventListener('click', () => changeDiscussionPage(page - 1));
   $('#next-comments').addEventListener('click', () => changeDiscussionPage(page + 1));
-  $('#discussion-form').addEventListener('submit', event => {
+  for(const form of [$('#discussion-form'),$('#reply-discussion-form')].filter(Boolean))form.addEventListener('submit', event => {
     event.preventDefault(); if (!client || !user) return;
     submit(event.currentTarget, async () => {
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
       let body=values.body.trim();
-      try { if(window.BG3RO_DISCUSSION_EDITOR)body=window.BG3RO_DISCUSSION_EDITOR.value(values.parent_id?replyName:''); }
+      const editor=form.id==='discussion-form'?window.BG3RO_DISCUSSION_EDITOR:window.BG3RO_REPLY_EDITOR;
+      try { if(editor)body=editor.value(values.parent_id?replyName:''); }
       catch(error){error.code='DISCUSSION_EDITOR';throw error;}
       const { error } = await client.from('bg3ro_discussion_posts').insert({ author_id: user.id, author_name: user.is_anonymous ? values.author_name.trim() : discordName(), title: values.parent_id ? 'Răspuns' : 'Comentariu', body, parent_id: values.parent_id || null });
       if (error) throw error;
-      form.elements.body.value = ''; window.BG3RO_DISCUSSION_EDITOR?.clear(); cancelReply(); formStatus(form, 'Mesajul a fost publicat.'); if (!values.parent_id) page = 0; await loadComments();
+      form.elements.body.value = '';editor?.clear();if(values.parent_id)cancelReply();formStatus(values.parent_id?$('#discussion-form'):form, values.parent_id?'Răspunsul a fost publicat.':'Mesajul a fost publicat.');if (!values.parent_id) page = 0;await loadComments();
     });
   });
   $('#report-form').addEventListener('submit', event => {

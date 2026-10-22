@@ -66,6 +66,6 @@
   client=event.detail.client;canReact=!!event.detail.userId||event.detail.guest===true;generation++;closePicker();
   for(const item of mounted.values()){item.status.textContent='';paint(item,[]);}load([...mounted.keys()]);
  });
- addEventListener('scroll',closePicker,{capture:true,passive:true});addEventListener('resize',closePicker);
+ addEventListener('scroll',()=>{if(!opened)return;const item=[...mounted.values()].find(item=>item.panel===opened);if(item?.trigger.isConnected)place(opened,item.trigger);else closePicker();},{capture:true,passive:true});addEventListener('resize',closePicker);
  window.BG3RO_REACTIONS={mount,load,close:closePicker};
 })();

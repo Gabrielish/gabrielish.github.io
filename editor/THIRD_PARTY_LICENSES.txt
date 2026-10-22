@@ -1,5 +1,8 @@
 Third-party notices for the locally bundled discussion editor.
 
+@tiptap/extension-text-style 3.32.0 is also included under the same Tiptap
+GmbH MIT License reproduced below for @tiptap/core.
+
 === @tiptap/core 3.32.0 ===
 MIT License
 
