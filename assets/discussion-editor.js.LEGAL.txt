@@ -1,0 +1,1 @@
+/*! BG3.RO visual editor; Tiptap/ProseMirror MIT notices: ../editor/THIRD_PARTY_LICENSES.txt */

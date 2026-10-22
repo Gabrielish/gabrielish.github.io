@@ -6,7 +6,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await page.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:'window.BG3RO_CONFIG={};'}));
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
   const measurements=[];
-  for(const id of ['discutii','erori']){
+  // Discussions now use a separate visual editor/feed; preserve the report header contract.
+  for(const id of ['erori']){
    await page.locator(`#tab-${id}`).click();
    const card=page.locator(`#${id} .community-compose`);
    await card.evaluate(el=>{
@@ -32,7 +33,6 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
     if(!message)assert.equal(gaps.button,16,'Empty status does not affect button spacing');
    }
   }
-  assert.deepEqual(measurements[0],measurements[1],`Identical header spacing at ${width}px`);
   assert.equal(measurements[0].titleToDescription,12);
   assert.equal(measurements[0].descriptionToForm,18);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));

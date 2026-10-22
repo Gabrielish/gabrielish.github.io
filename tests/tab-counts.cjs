@@ -19,8 +19,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
   await page.goto('http://127.0.0.1:4173/#discutii',{waitUntil:'networkidle'});await page.waitForSelector('html.portal-ready');
   assert.equal(await page.locator('#tab-discutii').textContent(),'Discuții (25)','Total threads, excluding replies and not limited to the current page');
-  assert.equal(await page.locator('#discussion-list > .post-thread').count(),20);
-  await page.locator('#next-comments').click();await page.waitForFunction(()=>document.querySelectorAll('#discussion-list > .post-thread').length===5);
+  assert.equal(await page.locator('#discussion-list > .post-thread').count(),10);
+  await page.locator('#discussion-pages button').filter({hasText:/^3$/}).click();await page.waitForFunction(()=>document.querySelectorAll('#discussion-list > .post-thread').length===5);
   assert.equal(await page.locator('#tab-discutii').textContent(),'Discuții (25)');
   await page.locator('#tab-erori').click();
   assert.equal(await page.locator('#tab-erori').textContent(),'Raportare erori (23)','Private records remain excluded for guests');

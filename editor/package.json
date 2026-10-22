@@ -1,0 +1,12 @@
+{
+  "name": "bg3ro-discussion-editor",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "esbuild discussion-editor.js --bundle --minify --format=iife --target=es2022 --legal-comments=linked --outfile=../assets/discussion-editor.js" },
+  "dependencies": {
+    "@tiptap/core": "3.32.0",
+    "@tiptap/starter-kit": "3.32.0",
+    "@tiptap/extension-text-align": "3.32.0"
+  },
+  "devDependencies": { "esbuild": "0.28.2" }
+}

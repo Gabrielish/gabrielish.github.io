@@ -54,7 +54,7 @@
   <link rel="stylesheet" href="./portal-editors.css?v=20261019-centered-close-hover">
   <script src="./portal-editors.js?v=20261020-about-work" defer></script>
   <script src="./portal-releases.js?v=20261021-compact-mods" defer></script>
-  <link rel="stylesheet" href="./portal-discussions.css?v=20261020-chronological">
+  <link rel="stylesheet" href="./portal-discussions.css?v=20261022-visual-discussions">
   <link rel="stylesheet" href="./portal-forms.css?v=20261021-compose-list-gap">
   <link rel="stylesheet" href="./portal-auth.css?v=20261020-guest-choice">
   <link rel="stylesheet" href="./portal-report-form.css?v=20261021-compose-list-gap">
@@ -65,7 +65,8 @@
   <script src="./portal-content.js?v=20261020-content-tools" defer></script>
   <script src="./portal-news-feed.js?v=20261020-chronological" defer></script>
   <script src="./portal-updates.js?v=20261020-progress-version" defer></script>
-  <script src="./portal.js?v=20261021-empty-report-copy" defer></script>
+  <script src="./assets/discussion-editor.js?v=20261022-visual-editor" defer></script>
+  <script src="./portal.js?v=20261022-visual-discussions" defer></script>
   <script src="./portal-navbar.js?v=20261018-compact-mobile" defer></script>
   <script src="./portal-video.js?v=20261018-no-dice" defer></script>
   <title>Baldur’s Gate 3 | Traducere în Limba Română</title>
@@ -194,12 +195,25 @@
             </article>
           </section>
           <section id="discutii" class="tab-panel panel-stack" aria-labelledby="tab-discutii">
-            <div class="card community-compose"><h2>Discuții</h2><p class="small">Întrebări, sugestii de formulare sau impresii despre traducere. Problemele concrete se trimit în <a href="#erori" data-go-tab="erori">Raportare erori</a>.</p>
+            <div class="card discussion-compose"><h2 class="visually-hidden">Scrie în Discuții</h2>
               <div class="notice backend-notice" hidden>Comunitatea nu este conectată încă la baza de date. Mesajele nu pot fi trimise deocamdată. Poți scrie pe <a href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=posts" target="_blank" rel="noopener noreferrer">Nexus Mods</a>.</div>
               <div class="auth-required" data-auth-gate><p>Intră în conversație.</p><div class="auth-gate-actions"><button class="btn secondary" data-auth-open type="button">Continuă cu Discord</button><button class="btn secondary" data-guest-start="discussion" type="button">Continuă ca oaspete</button></div></div>
-              <form id="discussion-form" data-user-form hidden><input name="parent_id" type="hidden"><p id="reply-label" class="small" hidden></p><div class="form-grid"><div class="field"><label for="discussion-name">Nume afișat public</label><input id="discussion-name" name="author_name" required minlength="2" maxlength="40" autocomplete="nickname"></div><div class="field"><label for="discussion-title">Subiect</label><input id="discussion-title" name="title" maxlength="120" required></div></div><div class="field"><label for="discussion-body">Mesaj</label><textarea id="discussion-body" name="body" minlength="10" maxlength="4000" required></textarea></div><div class="honeypot" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div><div class="form-end"><button class="btn" type="submit">Publică</button><button class="btn secondary" id="cancel-reply" type="button" hidden>Anulează răspunsul</button></div><p class="form-status" role="status"></p></form>
-              <div id="discussion-list"><p class="small">Se încarcă discuțiile…</p></div><div class="pager"><button class="btn secondary small-btn" id="previous-comments" type="button" hidden>Înapoi</button><span id="comments-page"></span><button class="btn secondary small-btn" id="next-comments" type="button" hidden>Mai multe</button></div>
+              <form id="discussion-form" class="discussion-composer" data-user-form hidden>
+                <input id="discussion-title" name="title" type="hidden" value="Comentariu"><input name="parent_id" type="hidden">
+                <img id="discussion-avatar" class="post-avatar post-avatar-default" src="./assets/discussion-avatar.svg" alt="" width="44" height="44" referrerpolicy="no-referrer">
+                <div class="discussion-compose-main">
+                  <div class="field discussion-identity"><label for="discussion-name">Numele tău</label><input id="discussion-name" name="author_name" required minlength="2" maxlength="40" autocomplete="nickname" placeholder="Cum vrei să apari în discuție?"></div>
+                  <strong id="discussion-own-name" hidden></strong><p id="reply-label" class="small" hidden></p>
+                  <div class="discussion-editor-shell"><div id="discussion-toolbar" class="discussion-toolbar" role="toolbar" aria-label="Formatarea comentariului"></div><div id="discussion-editor" class="discussion-editor-content"></div><label class="visually-hidden" for="discussion-body">Mesaj</label><textarea id="discussion-body" name="body" minlength="10" maxlength="4000" required placeholder="Scrie un comentariu…"></textarea></div>
+                  <div id="discussion-link-panel" class="discussion-link-panel" hidden><label for="discussion-link-url">Adresa linkului</label><input id="discussion-link-url" type="url" placeholder="https://"><div><button id="discussion-link-save" type="button" class="btn secondary small-btn">Aplică linkul</button><button id="discussion-link-remove" type="button" class="btn secondary small-btn">Elimină linkul</button><button id="discussion-link-cancel" type="button" class="btn secondary small-btn">Anulează</button></div></div>
+                  <p id="discussion-editor-error" class="error" role="status"></p>
+                  <div class="honeypot" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+                  <div class="discussion-compose-bottom"><span id="discussion-character-count"></span><div class="form-end"><button class="btn secondary" id="cancel-reply" type="button" hidden>Anulează răspunsul</button><button class="btn" type="submit">Publică</button></div></div><p class="form-status" role="status"></p>
+                </div>
+              </form>
             </div>
+            <div class="card discussion-feed-card"><div id="discussion-list"><p class="small">Se încarcă discuțiile…</p></div></div>
+            <div id="discussion-pagination" class="discussion-pagination" hidden><nav aria-label="Paginile discuțiilor"><button id="previous-comments" type="button" class="discussion-page" aria-label="Pagina anterioară">‹</button><div id="discussion-pages"></div><button id="next-comments" type="button" class="discussion-page" aria-label="Pagina următoare">›</button></nav><p id="comments-page" role="status"></p></div>
           </section>
           <section id="erori" class="tab-panel panel-stack" aria-labelledby="tab-erori">
             <div class="card community-compose report-compose"><h2>Raportează o eroare</h2><p class="small">Un text greșit, un acord nepotrivit sau o problemă tehnică? Descrie unde apare și cum o pot reproduce.</p><div class="notice backend-notice" hidden>Baza de date nu este încă conectată. Raportarea din site nu este activă; poți trimite detaliile pe <a href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=posts" target="_blank" rel="noopener noreferrer">Nexus Mods</a>.</div>

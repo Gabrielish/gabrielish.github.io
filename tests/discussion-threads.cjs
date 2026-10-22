@@ -17,7 +17,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    window.__qaPosts=[...replies,...roots];
   });
   await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/#discutii',{waitUntil:'networkidle'});
-  await p.waitForSelector('#post-reply-0');assert.equal(await p.locator('.post-thread').count(),20);
+  await p.waitForSelector('#post-reply-0');assert.equal(await p.locator('.post-thread').count(),10);
   assert.equal(await p.locator('#post-root-0 + .post-replies .reply').count(),100);
   assert.equal(await p.locator('#post-root-20').count(),0);assert.equal(await p.locator('#post-reply-last-page').count(),0);
   assert.equal(await p.locator('#post-reply-0 .post-mention').textContent(),'@Jucător Discord');assert.equal(await p.locator('.post-body img').count(),0);
@@ -27,8 +27,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   const root=await p.locator('#post-root-0').boundingBox(),reply=await p.locator('#post-reply-0').boundingBox();assert(reply.x>root.x);assert(reply.y>root.y);
   assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   await p.evaluate(()=>window.scrollTo(0,document.querySelector('.post-thread').getBoundingClientRect().top+scrollY-130));await p.screenshot({path:`.qa/discussion-threads-${width}.png`});
-  await p.locator('#next-comments').click();await p.waitForSelector('#post-reply-last-page');assert.equal(await p.locator('.post-thread').count(),1);assert.equal(await p.locator('#post-reply-0').count(),0);
-  await p.locator('#previous-comments').click();await p.waitForSelector('#post-reply-0');assert.equal(await p.locator('#post-reply-last-page').count(),0);
+  await p.getByRole('button',{name:'Pagina 3',exact:true}).click();await p.waitForSelector('#post-reply-last-page');assert.equal(await p.locator('.post-thread').count(),1);assert.equal(await p.locator('#post-reply-0').count(),0);
+  await p.getByRole('button',{name:'Pagina 1',exact:true}).click();await p.waitForSelector('#post-reply-0');assert.equal(await p.locator('#post-reply-last-page').count(),0);
   assert.deepEqual(errors,[]);await p.close();
  }
  console.log('PASS: root-based pagination, chronological nested replies, 100-reply batches, @mention, Discord/fallback/failed avatars, XSS safety, mobile indentation and no overflow. Synthetic SDK.');

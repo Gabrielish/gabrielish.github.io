@@ -1,0 +1,114 @@
+/*! BG3.RO visual editor; Tiptap/ProseMirror MIT notices: ../editor/THIRD_PARTY_LICENSES.txt */
+import {Editor} from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import TextAlign from '@tiptap/extension-text-align';
+
+const prefix='BG3RO-RICH-1:';
+const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']})];
+const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+function safeURL(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
+function cleanDoc(value){
+ let budget=2000;
+ function clean(n,depth=0){
+  if(!n||typeof n!=='object'||depth>16||--budget<0)return null;
+  if(n.type==='text'){
+   const result={type:'text',text:String(n.text||'')};
+   result.marks=(Array.isArray(n.marks)?n.marks:[]).flatMap(m=>{
+    if(['bold','italic','underline','strike','code'].includes(m.type))return [{type:m.type}];
+    const href=m.type==='link'&&safeURL(m.attrs?.href);return href?[{type:'link',attrs:{href}}]:[];
+   });return result.text?result:null;
+  }
+  if(!['doc','paragraph','heading','bulletList','orderedList','listItem','blockquote','codeBlock','hardBreak','horizontalRule'].includes(n.type))return null;
+  const result={type:n.type};
+  if(n.type==='heading')result.attrs={level:n.attrs?.level===3?3:2};
+  if(['paragraph','heading'].includes(n.type)&&['left','center','right','justify'].includes(n.attrs?.textAlign))result.attrs={...result.attrs,textAlign:n.attrs.textAlign};
+  if(Array.isArray(n.content))result.content=n.content.map(child=>clean(child,depth+1)).filter(Boolean);
+  return result;
+ }
+ const doc=clean(value);return doc?.type==='doc'?doc:{type:'doc',content:[]};
+}
+function documentFor(body){
+ if(String(body).startsWith(prefix)){try{return cleanDoc(JSON.parse(body.slice(prefix.length)));}catch(_){}}
+ return {type:'doc',content:String(body||'').split(/\r?\n/).map(text=>({type:'paragraph',content:text?[{type:'text',text}]:[]}))};
+}
+function render(body){
+ const output=node('div');output.className='post-body discussion-rich';
+ const tags={paragraph:'p',heading:'h2',bulletList:'ul',orderedList:'ol',listItem:'li',blockquote:'blockquote',codeBlock:'pre',hardBreak:'br',horizontalRule:'hr'};
+ function append(parent,n){
+  if(n.type==='doc'){(n.content||[]).forEach(child=>append(parent,child));return;}
+  if(n.type==='text'){
+   let text=document.createTextNode(n.text);
+   for(const mark of n.marks||[]){const tag={bold:'strong',italic:'em',underline:'u',strike:'s',code:'code',link:'a'}[mark.type];if(!tag)continue;const wrap=node(tag);
+    if(tag==='a'){const href=safeURL(mark.attrs?.href);if(!href)continue;wrap.href=href;wrap.target='_blank';wrap.rel='noopener noreferrer nofollow ugc';}
+    wrap.append(text);text=wrap;
+   }parent.append(text);return;
+  }
+  const tag=n.type==='heading'&&n.attrs?.level===3?'h3':tags[n.type];if(!tag)return;
+  const el=node(tag);if(n.attrs?.textAlign)el.style.textAlign=n.attrs.textAlign;
+  (n.content||[]).forEach(child=>append(el,child));parent.append(el);
+ }
+ append(output,documentFor(body));return output;
+}
+let editor=null;
+const textarea=document.querySelector('#discussion-body'),form=document.querySelector('#discussion-form');
+const host=document.querySelector('#discussion-editor'),toolbar=document.querySelector('#discussion-toolbar');
+function plainDoc(doc){return doc.content.every(n=>n.type==='paragraph'&&!n.attrs?.textAlign&&(n.content||[]).every(t=>t.type==='text'&&!(t.marks||[]).length));}
+function serialize(doc){return plainDoc(doc)?doc.content.map(p=>(p.content||[]).map(t=>t.text).join('')).join('\n'):prefix+JSON.stringify(doc);}
+const api={render,documentFor,hasMention:body=>{
+ const first=documentFor(body).content?.[0];return first?.type==='paragraph'&&first.content?.[0]?.text?.startsWith('@');
+},get editor(){return editor;},clear(){editor?.commands.clearContent();textarea.value='';},focus(){editor?.commands.focus();},
+ value(name=''){
+  if(!editor)return textarea.value;
+  const doc=cleanDoc(editor.getJSON());
+  if(name&&doc.content?.[0]?.content?.[0]?.text!=='@'+name)doc.content.unshift({type:'paragraph',content:[{type:'text',text:'@'+name}]});
+  const body=serialize(doc);
+  if(editor.getText().trim().length<10)throw Error('Scrie un mesaj de cel puțin 10 caractere.');
+  if(body.length>4000)throw Error('Mesajul este prea lung. Scurtează textul sau elimină o parte din formatare.');
+  return body;
+ },quote(body,name){
+  editor?.commands.insertContent([{type:'paragraph',content:[{type:'text',text:'@'+name}]},{type:'blockquote',content:documentFor(body).content},{type:'paragraph'}]);editor?.commands.focus('end');
+ }};
+window.BG3RO_DISCUSSION_EDITOR=api;
+if(textarea&&host){
+ editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':'Mesaj','aria-multiline':'true','data-placeholder':'Scrie un comentariu…',class:'discussion-prosemirror'},handlePaste(view,event){
+  // Let ProseMirror parse only its schema; scripts/images/styles are not in the schema.
+  if(event.clipboardData?.files.length){event.preventDefault();return true;}return false;
+ }},onUpdate(){
+  const body=serialize(cleanDoc(editor.getJSON()));textarea.value=body;
+  document.querySelector('#discussion-character-count').textContent=`${editor.getText().length} caractere`;
+  document.querySelector('#discussion-editor-error').textContent=body.length>4000?'Mesajul depășește limita. Scurtează textul sau formatarea.':'';
+  const status=form.querySelector('.form-status.error');if(status){status.textContent='';status.classList.remove('error');}
+  refresh();
+ },onSelectionUpdate(){refresh();}});
+ textarea.hidden=true;textarea.required=false;
+ // Retain the original plain textarea as a functional no-bundle fallback.
+ textarea.addEventListener('input',()=>{if(textarea.value!==serialize(cleanDoc(editor.getJSON())))editor.commands.setContent(documentFor(textarea.value));});
+ form.addEventListener('reset',()=>editor.commands.clearContent());
+ const icons={bold:'M6 4h7a4 4 0 0 1 0 8H6m0-8v16h8a4 4 0 0 0 0-8H6',italic:'M16 4H9m6 0L9 20m-5 0h7',underline:'M6 3v7a6 6 0 0 0 12 0V3M4 21h16',strike:'M17 5c-1-2-3-2-5-2-6 0-7 7-2 8m-6 1h16m-5 2c5 3 1 8-4 7-2 0-4-1-5-3',bullet:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',ordered:'M9 6h12M9 12h12M9 18h12M3 4v5M2 9h3M2 14c3-3 4 0 1 2l-1 2h3',quote:'M10 11H4V7h6v6c0 3-2 5-5 5m15-7h-6V7h6v6c0 3-2 5-5 5',code:'m8 5-7 7 7 7m8-14 7 7-7 7',left:'M3 5h18M3 10h12M3 15h18M3 20h12',center:'M3 5h18M6 10h12M3 15h18M6 20h12',right:'M3 5h18M9 10h12M3 15h18M9 20h12',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2m3 6a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',undo:'M3 4v6h6M3 10a9 9 0 1 1 1 9',redo:'M21 4v6h-6m6 0a9 9 0 1 0-1 9'};
+ const controls=[];
+ function button(label,icon,command,active){const b=node('button');b.type='button';b.title=label;b.setAttribute('aria-label',label);b.className='discussion-tool';
+  if(icons[icon]){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const [k,v]of Object.entries({viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true'}))svg.setAttribute(k,v);const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',icons[icon]);svg.append(path);b.append(svg);}else b.textContent=icon;
+  b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',command);toolbar.append(b);controls.push([b,active]);return b;
+ }
+ button('Aldin','bold',()=>editor.chain().focus().toggleBold().run(),()=>editor.isActive('bold'));
+ button('Cursiv','italic',()=>editor.chain().focus().toggleItalic().run(),()=>editor.isActive('italic'));
+ button('Subliniat','underline',()=>editor.chain().focus().toggleUnderline().run(),()=>editor.isActive('underline'));
+ button('Tăiat','strike',()=>editor.chain().focus().toggleStrike().run(),()=>editor.isActive('strike'));
+ for(const level of [2,3])button('Titlu H'+level,'H'+level,()=>editor.chain().focus().toggleHeading({level}).run(),()=>editor.isActive('heading',{level}));
+ for(const align of ['left','center','right'])button({left:'Aliniere la stânga',center:'Aliniere centrată',right:'Aliniere la dreapta'}[align],align,()=>editor.chain().focus().setTextAlign(align).run(),()=>editor.isActive({textAlign:align}));
+ button('Listă cu puncte','bullet',()=>editor.chain().focus().toggleBulletList().run(),()=>editor.isActive('bulletList'));
+ button('Listă numerotată','ordered',()=>editor.chain().focus().toggleOrderedList().run(),()=>editor.isActive('orderedList'));
+ button('Citat','quote',()=>editor.chain().focus().toggleBlockquote().run(),()=>editor.isActive('blockquote'));
+ button('Cod','code',()=>editor.chain().focus().toggleCodeBlock().run(),()=>editor.isActive('codeBlock'));
+ const panel=document.querySelector('#discussion-link-panel'),url=document.querySelector('#discussion-link-url');url.disabled=true;
+ const closeLink=()=>{panel.hidden=true;url.disabled=true;url.setCustomValidity('');};
+ const link=button('Adaugă sau modifică linkul','link',()=>{url.disabled=false;url.value=editor.getAttributes('link').href||'';panel.hidden=false;url.focus();},()=>editor.isActive('link'));
+ document.querySelector('#discussion-link-save').onclick=()=>{const href=safeURL(url.value.trim());if(!href){url.setCustomValidity('Introdu o adresă http:// sau https:// validă.');url.reportValidity();return;}url.setCustomValidity('');editor.chain().focus().extendMarkRange('link').setLink({href}).run();closeLink();};
+ url.oninput=()=>url.setCustomValidity('');
+ document.querySelector('#discussion-link-remove').onclick=()=>{editor.chain().focus().extendMarkRange('link').unsetLink().run();closeLink();};
+ document.querySelector('#discussion-link-cancel').onclick=()=>{closeLink();link.focus();};
+ button('Anulează ultima modificare','undo',()=>editor.chain().focus().undo().run());
+ button('Refă modificarea','redo',()=>editor.chain().focus().redo().run());
+ function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));host.classList.toggle('is-empty',editor.isEmpty);}
+ refresh();
+}

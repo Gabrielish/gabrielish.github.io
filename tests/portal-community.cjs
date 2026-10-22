@@ -68,7 +68,8 @@ function syntheticSDK(){
       assert.equal(await p.locator('#discussion-name').evaluate(el=>el.readOnly),true,'Discord name cannot be edited');
       await p.locator('#tab-discutii').click();
       await p.locator('#discussion-name').evaluate(el=>el.value='Nume modificat manual');
-      await p.locator('#discussion-title').fill('O întrebare');await p.locator('#discussion-body').fill('<img src=x onerror="window.injected=true"> Text de test.');
+      assert.equal(await p.locator('#discussion-title').getAttribute('type'),'hidden');
+      await p.locator('.discussion-prosemirror').fill('<img src=x onerror="window.injected=true"> Text de test.');
       await p.locator('#discussion-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#discussion-form .form-status').textContent.includes('Mesaj'));
       assert.equal(await p.locator('#discussion-list .post-body img').count(),0);assert.equal(await p.evaluate(()=>window.injected),undefined);
       assert.equal(await p.evaluate(()=>window.__communityTest.comments.length),1);
