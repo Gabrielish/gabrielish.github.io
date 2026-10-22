@@ -62,7 +62,8 @@
   function drawStars(value) { document.querySelectorAll('[data-rating]').forEach(b => { b.classList.toggle('is-filled', Number(b.dataset.rating) <= value); b.setAttribute('aria-pressed', String(Number(b.dataset.rating) === myRating)); }); }
   function drawOwn() {
     drawStars(myRating || Math.round(average));
-    setText('#rating-hint', userId ? (myRating ? `Evaluarea ta: ${myRating} din 5. Poți modifica nota.` : 'Alege o notă de la 1 la 5 stele.') : 'Conectează-te cu Discord pentru a evalua.');
+    $('#rating-own').hidden = !userId || !myRating;
+    setText('#rating-hint', myRating ? `Evaluarea ta: ${myRating}/5` : '');
     document.querySelectorAll('[data-works]').forEach(b => b.setAttribute('aria-pressed', String(myVote !== null && String(myVote.works) === b.dataset.works)));
   }
   function requireLogin() { if (client && userId) return true; $('.topbar [data-auth-open]')?.click(); return false; }
@@ -101,7 +102,7 @@
     const changed = client !== event.detail.client || userId !== event.detail.userId;
     client = event.detail.client;userId = event.detail.userId;
     if (!changed) return;
-    draftWorks=null;voteExpanded=false;drawVotePanel();status('#compatibility-status','');
+    draftWorks=null;voteExpanded=false;drawVotePanel();status('#compatibility-status','');status('#rating-status','');
     $('#compatibility-platform').value='windows';
     const request = ++authRequest;myRating = null;myVote = null;drawOwn();drawVersions('');
     if (!client || !userId) return;
@@ -116,20 +117,40 @@
   async function save(table, payload, statusId) {
     if (busy || !requireLogin()) return false;
     const actor = userId;
-    busy = true;document.querySelectorAll('[data-rating],[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = true; });status(statusId, 'Se salvează…');
+    busy = true;document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = true; });status(statusId, 'Se salvează…');
     try {
       const result = await client.from(table).upsert({ user_id: userId, ...payload }, { onConflict: 'user_id' });
       if (result.error) throw result.error;
       if (actor !== userId) { status(statusId, '');return false; }
-      status(statusId, 'Salvat. Mulțumesc pentru feedback!');return true;
+      status(statusId, statusId === '#rating-status' ? '' : 'Salvat. Mulțumesc pentru feedback!');return true;
     } catch (error) { status(statusId, /rate|limit|10 secunde/i.test(error?.message || '') ? 'Așteaptă 10 secunde înainte să modifici din nou votul.' : 'Votul nu a fost salvat. Încearcă din nou.', true);return false; }
-    finally { busy = false;document.querySelectorAll('[data-rating],[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = false; }); }
+    finally { busy = false;document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = false; }); }
   }
   document.querySelectorAll('[data-rating]').forEach(button => {
     button.addEventListener('pointerenter', () => { if (!busy) drawStars(Number(button.dataset.rating)); });
     button.addEventListener('click', async () => { const rating = Number(button.dataset.rating);if (await save('bg3ro_ratings', { rating }, '#rating-status')) { myRating = rating;drawOwn();await loadStats(); } });
   });
   $('.rating-stars').addEventListener('pointerleave', drawOwn);
+  $('#rating-remove').addEventListener('click', async () => {
+    if (busy || !myRating || !requireLogin()) return;
+    const actor = userId, request = authRequest;
+    busy = true;
+    const controls = document.querySelectorAll('[data-rating],#rating-remove,[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle');
+    controls.forEach(button => { button.disabled = true; });
+    status('#rating-status', 'Se elimină…');
+    try {
+      const result = await client.from('bg3ro_ratings').delete().eq('user_id', actor);
+      if (request !== authRequest) return;
+      if (result.error) throw result.error;
+      myRating = null;status('#rating-status', '');drawOwn();
+      $('[data-rating="1"]').focus({preventScroll:true});
+      await loadStats();
+    } catch (_) {
+      if (request === authRequest) status('#rating-status', 'Evaluarea nu a fost eliminată. Încearcă din nou.', true);
+    } finally {
+      busy = false;controls.forEach(button => { button.disabled = false; });
+    }
+  });
   document.querySelectorAll('[data-works]').forEach(button => button.addEventListener('click', () => {
     if(busy || !requireLogin())return;
     draftWorks=button.dataset.works==='true';voteExpanded=true;

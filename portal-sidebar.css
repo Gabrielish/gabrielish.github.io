@@ -5,12 +5,15 @@
 .project-sidebar .quick-download .small{font-size:11px;color:#d7bc8a;margin:12px 0 0}
 .project-sidebar .quick-download .sidebar-note{margin:0 0 17px}
 .project-sidebar .btn{font-size:12px;padding:11px 12px;gap:8px}
-.rating-summary{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
-.rating-summary .sidebar-note{margin:0}.rating-average{font-size:27px;font-weight:700;color:#f4ecd9;line-height:1}
-.rating-stars{display:flex;gap:4px;margin:15px 0 0}
-.rating-star{display:grid;place-items:center;width:38px;height:38px;border:0;background:none;color:#d4b779;border-radius:4px;padding:5px}
+.rating-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rating-summary .sidebar-note{margin:0;white-space:nowrap}.rating-average{font-size:15px;font-weight:700;color:#f4ecd9;line-height:1}
+.rating-stars{display:flex;gap:0;margin:0;flex:none}
+.rating-star{display:grid;place-items:center;width:26px;height:32px;border:0;background:none;color:#e7c554;border-radius:4px;padding:2px}
 .rating-star svg{fill:none;stroke:currentColor;stroke-width:1.5;transition:transform .2s}
 .rating-star.is-filled svg{fill:currentColor}.rating-star:is(:hover,:focus-visible) svg{transform:scale(1.16);fill:#e6c36b}
+.rating-own{display:flex;align-items:center;gap:9px;margin-top:3px;color:#a9aaa9;font-size:11px;line-height:1.8}
+.rating-own[hidden]{display:none}.rating-remove{border:0;background:none;color:#ef817b;font:inherit;cursor:pointer;padding:4px 0;min-height:28px}
+.rating-remove:hover{text-decoration:underline}.rating-remove:disabled{opacity:.5;cursor:wait}
 .sidebar-status{font-size:12px!important;line-height:1.7;color:#d7bc8a!important;margin:12px 0 0!important}
 .sidebar-status:empty{display:none}.sidebar-status.error{color:#e6a79d!important}
 .compatibility-summary{background:#1a1b1e;border-radius:7px;padding:14px;margin-bottom:20px}

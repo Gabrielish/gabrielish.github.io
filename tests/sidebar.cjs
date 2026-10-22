@@ -22,17 +22,25 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.equal(await page.locator('[data-works="true"]').getAttribute('aria-label'),null,'Visible button text remains the accessible name');
  assert(!await page.locator('.compatibility-card').textContent().then(text=>text.includes('Voturi ale utilizatorilor, nu o verificare oficială.')),'Redundant compatibility note removed');
  assert.equal(await page.locator('#rating-average').textContent(),'—');assert.equal(await page.locator('#rating-count').textContent(),'0 evaluări');
+ assert.equal(await page.locator('#rating-own').isVisible(),false,'No extra row before rating');
+ const starBox=await page.locator('.rating-stars').boundingBox(),averageBox=await page.locator('#rating-average').boundingBox(),countBox=await page.locator('#rating-count').boundingBox();
+ assert(Math.abs(starBox.y+starBox.height/2-averageBox.y-averageBox.height/2)<3,'Stars and average share a row at '+width);
+ assert(Math.abs(starBox.y+starBox.height/2-countBox.y-countBox.height/2)<3,'Count shares the compact row at '+width);
  await page.locator('[data-rating="4"]').click();assert(await page.locator('#auth-dialog').isVisible());await page.keyboard.press('Escape');
  await page.evaluate(()=>{
   const s=window.__sidebarTest;
   const client={from(table){
    const key=table==='bg3ro_ratings'?'rating':'vote';
-   return{select(){return this},eq(){return this},maybeSingle:async()=>({data:s[key],error:null}),upsert:async payload=>{if(s.fail)return{error:{message:'Network failure'}};s[key]=payload;return{error:null}}};
+   let deleting=false;
+   return{select(){return this},delete(){deleting=true;return this},eq(column,value){if(!deleting)return this;if(column!=='user_id'||value!=='alice')throw Error('Wrong deletion scope');if(s.fail)return Promise.resolve({error:{message:'Network failure'}});s[key]=null;return Promise.resolve({error:null})},maybeSingle:async()=>({data:s[key],error:null}),upsert:async payload=>{if(s.fail)return{error:{message:'Network failure'}};s[key]=payload;return{error:null}}};
   }};
   window.__sidebarClient=client;
   window.dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client,userId:'alice'}}));
  });
  await page.locator('[data-rating="4"]').click();await page.waitForFunction(()=>document.querySelector('#rating-average').textContent==='4.0');
+ assert.equal(await page.locator('#rating-hint').textContent(),'Evaluarea ta: 4/5');
+ assert(await page.locator('#rating-remove').isVisible());
+ assert.equal(await page.locator('#rating-status').textContent(),'','Successful save has no extra status row');
  assert.equal(await page.locator('.compatibility-fields').isVisible(),false,'Fields stay hidden until a vote is chosen');
  await page.locator('[data-works="true"]').click();
  assert.equal(await page.locator('.compatibility-fields').isVisible(),true,'Chosen vote opens the inline form');
@@ -83,6 +91,19 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.equal(await page.locator('#recent-compatibility-list .is-broken>svg.is-down').count(),1);
  assert.equal(await page.locator('#works-count').textContent(),'0 funcționează');assert.equal(await page.locator('#broken-count').textContent(),'1 nu funcționează');
  await page.evaluate(()=>window.__sidebarTest.fail=true);await page.locator('[data-rating="2"]').click();await page.waitForSelector('#rating-status.error');assert.equal(await page.locator('#rating-average').textContent(),'4.0');
+ await page.locator('#rating-remove').click();await page.waitForFunction(()=>document.querySelector('#rating-status').textContent.includes('nu a fost eliminată'));
+ assert.equal(await page.locator('#rating-hint').textContent(),'Evaluarea ta: 4/5','Failed deletion preserves own rating');
+ assert.equal(await page.locator('#rating-average').textContent(),'4.0','Failed deletion preserves real aggregate');
+ await page.evaluate(()=>window.__sidebarTest.fail=false);
+ await page.locator('.rating-card').screenshot({path:`.qa/rating-own-${width}.png`});
+ await page.locator('#rating-remove').click();await page.waitForFunction(()=>document.querySelector('#rating-average').textContent==='—');
+ assert.equal(await page.locator('#rating-own').isVisible(),false,'Own row disappears after removal');
+ assert.equal(await page.locator('#rating-count').textContent(),'0 evaluări');
+ assert.equal(await page.locator('.rating-star.is-filled').count(),0);
+ assert.equal(await page.locator('#rating-status').textContent(),'');
+ assert.equal(await page.locator('#broken-count').textContent(),'1 nu funcționează','Removing rating does not remove compatibility vote');
+ await page.mouse.move(0,0);
+ await page.locator('.rating-card').screenshot({path:`.qa/rating-empty-${width}.png`});
  assert((await page.locator('.quick-download a[href*="nexusmods"]').getAttribute('href')).includes('tab=files'));assert.equal(await page.locator('#github-quick-download:visible').count(),0);assert.equal(await page.locator('#statistics-updated').textContent(),'Nicio actualizare');
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
  assert.equal(await page.locator('.sidebar-share,.sidebar-support,#share-project').count(),0,'Removed sidebar cards stay absent');
