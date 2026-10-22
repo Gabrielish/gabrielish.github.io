@@ -8,6 +8,10 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
  assert((await p.locator('.report-translation-notice').innerText()).includes('doar raportării erorilor de traducere'));
  const form=p.locator('#report-form'),editor=p.locator('#report-editor .discussion-prosemirror');
  assert(await editor.isVisible());assert.equal(await p.locator('#report-title').isVisible(),false);assert.equal(await p.locator('#report-body').isVisible(),false);
+ const palettes=await p.evaluate(()=>[
+  ['.discussion-compose','.report-compose'],['#discussion-form .discussion-editor-shell','#report-form .discussion-editor-shell'],['#discussion-toolbar','#report-toolbar'],['#discussion-editor .discussion-prosemirror','#report-editor .discussion-prosemirror'],['#discussion-name','#report-name']
+ ].map(pair=>pair.map(selector=>{const style=getComputedStyle(document.querySelector(selector));return [style.backgroundColor,style.color,style.borderTopColor];})));
+ for(const [discussion,report]of palettes)assert.deepEqual(report,discussion,'Report and discussion palettes must match');
  const editorBox=await p.locator('#report-form .discussion-editor-shell').boundingBox(),photoBox=await p.locator('#report-photo-drop').boundingBox();assert(photoBox.y>editorBox.y+editorBox.height,'Capture area is BELOW editor');
  const submitBox=await form.locator('[type=submit]').boundingBox(),formBox=await form.boundingBox();assert(Math.abs(submitBox.x+submitBox.width-formBox.x-formBox.width)<2,'Submit button aligns right '+JSON.stringify({width,submitBox,formBox}));
  await p.addStyleTag({content:'.topbar{visibility:hidden!important}'});await p.locator('#erori').screenshot({path:`.qa/report-visual-empty-${width}.png`});
