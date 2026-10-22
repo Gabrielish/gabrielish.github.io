@@ -21,7 +21,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   assert((await page.evaluate(()=>getSelection().toString())).includes('Localization'),'Installation paths remain selectable');
   await page.evaluate(()=>getSelection().removeAllRanges());
   await page.locator('#tab-despre').click();
-  await page.locator('.compatibility-fields').evaluate(el=>el.hidden=false);
+  await page.locator('.compatibility-fields').evaluate(el=>{el.hidden=false;document.querySelector('#compatibility-vote-form').hidden=false;document.querySelector('#compatibility-vote-body').hidden=false;});
   const select=page.locator('#compatibility-platform');
   assert.equal(await select.evaluate(el=>getComputedStyle(el).userSelect),'none');
   assert.equal(await select.locator('option').first().evaluate(el=>getComputedStyle(el).userSelect),'none');

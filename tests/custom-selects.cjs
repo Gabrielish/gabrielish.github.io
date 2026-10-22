@@ -6,7 +6,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await page.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:'window.BG3RO_CONFIG={};'}));
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
   // Auth visibility is covered by sidebar.cjs; expose the picker for this styling test.
-  await page.locator('.compatibility-fields').evaluate(el=>el.hidden=false);
+  await page.locator('.compatibility-fields').evaluate(el=>{el.hidden=false;document.querySelector('#compatibility-vote-form').hidden=false;document.querySelector('#compatibility-vote-body').hidden=false;});
   const select=page.locator('#compatibility-platform');
   const alignment=await select.evaluate(el=>{const s=getComputedStyle(el),i=getComputedStyle(el,'::picker-icon');return{align:s.alignItems,line:s.lineHeight,iconAlign:i.alignSelf,top:i.marginTop,bottom:i.marginBottom};});
   assert.equal(alignment.align,'center');assert.equal(alignment.iconAlign,'center');assert.equal(alignment.line,'20px');assert.equal(alignment.top,'0px');assert.equal(alignment.bottom,'0px');

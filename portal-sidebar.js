@@ -17,6 +17,20 @@
   }
   document.querySelectorAll('[data-works]').forEach(button=>button.prepend(thumbIcon(button.dataset.works==='true')));
   let client = null, userId = null, myRating = null, myVote = null, average = 0, busy = false, statsRequest = 0, authRequest = 0;
+  let draftWorks = null, voteExpanded = false;
+  function drawVotePanel() {
+    const active=!!client && !!userId && draftWorks!==null;
+    $('#compatibility-vote-form').hidden=!active;
+    $('.compatibility-actions').hidden=active;
+    $('#compatibility-vote-body').hidden=!active || !voteExpanded;
+    $('.compatibility-fields').hidden=!active || !voteExpanded;
+    $('#compatibility-panel-toggle').setAttribute('aria-expanded',String(active && voteExpanded));
+    $('#compatibility-choice').textContent=draftWorks===false?'Nu funcționează':'Funcționează';
+    document.querySelectorAll('[data-works]').forEach(b=>{
+      b.setAttribute('aria-controls','compatibility-vote-form');
+      b.setAttribute('aria-expanded',String(active && draftWorks=== (b.dataset.works==='true')));
+    });
+  }
   const platforms = { windows: 'Windows', macos: 'macOS', linux: 'Linux / Steam Deck', ps5: 'PS5', other: 'Altă platformă' };
   const setText = (selector, text) => { $(selector).textContent = text; };
   let releaseVersions = [], versionsState = 'loading';
@@ -86,39 +100,54 @@
   window.addEventListener('bg3ro:auth', async event => {
     const changed = client !== event.detail.client || userId !== event.detail.userId;
     client = event.detail.client;userId = event.detail.userId;
-    $('.compatibility-fields').hidden = !client || !userId || !!event.detail.guest;
     if (!changed) return;
+    draftWorks=null;voteExpanded=false;drawVotePanel();status('#compatibility-status','');
+    $('#compatibility-platform').value='windows';
     const request = ++authRequest;myRating = null;myVote = null;drawOwn();drawVersions('');
     if (!client || !userId) return;
     try {
       const [rating, vote] = await Promise.all([client.from('bg3ro_ratings').select('rating').eq('user_id', userId).maybeSingle(),client.from('bg3ro_compatibility').select('works,platform,mod_version').eq('user_id', userId).maybeSingle()]);
       if (request !== authRequest) return;
       if (!rating.error && rating.data) myRating = rating.data.rating;
-      if (!vote.error && vote.data) { myVote = vote.data;$('#compatibility-platform').value = myVote.platform;drawVersions(myVote.mod_version); }
+      if (!vote.error && vote.data) { myVote = vote.data;if(draftWorks===null){$('#compatibility-platform').value = myVote.platform;drawVersions(myVote.mod_version);} }
       drawOwn();
     } catch (_) { /* Public statistics remain available independently. */ }
   });
   async function save(table, payload, statusId) {
     if (busy || !requireLogin()) return false;
     const actor = userId;
-    busy = true;document.querySelectorAll('[data-rating],[data-works]').forEach(b => { b.disabled = true; });status(statusId, 'Se salvează…');
+    busy = true;document.querySelectorAll('[data-rating],[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = true; });status(statusId, 'Se salvează…');
     try {
       const result = await client.from(table).upsert({ user_id: userId, ...payload }, { onConflict: 'user_id' });
       if (result.error) throw result.error;
       if (actor !== userId) { status(statusId, '');return false; }
       status(statusId, 'Salvat. Mulțumesc pentru feedback!');return true;
     } catch (error) { status(statusId, /rate|limit|10 secunde/i.test(error?.message || '') ? 'Așteaptă 10 secunde înainte să modifici din nou votul.' : 'Votul nu a fost salvat. Încearcă din nou.', true);return false; }
-    finally { busy = false;document.querySelectorAll('[data-rating],[data-works]').forEach(b => { b.disabled = false; }); }
+    finally { busy = false;document.querySelectorAll('[data-rating],[data-works],#compatibility-submit,#compatibility-change,#compatibility-panel-toggle').forEach(b => { b.disabled = false; }); }
   }
   document.querySelectorAll('[data-rating]').forEach(button => {
     button.addEventListener('pointerenter', () => { if (!busy) drawStars(Number(button.dataset.rating)); });
     button.addEventListener('click', async () => { const rating = Number(button.dataset.rating);if (await save('bg3ro_ratings', { rating }, '#rating-status')) { myRating = rating;drawOwn();await loadStats(); } });
   });
   $('.rating-stars').addEventListener('pointerleave', drawOwn);
-  document.querySelectorAll('[data-works]').forEach(button => button.addEventListener('click', async () => {
-    const payload = { works: button.dataset.works === 'true', platform: $('#compatibility-platform').value, mod_version: $('#compatibility-version').value.trim() };
-    if (await save('bg3ro_compatibility', payload, '#compatibility-status')) { myVote = payload;drawOwn();await loadStats(); }
+  document.querySelectorAll('[data-works]').forEach(button => button.addEventListener('click', () => {
+    if(busy || !requireLogin())return;
+    draftWorks=button.dataset.works==='true';voteExpanded=true;
+    status('#compatibility-status','');drawVotePanel();$('#compatibility-platform').focus({preventScroll:true});
   }));
+  $('#compatibility-panel-toggle').addEventListener('click',()=>{voteExpanded=!voteExpanded;drawVotePanel();});
+  $('#compatibility-change').addEventListener('click',()=>{
+    const previous=draftWorks;draftWorks=null;voteExpanded=false;drawVotePanel();
+    document.querySelector(`[data-works="${previous}"]`)?.focus({preventScroll:true});
+  });
+  $('#compatibility-vote-form').addEventListener('submit',async event=>{
+    event.preventDefault();if(draftWorks===null || busy || !requireLogin())return;
+    const payload={works:draftWorks,platform:$('#compatibility-platform').value,mod_version:$('#compatibility-version').value.trim()};
+    if(await save('bg3ro_compatibility',payload,'#compatibility-status')){
+      myVote=payload;voteExpanded=false;drawOwn();drawVotePanel();await loadStats();
+    }
+  });
+  drawVotePanel();
   window.addEventListener('bg3ro:releases-updated', loadStats);
   loadStats();
 })();
