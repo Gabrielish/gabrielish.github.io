@@ -38,7 +38,7 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 .report-title-row{overflow-wrap:anywhere}
 .report-title-row .report-platform-version{font-size:13px;font-weight:400;color:var(--muted)}
 .report-compose-heading{display:flex;align-items:center;gap:10px;font-size:19px!important;line-height:1.5;margin:0 0 20px!important;color:var(--text)!important}
-.report-compose-heading svg{flex:none;color:#ec8b32}
+.report-compose-heading svg{flex:none;color:var(--gold)}
 .report-translation-notice{border:1px solid #352731;border-radius:12px;padding:14px 16px;background:#25181f;color:#ef756e;margin-bottom:22px;font-size:13px;line-height:1.7}
 .report-translation-notice strong{font-weight:600}.report-translation-notice p{font-size:12px;color:#ce7f79;margin:4px 0 0;line-height:1.7}
 #report-form{margin:0}.report-guest-name{max-width:330px;margin-bottom:16px!important}
@@ -52,8 +52,8 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 #report-photo-drop .report-drop-content>svg{flex:none;color:var(--muted)}
 #report-photo-preview{align-self:flex-start;margin-top:10px}#report-photo-remove{align-self:flex-start}
 #report-form>.form-end{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;margin:18px 0 0}
-#report-form .report-submit{display:inline-flex;align-items:center;gap:8px;background:#b86627;border:1px solid #b86627;color:#fff1de;font-weight:600;padding:11px 18px;border-radius:10px;min-height:42px}
-#report-form .report-submit:hover{background:#cb792f}.report-submit svg{width:18px;height:18px}
+#report-form .report-submit{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:11px 18px;border-radius:10px;min-height:42px}
+.report-submit svg{width:18px;height:18px}
 #my-reports.report-feed{margin:0}.report-empty{text-align:center;padding:30px 0 34px;color:var(--muted)}
 .report-empty>svg{width:42px;height:42px;opacity:.5;margin:0 auto 18px}.report-empty p{font-size:14px;margin:0;color:var(--muted)}
 #my-reports .pager:has(button[hidden]){display:none}

@@ -12,6 +12,9 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
   ['.discussion-compose','.report-compose'],['#discussion-form .discussion-editor-shell','#report-form .discussion-editor-shell'],['#discussion-toolbar','#report-toolbar'],['#discussion-editor .discussion-prosemirror','#report-editor .discussion-prosemirror'],['#discussion-name','#report-name']
  ].map(pair=>pair.map(selector=>{const style=getComputedStyle(document.querySelector(selector));return [style.backgroundColor,style.color,style.borderTopColor];})));
  for(const [discussion,report]of palettes)assert.deepEqual(report,discussion,'Report and discussion palettes must match');
+ const actions=await p.evaluate(()=>['#discussion-form [type=submit]','#report-form .report-submit'].map(selector=>{const s=getComputedStyle(document.querySelector(selector));return [s.backgroundColor,s.color,s.borderTopColor];}));
+ assert.deepEqual(actions[0],actions[1],'Report submit uses the standard theme button palette');
+ assert.equal(await p.locator('.report-compose-heading svg').evaluate(el=>getComputedStyle(el).color),'rgb(215, 188, 138)','Bug icon uses theme gold');
  const editorBox=await p.locator('#report-form .discussion-editor-shell').boundingBox(),photoBox=await p.locator('#report-photo-drop').boundingBox();assert(photoBox.y>editorBox.y+editorBox.height,'Capture area is BELOW editor');
  const submitBox=await form.locator('[type=submit]').boundingBox(),formBox=await form.boundingBox();assert(Math.abs(submitBox.x+submitBox.width-formBox.x-formBox.width)<2,'Submit button aligns right '+JSON.stringify({width,submitBox,formBox}));
  await p.addStyleTag({content:'.topbar{visibility:hidden!important}'});await p.locator('#erori').screenshot({path:`.qa/report-visual-empty-${width}.png`});
