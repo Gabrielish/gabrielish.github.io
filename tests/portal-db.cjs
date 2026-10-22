@@ -160,6 +160,8 @@ const M = '33333333-3333-3333-3333-333333333333';
     await role();
     assert.equal((await db.query('select news_title,news_body,news_badge from public.bg3ro_releases where id=$1',[release.id])).rows[0].news_badge,'Arhivă');
     await denied("update public.bg3ro_releases set news_badge='Anonymous' where id=$1",[release.id]);
-    console.log('PASS: portal migrations, role isolation, column privileges, rate limits, contact inbox, screenshots, manual update metadata validation, administrator-only editing/deletion and release isolation.');
+    await db.exec('reset role');
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/discussion-reactions.sql'),'utf8'));
+    console.log('PASS: portal migrations, role isolation, column privileges, rate limits, contact inbox, screenshots, manual update metadata validation, administrator-only editing/deletion, release isolation and private reaction aggregates/toggle permissions.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
