@@ -45,7 +45,7 @@
    return blob;
   }finally{bitmap.close();}
  }
- function clearPreview(){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;preview.removeAttribute('src');preview.hidden=true;remove.hidden=true;hint.textContent='';if(fileLabel)fileLabel.textContent='Trage o fotografie aici';}
+ function clearPreview(){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;preview.removeAttribute('src');preview.hidden=true;remove.hidden=true;hint.textContent='';if(fileLabel)fileLabel.textContent='Captură de ecran (opțional, max. 5 MB)';}
  input.addEventListener('change',async()=>{
   clearPreview();const file=input.files[0];if(!file)return;
   try{await prepare(file);if(input.files[0]!==file)return;previewURL=URL.createObjectURL(file);preview.src=previewURL;preview.hidden=false;remove.hidden=false;if(fileLabel)fileLabel.textContent=file.name;}

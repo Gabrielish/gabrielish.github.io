@@ -22,12 +22,12 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   const shared=await page.evaluate(()=>{
    const fixture=document.createElement('div');fixture.className='post-thread';fixture.innerHTML='<div class="post"><img class="post-avatar post-avatar-default"><div class="post-content"><div class="post-meta"><strong>Jucător</strong></div><h3 class="post-title">Titlu</h3><div class="post-body">Text</div></div></div>';
    document.querySelector('#discussion-list').append(fixture);
-   const pairs=[['.post',['display','gap','padding','borderTopWidth']],['.post-avatar',['width','height','padding','borderRadius']],['.post-meta',['gap','marginBottom','fontSize','lineHeight']],['.post-meta strong',['fontSize','color']],['.post-title',['fontSize','marginTop','marginBottom']],['.post-body',['fontSize','lineHeight','color']]];
+   const pairs=[['.post',['display','gap','padding','borderTopWidth']],['.post-avatar',['width','height','padding','borderRadius']],['.post-meta',['gap','marginBottom','fontSize','lineHeight']],['.post-meta strong',['fontSize']],['.post-title',['fontSize','marginTop','marginBottom']],['.post-body',['fontSize','lineHeight']]];
    const result=pairs.map(([selector,props])=>{const a=getComputedStyle(fixture.querySelector(selector)),b=getComputedStyle(document.querySelector('.report-item '+selector));return [props.map(p=>a[p]),props.map(p=>b[p])];});
    fixture.remove();return result;
   });
-  for(const [discussion,report] of shared)assert.deepEqual(report,discussion,'Shared discussion/report styles must match');
-  assert(await page.locator('#reports-list').evaluate(el=>el.closest('.card')===document.querySelector('#report-form').closest('.card')),'Report list follows the form inside the same card');
+  for(const [discussion,report] of shared)assert.deepEqual(report,discussion,'Shared discussion/report geometry must match; report colors use the new reference palette');
+  assert(await page.locator('#reports-list').evaluate(el=>el.closest('.card')!==document.querySelector('#report-form').closest('.card')),'Report list has its own card below the composer');
   assert.equal(await page.locator('.report-item').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
   await page.locator('.report-compose').screenshot({path:`.qa/shared-report-card-${width}.png`});
   const toolbar=page.locator('.report-toolbar');
@@ -47,7 +47,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.locator('.report-item').screenshot({path:`.qa/report-actions-${width}.png`});
   page.once('dialog',d=>d.dismiss());await remove.click();assert.equal(await page.locator('.report-item').count(),1);
   page.once('dialog',d=>d.accept());await remove.click();await page.waitForFunction(()=>window.__communityTest.reports.length===0);
-  await page.waitForFunction(()=>document.querySelector('#reports-list .empty-state h3')?.textContent==='Ai găsit o problemă?');
+  await page.waitForFunction(()=>document.querySelector('#reports-list .report-empty p')?.textContent==='Nu a fost raportată încă nicio eroare.');
   assert.equal(await page.locator('#reports-heading').count(),0);
   assert.equal(await page.locator('#my-reports').getAttribute('aria-label'),'Erori raportate');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();

@@ -75,6 +75,7 @@
     const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[type]);svg.append(path);return svg;
   }
   function discussionAction(label,icon,callback){const button=actionButton(label,callback);button.prepend(discussionIcon(icon));return button;}
+  function bugIcon(){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const[k,v]of Object.entries({viewBox:'0 0 24 24',width:24,height:24,fill:'none',stroke:'currentColor','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true'}))svg.setAttribute(k,v);const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d','M8 7a4 4 0 0 1 8 0m-4 2v12m-5-11H3m18 0h-4M7 15H3m18 0h-4M7 6 4 3m13 3 3-3M7 19l-3 2m13-2 3 2M7 9h10v7a5 5 0 0 1-10 0Z');svg.append(path);return svg;}
   function attachReply(post, quote=false, focus=true) {
     if(!user||post.status!=='approved')return;
     const content=document.getElementById('post-'+post.id)?.querySelector('.post-content');if(!content)return;
@@ -457,6 +458,10 @@
       if (!user.is_anonymous) {
         values.author_name = discordName();
       }
+      try{if(window.BG3RO_REPORT_EDITOR)values.body=window.BG3RO_REPORT_EDITOR.value();}catch(error){error.code='DISCUSSION_EDITOR';throw error;}
+      const description=window.BG3RO_REPORT_EDITOR?.editor?.getText().trim()||values.body;
+      values.title=description.replace(/\s+/g,' ').slice(0,120);
+      values.mod_version=values.mod_version||'Nespecificată';
       await window.BG3RO_REPORT_PHOTO.publish(client, { ...values, author_id: user.id, is_public: true });
       form.reset(); formStatus(form, 'Raportarea a fost trimisă și este publică. O poți urmări mai jos.'); await loadReports();
     });
@@ -469,7 +474,7 @@
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     target.replaceChildren(); tabCount('#tab-erori', 'Raportare erori', count); $('#more-reports').hidden = reportsLimit >= count;
-    if (!data.length) target.append(emptyState('Ai găsit o problemă?', 'Nu a fost raportată încă nicio eroare. Poți fi primul care semnalează o problemă.'));
+    if (!data.length) {const empty=element('div','report-empty');empty.append(bugIcon(),element('p','','Nu a fost raportată încă nicio eroare.'));target.append(empty);}
     data.forEach(report => {
       const article = element('article', 'report-item post-thread');
       const layout = element('div', 'post'), content = element('div', 'post-content');
@@ -487,7 +492,9 @@
       header.append(copy); content.append(header); layout.append(avatar, content); article.append(layout);
       const title = element('h3', 'post-title report-title-row');
       title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${window.BG3RO_VERSIONS.version(report.mod_version)}`));
-      content.append(title, element('div', 'post-body report-body', report.body));
+      const reportBody=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.body):element('div','post-body',report.body);reportBody.classList.add('report-body');
+      if(!reportBody.textContent.replace(/\s+/g,' ').startsWith(report.title))content.append(title);
+      content.append(reportBody);
       if (report.moderator_reply) content.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
       if (moderator) {
         const form = element('form'); const field = element('div', 'field');

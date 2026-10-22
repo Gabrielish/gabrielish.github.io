@@ -55,9 +55,10 @@ function render(body){
  }
  append(output,documentFor(body));return output;
 }
-function mount(form,isReply=false){
+function mount(form,isReply=false,isReport=false){
 let editor=null;
-const q=selector=>form.querySelector(isReply?selector.replaceAll('#discussion-','#reply-discussion-'):selector);
+const q=selector=>form.querySelector(isReport?selector.replaceAll('#discussion-','#report-'):isReply?selector.replaceAll('#discussion-','#reply-discussion-'):selector);
+const minimum=isReport?20:10,maximum=isReport?6000:4000;
 const textarea=q('#discussion-body');
 const host=q('#discussion-editor'),toolbar=q('#discussion-toolbar');
 function plainDoc(doc){return doc.content.every(n=>n.type==='paragraph'&&!n.attrs?.textAlign&&(n.content||[]).every(t=>t.type==='text'&&!(t.marks||[]).length));}
@@ -75,20 +76,20 @@ const api={render,documentFor,hasMention:body=>{
   const doc=cleanDoc(editor.getJSON());
   if(name&&doc.content?.[0]?.content?.[0]?.text!=='@'+name)doc.content.unshift({type:'paragraph',content:[{type:'text',text:'@'+name}]});
   const body=serialize(doc);
-  if(editor.getText().trim().length<10)throw Error('Scrie un mesaj de cel puțin 10 caractere.');
-  if(body.length>4000)throw Error('Mesajul este prea lung. Scurtează textul sau elimină o parte din formatare.');
+  if(editor.getText().trim().length<minimum)throw Error(`Scrie ${isReport?'o descriere':'un mesaj'} de cel puțin ${minimum} caractere.`);
+  if(body.length>maximum)throw Error('Textul este prea lung. Scurtează textul sau elimină o parte din formatare.');
   return body;
  },quote(body,name){
   editor?.commands.insertContent([{type:'paragraph',content:[{type:'text',text:'@'+name}]},{type:'blockquote',content:documentFor(body).content},{type:'paragraph'}]);editor?.commands.focus('end');
  }};
 if(textarea&&host){
- editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':isReply?'Răspuns':'Mesaj','aria-multiline':'true','data-placeholder':'Scrie un comentariu…',class:'discussion-prosemirror'},handlePaste(view,event){
+ editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':isReport?'Descrie eroarea de traducere':isReply?'Răspuns':'Mesaj','aria-multiline':'true','data-placeholder':isReport?'Descrie eroarea de traducere…':'Scrie un comentariu…',class:'discussion-prosemirror'},handlePaste(view,event){
   // Let ProseMirror parse only its schema; scripts/images/styles are not in the schema.
   if(event.clipboardData?.files.length){event.preventDefault();return true;}return false;
  }},onUpdate(){
   const body=serialize(cleanDoc(editor.getJSON()));textarea.value=body;
   q('#discussion-character-count').textContent=`${editor.getText().length} caractere`;
-  q('#discussion-editor-error').textContent=body.length>4000?'Mesajul depășește limita. Scurtează textul sau formatarea.':'';
+  q('#discussion-editor-error').textContent=body.length>maximum?'Textul depășește limita. Scurtează textul sau formatarea.':'';
   const status=form.querySelector('.form-status.error');if(status){status.textContent='';status.classList.remove('error');}
   refresh();
  },onSelectionUpdate(){refresh();}});
@@ -152,3 +153,5 @@ if(mainForm){
  window.BG3RO_DISCUSSION_EDITOR=mount(mainForm);
  window.BG3RO_REPLY_EDITOR=mount(replyForm,true);
 }
+const reportForm=document.querySelector('#report-form');
+if(reportForm)window.BG3RO_REPORT_EDITOR=mount(reportForm,false,true);

@@ -1,0 +1,21 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>'));
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{for(const width of [320,390,820,1440]){
+ const p=await browser.newPage({viewport:{width,height:1100},reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.route('https://baldursgate3.game/**',r=>r.abort());await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test'};"}));await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
+ await p.goto('http://127.0.0.1:4173/#erori',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
+ assert.equal(await p.locator('#erori>.card').count(),2,'Report composer and results have separate cards');assert(await p.locator('.report-empty').isVisible());
+ assert((await p.locator('.report-translation-notice').innerText()).includes('doar raportării erorilor de traducere'));
+ const form=p.locator('#report-form'),editor=p.locator('#report-editor .discussion-prosemirror');
+ assert(await editor.isVisible());assert.equal(await p.locator('#report-title').isVisible(),false);assert.equal(await p.locator('#report-body').isVisible(),false);
+ const editorBox=await p.locator('#report-form .discussion-editor-shell').boundingBox(),photoBox=await p.locator('#report-photo-drop').boundingBox();assert(photoBox.y>editorBox.y+editorBox.height,'Capture area is BELOW editor');
+ const submitBox=await form.locator('[type=submit]').boundingBox(),formBox=await form.boundingBox();assert(Math.abs(submitBox.x+submitBox.width-formBox.x-formBox.width)<2,'Submit button aligns right '+JSON.stringify({width,submitBox,formBox}));
+ await p.addStyleTag({content:'.topbar{visibility:hidden!important}'});await p.locator('#erori').screenshot({path:`.qa/report-visual-empty-${width}.png`});
+ await p.locator('#report-name').fill('Vizitator');await editor.fill('Textul din descrierea acestei vrăji are un acord greșit.');await editor.press('ControlOrMeta+a');await form.getByRole('button',{name:'Aldin',exact:true}).click();
+ await p.evaluate(()=>window.__communityTest.failInsert=true);await form.locator('[type=submit]').click();await p.waitForSelector('#report-form .form-status.error');assert.equal(await editor.locator('strong').count(),1,'Failed submission preserves formatting');
+ await p.evaluate(()=>window.__communityTest.failInsert=false);await form.locator('[type=submit]').click();await p.waitForSelector('.report-item');
+ assert.equal(await p.locator('.report-item .report-body strong').textContent(),'Textul din descrierea acestei vrăji are un acord greșit.');
+ assert.equal(await p.evaluate(()=>window.__communityTest.reports[0].category),'text');assert.equal(await p.evaluate(()=>window.__communityTest.reports[0].title),'Textul din descrierea acestei vrăji are un acord greșit.');assert.equal((await editor.innerText()).trim(),'');
+ await p.locator('#report-name').fill('Vizitator');await editor.fill('Prea scurt');await form.locator('[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#report-form .form-status').textContent.includes('20 caractere'));assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),1);
+ assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await p.close();
+}console.log('PASS: report visual editor, translation notice, separate empty/feed card, screenshot row, right-aligned submit, guest posting, rich rendering, auto title, failure retention and text validation 320–1440px.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

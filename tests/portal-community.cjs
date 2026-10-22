@@ -55,8 +55,9 @@ function syntheticSDK(){
       assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori');
       assert.equal(await p.locator('#discussion-count').count(),0);
       assert.equal(await p.locator('#discussion-list .empty-state h3').textContent(),'Deschide conversația');
-      assert.equal(await p.locator('#reports-list .empty-state h3').textContent(),'Ai găsit o problemă?');
-      for(const selector of ['#discussion-list .empty-state','#reports-list .empty-state']){
+      assert.equal(await p.locator('#reports-list .report-empty p').textContent(),'Nu a fost raportată încă nicio eroare.');
+      assert.equal(await p.locator('.report-empty').evaluate(el=>getComputedStyle(el).textAlign),'center');
+      for(const selector of ['#discussion-list .empty-state']){
         assert.deepEqual(await p.locator(selector).evaluate(el=>{const s=getComputedStyle(el);return [s.textAlign,s.padding]}),['center','30px 0px']);
         assert.equal(await p.locator(selector+' > p.small').count(),1);
       }
@@ -78,10 +79,10 @@ function syntheticSDK(){
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].status),'approved');
       assert.equal(await p.locator('#discussion-form .form-status').textContent(),'Mesajul a fost publicat.');
       assert.equal(await p.locator('#discussion-form button[type=submit]').textContent(),'Trimite');
-      assert.equal(await p.locator('#report-form button[type=submit]').textContent(),'Publică');
-      await p.locator('#tab-erori').click();await p.locator('#report-title').fill('O eroare în traducere');await p.locator('#report-version').selectOption('Nespecificată');await p.locator('#report-body').fill('Un context de test care descrie suficient de clar eroarea.');
+      assert((await p.locator('#report-form button[type=submit]').textContent()).includes('Raportează o eroare'));
+      await p.locator('#tab-erori').click();await p.locator('#report-editor .discussion-prosemirror').fill('Un context de test care descrie suficient de clar eroarea.');
       await p.evaluate(()=>window.__communityTest.failInsert=true);await p.locator('#report-form button[type=submit]').click();await p.waitForSelector('#report-form .form-status.error');assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),0);
-      assert.equal(await p.locator('#report-title').inputValue(),'O eroare în traducere');
+      assert((await p.locator('#report-editor .discussion-prosemirror').innerText()).includes('Un context de test'));
       await p.evaluate(()=>window.__communityTest.failInsert=false);await p.locator('#report-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#report-form .form-status').textContent.includes('trimis'));
       assert.equal(await p.locator('.report-item').count(),1);assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),1);
       assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (1)');
