@@ -19,4 +19,18 @@
 .edit-dialog .release-edit{border-top:1px solid var(--line);margin-top:24px;padding-top:20px}
 .edit-dialog input[type=file]{display:block;max-width:100%;margin:12px 0}
 .about-copy #about-project-body p{white-space:pre-wrap;overflow-wrap:anywhere}
+#about-editor{margin-top:12px}
+#about-editor>.about-edit-action{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:2px 0;background:none;border:0;border-radius:0;box-shadow:none;color:var(--muted);font-size:12px;font-weight:400}
+#about-editor>.about-edit-action svg{width:15px;height:15px}
+#about-editor>.about-edit-action:hover{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+#about-form{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
+#about-form>.field{gap:6px;margin-bottom:12px}
+#about-form>.form-end{justify-content:flex-end;align-items:center;flex-direction:row;gap:8px;margin-top:10px}
+#about-form>.form-end>.btn{min-height:36px;padding:7px 14px;font-size:13px;line-height:20px}
+#about-form .about-cancel{background:none;border:0;box-shadow:none;color:var(--muted);font-weight:400;padding-inline:10px}
+#about-form .about-cancel:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+#about-form .form-status:empty{display:none}
+#about-form .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Descrie proiectul…'}
+.about-copy #about-project-body .discussion-rich p{white-space:normal}
+@media(max-width:600px){#about-form{padding:10px}#about-form>.form-end>.btn{font-size:12px;padding:7px 12px}}
 @media(max-width:480px){.edit-dialog{padding:20px}.edit-dialog .dialog-title h2{font-size:20px}}

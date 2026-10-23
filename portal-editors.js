@@ -58,17 +58,34 @@
     field.append(label,input); form.append(field);
   });
   const save = document.createElement('button'); save.type = 'submit'; save.className = 'btn'; save.textContent = 'Salvează modificările';
-  const status = document.createElement('p'); status.className = 'form-status'; status.setAttribute('role','status'); form.append(save,status); source.append(form); about.append(source);
-  const aboutEditor = mount(source,'Editează Despre proiect',heading);
-  let dirty = false, revision = 0;
-  form.addEventListener('input',()=>dirty=true);
+  const status = document.createElement('p'); status.className = 'form-status'; status.setAttribute('role','status');
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='btn about-cancel';cancel.textContent='Anulează';
+  const end=document.createElement('div');end.className='form-end';end.append(cancel,save);form.append(end,status);form.hidden=true;
+  const edit=pencil('Editează Despre proiect');edit.className='btn about-edit-action';const caption=document.createElement('span');caption.textContent='Editează';edit.append(caption);edit.setAttribute('aria-expanded','false');edit.setAttribute('aria-controls',form.id);
+  source.append(edit,form);about.append(source);const aboutEditor=source;
+  let revision=0,api=null,saved=Object.fromEntries(fields.map(([name,,,value])=>[name,value]));
+  function closeAbout(focus=true){
+    if(api){const textarea=form.elements.about_body,container=textarea.closest('.update-rich-editor');api.destroy();api=null;container.before(textarea);container.remove();textarea.id='about_body';textarea.hidden=false;textarea.required=true;textarea.previousElementSibling.htmlFor=textarea.id;}
+    save.disabled=false;
+    form.hidden=true;edit.hidden=false;edit.setAttribute('aria-expanded','false');status.textContent='';status.classList.remove('error');
+    if(focus&&!source.hidden)edit.focus({preventScroll:true});
+  }
+  edit.addEventListener('click',()=>{
+    if(!moderator||save.disabled)return;fields.forEach(([name])=>form.elements[name].value=saved[name]);status.textContent='';status.classList.remove('error');form.hidden=false;edit.hidden=true;edit.setAttribute('aria-expanded','true');
+    if(window.BG3RO_MOUNT_CONTENT_EDITOR)api=window.BG3RO_MOUNT_CONTENT_EDITOR(form,form.elements.about_body,{minimum:1,label:'Despre proiect',placeholder:'Descrie proiectul…'});
+    else if(saved.about_body.startsWith('BG3RO-RICH-1:')){status.textContent='Editorul nu s-a încărcat. Reîncarcă pagina pentru a păstra formatarea.';status.classList.add('error');save.disabled=true;}
+    form.elements.about_title.focus({preventScroll:true});
+  });
+  cancel.addEventListener('click',()=>closeAbout());
   function render(data) {
+    fields.forEach(([name])=>{if(typeof data[name]==='string')saved[name]=data[name];});
     if (typeof data.about_title === 'string') heading.textContent = data.about_title;
     if (typeof data.about_body === 'string') {
-      body.replaceChildren(...data.about_body.split(/\n\s*\n/).map(text=>{const p=document.createElement('p');p.textContent=text;return p;}));
+      if(data.about_body.startsWith('BG3RO-RICH-1:')&&window.BG3RO_CONTENT)body.replaceChildren(window.BG3RO_CONTENT.render(data.about_body));
+      else body.replaceChildren(...data.about_body.split(/\n\s*\n/).map(text=>{const p=document.createElement('p');p.textContent=text;return p;}));
     }
     if (typeof data.about_note === 'string') {note.textContent=data.about_note;note.hidden=!data.about_note.trim();}
-    if (!dirty) fields.forEach(([name])=>{if(typeof data[name]==='string')form.elements[name].value=data[name];});
+    if(form.hidden)fields.forEach(([name])=>form.elements[name].value=saved[name]);
   }
   async function loadAbout() {
     const ticket=++revision;
@@ -77,20 +94,21 @@
   }
   form.addEventListener('submit',async event=>{
     event.preventDefault();if(!client||!moderator||save.disabled)return;
-    save.disabled=true;status.textContent='Se salvează…';
+    save.disabled=true;cancel.disabled=true;status.classList.remove('error');status.textContent='Se salvează…';
     try {
-      const values=Object.fromEntries([...new FormData(form)].map(([k,v])=>[k,v.trim()]));
+      let content;try{content=api?api.value():form.elements.about_body.value.trim();if(!content||content.length>12000||(!api&&content.startsWith('BG3RO-RICH-1:')))throw Error('Verifică textul sau reîncarcă editorul.');}catch(error){error.editorValidation=true;throw error;}
+      const values={about_title:form.elements.about_title.value.trim(),about_body:content,about_note:form.elements.about_note.value.trim()};
       const {data,error}=await client.from('bg3ro_project_status').update(values).eq('id',1).select('about_title,about_body,about_note').maybeSingle();
       if(error||!data)throw error||new Error('Not saved');
-      dirty=false;render(data);status.textContent='Modificările au fost salvate.';
-    }catch(_){status.textContent='Modificările nu au fost salvate. Verifică legătura și reîncearcă.';}
-    finally{save.disabled=false;}
+      render(data);closeAbout();
+    }catch(error){status.classList.add('error');status.textContent=error.editorValidation?error.message:'Modificările nu au fost salvate. Verifică legătura și reîncearcă.';}
+    finally{save.disabled=false;cancel.disabled=false;}
   });
   window.addEventListener('bg3ro:auth',event=>{
     client=event.detail.client;moderator=event.detail.moderator===true;
     progress.hidden=aboutEditor.hidden=!moderator;
     document.querySelector('#work-editor').hidden=!moderator;
-    if(!moderator){dirty=false;for(const dialog of dialogs){if(dialog.open)dialog.close();if(!dialog.isConnected)dialogs.delete(dialog);}}
+    if(!moderator){closeAbout(false);for(const dialog of dialogs){if(dialog.open)dialog.close();if(!dialog.isConnected)dialogs.delete(dialog);}}
     if(client)loadAbout();
   });
 })();
