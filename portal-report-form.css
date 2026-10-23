@@ -73,6 +73,9 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 #report-photo-thumbnail #report-photo-preview{display:block;width:80px;height:80px;max-width:none;max-height:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;object-fit:cover;background:var(--panel)}
 #report-photo-remove{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;width:24px;height:24px;min-height:24px;padding:0;border:0;border-radius:50%;background:#dc4545;color:#fff;cursor:pointer}
 #report-photo-remove:hover{background:#b92f36}#report-photo-remove:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+@media(hover:hover) and (pointer:fine){
+ #report-photo-thumbnail:not(:hover):not(:focus-within) #report-photo-remove{opacity:0;pointer-events:none}
+}
 #report-form>.form-end{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;margin:18px 0 0}
 #report-form .report-submit{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:11px 18px;border-radius:10px;min-height:42px}
 .report-submit svg{width:18px;height:18px}

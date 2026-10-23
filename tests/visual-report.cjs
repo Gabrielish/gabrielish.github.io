@@ -1,7 +1,7 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>'));
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{for(const width of [320,390,820,1440]){
- const p=await browser.newPage({viewport:{width,height:1100},reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ const p=await browser.newPage({viewport:{width,height:1100},hasTouch:width<600,isMobile:width<600,reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.route('https://baldursgate3.game/**',r=>r.abort());await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test'};"}));await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
  await p.goto('http://127.0.0.1:4173/#erori',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
  assert.equal(await p.locator('#erori>.card').count(),2,'Report composer and results have separate cards');assert(await p.locator('.report-empty').isVisible());
@@ -28,8 +28,13 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
   assert.equal(imageBox.width,80);assert.equal(imageBox.height,80);assert(xBox.x<imageBox.x+imageBox.width&&xBox.x+xBox.width>imageBox.x+imageBox.width,'X overlaps the image right edge');assert(xBox.y<imageBox.y&&xBox.y+xBox.height>imageBox.y,'X overlaps the image top edge');
   assert.equal(await p.locator('#report-photo-label').textContent(),'Captură de ecran (opțional, max. 5 MB)');
   assert.equal(await preview.evaluate(el=>getComputedStyle(el).objectFit),'cover');
+  await p.mouse.move(0,0);await p.evaluate(()=>document.activeElement?.blur());
+  const mouseDevice=await p.evaluate(()=>matchMedia('(hover:hover) and (pointer:fine)').matches);
+  assert.equal(await remove.evaluate(el=>getComputedStyle(el).opacity),mouseDevice?'0':'1','X is hidden off-hover on desktop and always visible on touch devices');
+  await preview.hover();assert.equal(await remove.evaluate(el=>getComputedStyle(el).opacity),'1','Hover reveals X');
+  if(mouseDevice){await remove.hover();assert.equal(await remove.evaluate(el=>getComputedStyle(el).opacity),'1','X remains usable when the pointer moves from the image onto it');}
   if(imageWidth>imageHeight)await p.locator('#report-photo-drop').screenshot({path:`.qa/report-thumbnail-${width}.png`});
-  await remove.focus();await remove.press('Enter');assert.equal(await p.locator('#report-photo').inputValue(),'');assert(!(await p.locator('#report-photo-thumbnail').isVisible()));assert(await upload.evaluate(el=>el===document.activeElement));
+  await p.mouse.move(0,0);await remove.focus();assert.equal(await remove.evaluate(el=>getComputedStyle(el).opacity),'1','Keyboard focus reveals X without hover');await remove.press('Enter');assert.equal(await p.locator('#report-photo').inputValue(),'');assert(!(await p.locator('#report-photo-thumbnail').isVisible()));assert(await upload.evaluate(el=>el===document.activeElement));
  }
  assert(await editor.isVisible());assert.equal(await p.locator('#report-title').isVisible(),false);assert.equal(await p.locator('#report-body').isVisible(),false);
  const palettes=await p.evaluate(()=>[
