@@ -44,6 +44,14 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 .report-inline-reply [id$="cancel-reply"]{background:transparent;border:0;box-shadow:none;color:var(--muted);font-weight:400;padding:8px 10px;min-height:40px}
 .report-inline-reply [id$="cancel-reply"]:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
 .report-inline-reply .form-status:empty{display:none}
+.report-inline-edit .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Descrie eroarea de traducere…'}
+.report-state-menu{position:fixed;inset:auto;margin:0;padding:8px;width:360px;max-width:calc(100vw - 16px);box-sizing:border-box;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);box-shadow:0 10px 30px #0006}
+.report-state-menu:popover-open{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.report-state-option{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:64px;padding:8px 3px;border:1px solid transparent;border-radius:8px;background:none;color:var(--muted);font-size:12px}
+.report-state-menu .report-state-option svg{width:23px;height:23px}
+.report-state-option:hover,.report-state-option[aria-checked=true]{border-color:var(--gold);background:var(--panel-soft);color:var(--gold)}
+.report-state-option[data-state=resolved] svg{color:var(--green)}
+.report-state-status{flex-basis:100%;color:#f3a9b7;font-size:12px}.report-state-status:empty{display:none}
 .report-project-reply{margin-top:8px}
 .report-title-row{overflow-wrap:anywhere}
 .report-title-row .report-platform-version{font-size:13px;font-weight:400;color:var(--muted)}

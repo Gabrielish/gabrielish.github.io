@@ -71,6 +71,8 @@
     // Lucide icons (ISC/MIT); see assets/lucide-LICENSE.txt.
     const paths={reply:'m9 17-5-5 5-5M20 18v-2a4 4 0 0 0-4-4H4',quote:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 10h.01M12 10h.01M16 10h.01',link:'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',delete:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'};
     paths.approve='m5 12 4 4L19 6';paths.reject='M5 5l14 14M19 5 5 19';
+    paths.edit='m16 3 5 5M4 20l4-1L21 6a2.8 2.8 0 0 0-4-4L4 15l-1 6Z';
+    paths.new='M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0';paths.investigating='M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2';paths.resolved=paths.new+'m-14-1 4 4 6-6';paths.closed=paths.new+'M9 9l6 6m0-6-6 6';
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     for(const [key,value]of Object.entries({viewBox:'0 0 24 24',width:16,height:16,fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false'}))svg.setAttribute(key,value);
     const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[type]);svg.append(path);return svg;
@@ -470,7 +472,7 @@
     const request = ++reportsRequest;
     if (!client) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path,author_avatar_url', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path,author_avatar_url'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
@@ -489,7 +491,7 @@
       copy.append(element('strong', '', report.author_name || 'Jucător'), date);
       if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete'));
       if (!report.is_public) copy.append(element('span', 'post-status', 'Privată'));
-      copy.append(element('span', 'post-status', statusLabels[report.status]));
+      const stateBadge=element('span', 'post-status', statusLabels[report.status]);copy.append(stateBadge);
       header.append(copy); content.append(header); layout.append(avatar, content); article.append(layout);
       const title = element('h3', 'post-title report-title-row');
       title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${window.BG3RO_VERSIONS.version(report.mod_version)}`));
@@ -497,20 +499,20 @@
       if(!reportBody.textContent.replace(/\s+/g,' ').startsWith(report.title))content.append(title);
       content.append(reportBody);
       if (report.moderator_reply){const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');content.append(element('strong', '', 'Răspunsul proiectului'),answer);}
-      if (moderator) {
-        const form = element('form'); const field = element('div', 'field');
-        const label = element('label', '', 'Stadiul raportării'); label.htmlFor = `state-${report.id}`;
-        const select = element('select'); select.name = 'status'; select.id = label.htmlFor;
-        ['new','investigating','resolved','closed'].forEach(value => { const option = element('option', '', statusLabels[value]); option.value = value; option.selected = report.status === value; select.append(option); });
-        field.append(label, select);
-        const button = element('button', 'btn secondary small-btn', 'Salvează stadiul'); button.type = 'submit';
-        buttonIcon(button, ['M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2Z','M7 3v6h10V3M7 21v-8h10v8']);
-        const actions = element('div', 'report-actions'); actions.append(button);
-        form.append(field, actions, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
-        form.addEventListener('submit', event => { event.preventDefault(); submit(form, async () => {
-          const { error: updateError } = await client.from('bg3ro_bug_reports').update({ status: select.value }).eq('id', report.id);
-          if (updateError) throw updateError; form.closest('dialog')?.close(); toast('Raportare actualizată.'); await loadReports();
-        }); }); article.append(form);
+      if (moderator || (user && report.author_id===user.id)) {
+        const toolbar=element('div','report-toolbar post-actions');let inlineEdit=null;
+        const edit=discussionAction('Editează','edit',()=>{
+          if(inlineEdit){inlineEdit.api.focus();return;}
+          inlineEdit=window.BG3RO_CREATE_REPORT_REPLY?.(layout,report.body,true);if(!inlineEdit)return;
+          const {form,api,cancel}=inlineEdit;reportReplyEditors.add(api);form.querySelector('[type=submit]').textContent='Salvează modificările';
+          cancel.addEventListener('click',()=>{if(form.querySelector('[type=submit]').disabled)return;api.destroy();reportReplyEditors.delete(api);form.remove();inlineEdit=null;edit.focus({preventScroll:true});});
+          form.addEventListener('submit',event=>{event.preventDefault();submit(form,async()=>{
+            if(!moderator&&report.author_id!==user?.id)return;
+            let body;try{body=api.value();}catch(error){error.code='DISCUSSION_EDITOR';throw error;}
+            const title=api.editor.getText().replace(/\s+/g,' ').trim().slice(0,120);
+            const {error}=await client.from('bg3ro_bug_reports').update({title,body}).eq('id',report.id);if(error)throw error;await loadReports();
+          });});form.scrollIntoView({block:'nearest',behavior:'instant'});api.focus();
+        });edit.setAttribute('aria-label','Editează raportarea');
         const remove = actionButton('Șterge raportarea', async () => {
           if (!confirm('Ștergi definitiv această raportare?')) return;
           const result = await client.from('bg3ro_bug_reports').delete().eq('id', report.id);
@@ -519,11 +521,9 @@
           await loadReports();
         });
         buttonIcon(remove, ['M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14','M10 10v6m4-6v6']);
-        const source = element('div'); source.id = 'report-editor-' + report.id; source.append(form); article.append(source);
-        const editor = window.BG3RO_EDITORS.mount(source, 'Editează raportarea');
-        const toolbar = element('div', 'report-toolbar'); remove.setAttribute('aria-label', 'Șterge raportarea'); remove.title = 'Șterge raportarea';
-        const editButton=editor.querySelector('.edit-pencil');editButton.append(document.createTextNode('Editează'));
+        remove.setAttribute('aria-label', 'Șterge raportarea'); remove.title = 'Șterge raportarea';
         remove.replaceChildren(discussionIcon('delete'),document.createTextNode('Șterge'));
+        if(moderator){
         let inlineReply=null;
         const reply=discussionAction(report.moderator_reply?'Editează răspunsul':'Răspunde','reply',()=>{
           if(inlineReply){inlineReply.api.focus();return;}
@@ -540,7 +540,21 @@
           });});
           replyForm.scrollIntoView({block:'nearest',behavior:'instant'});api.focus();
         });
-        toolbar.classList.add('post-actions');toolbar.append(reply,editor, remove);content.append(toolbar);
+        const menu=element('div','report-state-menu');menu.id='report-states-'+report.id;menu.setAttribute('popover','auto');menu.setAttribute('role','menu');menu.setAttribute('aria-label','Stadiul raportării');
+        const status=element('span','report-state-status');status.setAttribute('role','status');
+        const stateButton=discussionAction('Stare: '+statusLabels[report.status],report.status,()=>{
+          if(menu.matches(':popover-open')){menu.hidePopover();return;}
+          menu.showPopover();stateButton.setAttribute('aria-expanded','true');const r=stateButton.getBoundingClientRect(),m=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(r.left,innerWidth-m.width-8))+'px';menu.style.top=Math.max(8,Math.min(r.bottom+6+m.height<=innerHeight-8?r.bottom+6:r.top-m.height-6,innerHeight-m.height-8))+'px';menu.querySelector('[aria-checked=true]')?.focus({preventScroll:true});
+        });stateButton.setAttribute('aria-haspopup','menu');stateButton.setAttribute('aria-controls',menu.id);stateButton.setAttribute('aria-expanded','false');
+        for(const value of ['new','investigating','resolved','closed']){const option=element('button','report-state-option',statusLabels[value]);option.type='button';option.dataset.state=value;option.prepend(discussionIcon(value));option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked',String(value===report.status));option.addEventListener('click',async()=>{
+          if(!moderator)return;menu.querySelectorAll('button').forEach(b=>b.disabled=true);status.textContent='';
+          try{const {error}=await client.from('bg3ro_bug_reports').update({status:value}).eq('id',report.id);if(error)throw error;report.status=value;stateBadge.textContent=statusLabels[value];stateButton.replaceChildren(discussionIcon(value),document.createTextNode('Stare: '+statusLabels[value]));stateButton.setAttribute('aria-expanded','false');menu.querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.state===value)));menu.hidePopover();stateButton.focus({preventScroll:true});}catch(error){status.textContent=readableError(error);}finally{menu.querySelectorAll('button').forEach(b=>b.disabled=false);}
+        });menu.append(option);}
+        menu.addEventListener('toggle',()=>stateButton.setAttribute('aria-expanded',String(menu.matches(':popover-open'))));
+        menu.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)){event.preventDefault();options[event.key==='Home'?0:event.key==='End'?3:(i+(['ArrowLeft','ArrowUp'].includes(event.key)?3:1))%4].focus();}else if(event.key==='Escape'||event.key==='Tab'){if(event.key==='Escape')event.preventDefault();menu.hidePopover();stateButton.focus({preventScroll:true});}});
+        toolbar.append(reply,stateButton,menu,status);
+        }
+        toolbar.append(edit,remove);content.append(toolbar);
       }
       target.append(article);
       window.BG3RO_REPORT_PHOTO.show(client, report, content).catch(() => {});

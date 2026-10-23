@@ -174,18 +174,19 @@ if(mainForm){
  window.BG3RO_DISCUSSION_EDITOR=mount(mainForm);
  window.BG3RO_REPLY_EDITOR=mount(replyForm,true);
  let reportReplySequence=0;
- window.BG3RO_CREATE_REPORT_REPLY=(container,body='')=>{
+ window.BG3RO_CREATE_REPORT_REPLY=(container,body='',editingReport=false)=>{
   const prefix='report-answer-'+(++reportReplySequence)+'-',form=replyForm.cloneNode(true);
   form.id=prefix+'form';form.hidden=false;form.classList.add('report-inline-reply');
   for(const el of form.querySelectorAll('[id]'))el.id=prefix+el.id.replace(/^reply-/,'');
   for(const el of form.querySelectorAll('[for]'))el.htmlFor=prefix+el.htmlFor.replace(/^reply-/,'');
   form.querySelector('.post-avatar')?.remove();form.querySelector('[id$="discussion-own-name"]')?.remove();form.querySelector('[id$="reply-label"]')?.remove();
   form.querySelector('.discussion-toolbar').replaceChildren();form.querySelector('.discussion-editor-content').replaceChildren();
-  const textarea=form.querySelector('[name=body]');textarea.value=body;
+  const textarea=form.querySelector('[name=body]');textarea.value=body;textarea.maxLength=editingReport?6000:4000;
   const cancel=form.querySelector('[id$="cancel-reply"]');cancel.hidden=false;cancel.textContent='Anulează';
   form.querySelector('[type=submit]').textContent='Răspunde';
-  container.append(form);const api=mount(form,true,false,prefix);api.reset();api.editor.commands.setContent(documentFor(body));
-  api.editor.view.dom.dataset.placeholder='Scrie un răspuns…';
+  if(editingReport)form.classList.add('report-inline-edit');
+  container.append(form);const api=mount(form,!editingReport,editingReport,prefix);api.reset();api.editor.commands.setContent(documentFor(body));
+  api.editor.view.dom.dataset.placeholder=editingReport?'Descrie eroarea de traducere…':'Scrie un răspuns…';
   return {form,api,cancel};
  };
 }

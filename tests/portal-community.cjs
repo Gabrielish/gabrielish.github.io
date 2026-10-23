@@ -88,7 +88,7 @@ function syntheticSDK(){
       assert.equal(await p.locator('.report-item').count(),1);assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),1);
       assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (1)');
       if(owner){
-        await p.locator('.report-toolbar .edit-pencil').click();await p.locator('.report-item select').selectOption('resolved');await p.locator('.report-item dialog button[type=submit]').click();await p.waitForFunction(()=>window.__communityTest.reports[0].status==='resolved');
+        await p.locator('.report-toolbar').getByRole('button',{name:'Stare: Nou',exact:true}).click();await p.getByRole('menuitemradio',{name:'Rezolvat',exact:true}).click();await p.waitForFunction(()=>window.__communityTest.reports[0].status==='resolved');
         await p.locator('#tab-despre').click();await p.locator('#progress-editor > .edit-pencil').click();
         await p.locator('#progress-value').fill('82');await p.locator('#progress-review-value').fill('25');await p.locator('#progress-testing-value').fill('30');await p.locator('#progress-form button').click();await p.waitForFunction(()=>document.querySelector('#progress-form .form-status').textContent.includes('actualizat'));
         await p.keyboard.press('Escape');assert.equal(await p.locator('#translation-percent').textContent(),'82%');assert.equal(await p.locator('#review-percent').textContent(),'25%');assert.equal(await p.locator('#testing-percent').textContent(),'30%');
