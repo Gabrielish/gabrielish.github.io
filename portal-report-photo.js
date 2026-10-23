@@ -86,7 +86,7 @@
    const link=document.createElement('button');link.type='button';link.className='report-photo-link';link.setAttribute('aria-label','Deschide fotografia raportării');link.setAttribute('aria-haspopup','dialog');
    link.addEventListener('click',()=>openPhoto(url.href));
    const image=document.createElement('img');image.src=url.href;image.alt='Fotografie atașată raportării';image.loading='lazy';image.referrerPolicy='no-referrer';
-   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);const moderation=article.querySelector(':scope > form');if(moderation)moderation.before(link);else article.append(link);
+   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);const moderation=article.querySelector(':scope > form,:scope > .report-toolbar');if(moderation)moderation.before(link);else article.append(link);
   },
   async cleanup(client,path){if(path)try{await client.storage.from(bucket).remove([path]);}catch(_){/* Deleted-report images are no longer publicly readable. */}}
  };

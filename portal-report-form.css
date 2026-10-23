@@ -30,11 +30,12 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 #report-photo-label{font-size:14px;overflow-wrap:anywhere;max-width:100%}
 .report-photo-field.drag-over,.report-photo-field:focus-within{border-color:var(--gold);background:#24241f}
 .report-header{position:relative;min-width:0}
-.report-header:has(.report-toolbar){padding-right:96px}
 .report-header>.post-meta strong{overflow-wrap:anywhere}
-.report-toolbar{position:absolute;top:0;right:0;display:flex;gap:8px}
-.report-toolbar>.btn{width:40px;height:40px;min-height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center}
-.report-toolbar svg{width:18px;height:18px;margin:0}
+.report-toolbar.post-actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}
+.report-toolbar>.btn,.report-toolbar>.edit-control>.edit-pencil{display:inline-flex;align-items:center;gap:6px;width:auto;height:auto;min-height:30px;padding:2px 0;border:0;border-radius:0;background:none;color:var(--muted);font-size:12px;font-weight:400;box-shadow:none}
+.report-toolbar> .btn svg,.report-toolbar>.edit-control>.edit-pencil svg{width:15px;height:15px;flex:none;margin:0}
+.report-toolbar>.btn:hover,.report-toolbar>.edit-control>.edit-pencil:hover{color:var(--gold);background:none;text-decoration:underline;text-underline-offset:3px}
+#reports-list>.report-item:first-child{border-top:0;padding-top:0}
 .report-title-row{overflow-wrap:anywhere}
 .report-title-row .report-platform-version{font-size:13px;font-weight:400;color:var(--muted)}
 .report-compose-heading{display:flex;align-items:center;gap:10px;font-size:19px!important;line-height:1.5;margin:0 0 20px!important;color:var(--text)!important}
@@ -60,4 +61,4 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 #my-reports .pager:has(button[hidden]){display:none}
 @media(max-width:600px){.report-compose-heading{font-size:17px!important;align-items:flex-start}.report-translation-notice{padding:12px}.report-translation-notice strong{font-size:12px}#report-photo-drop{padding:12px}#report-photo-drop .report-drop-content{flex-wrap:wrap}#report-photo-label{flex:1;min-width:130px}#report-photo-browse{margin-left:auto}#report-form .report-submit{font-size:13px;padding:10px 13px}.report-empty{padding-block:24px}}
 @media(max-width:950px){.report-context{grid-template-columns:repeat(2,minmax(0,1fr))}.report-context>.field:first-child{grid-column:auto}}
-@media(max-width:600px){.report-context{grid-template-columns:1fr}.report-context>.report-photo-field{order:2}.report-photo-field{padding:14px}.report-header:has(.report-toolbar){padding-right:78px}.report-toolbar{gap:5px}.report-toolbar>.btn,.report-toolbar .edit-pencil{width:34px;height:34px;min-height:34px}}
+@media(max-width:600px){.report-context{grid-template-columns:1fr}.report-context>.report-photo-field{order:2}.report-photo-field{padding:14px}}

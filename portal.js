@@ -522,8 +522,9 @@
         const source = element('div'); source.id = 'report-editor-' + report.id; source.append(form); article.append(source);
         const editor = window.BG3RO_EDITORS.mount(source, 'Editează raportarea');
         const toolbar = element('div', 'report-toolbar'); remove.setAttribute('aria-label', 'Șterge raportarea'); remove.title = 'Șterge raportarea';
-        remove.querySelector('span')?.remove();
-        toolbar.append(editor, remove); header.append(toolbar);
+        const editButton=editor.querySelector('.edit-pencil');editButton.append(document.createTextNode('Editează'));
+        remove.replaceChildren(discussionIcon('delete'),document.createTextNode('Șterge'));
+        toolbar.classList.add('post-actions');toolbar.append(editor, remove);content.append(toolbar);
       }
       target.append(article);
       window.BG3RO_REPORT_PHOTO.show(client, report, content).catch(() => {});

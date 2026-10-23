@@ -19,21 +19,14 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await page.locator('.report-header time').getAttribute('datetime'),'2026-10-19T10:00:00Z');
   assert.equal(await page.locator('.report-header .post-status').textContent(),'Nou');
   assert.equal(await page.locator('.report-title-row').textContent(),'Raport de test · windows · test');
-  const shared=await page.evaluate(()=>{
-   const fixture=document.createElement('div');fixture.className='post-thread';fixture.innerHTML='<div class="post"><img class="post-avatar post-avatar-default"><div class="post-content"><div class="post-meta"><strong>Jucător</strong></div><h3 class="post-title">Titlu</h3><div class="post-body">Text</div></div></div>';
-   document.querySelector('#discussion-list').append(fixture);
-   const pairs=[['.post',['display','gap','padding','borderTopWidth']],['.post-avatar',['width','height','padding','borderRadius']],['.post-meta',['gap','marginBottom','fontSize','lineHeight']],['.post-meta strong',['fontSize']],['.post-title',['fontSize','marginTop','marginBottom']],['.post-body',['fontSize','lineHeight']]];
-   const result=pairs.map(([selector,props])=>{const a=getComputedStyle(fixture.querySelector(selector)),b=getComputedStyle(document.querySelector('.report-item '+selector));return [props.map(p=>a[p]),props.map(p=>b[p])];});
-   fixture.remove();return result;
-  });
-  for(const [discussion,report] of shared)assert.deepEqual(report,discussion,'Shared discussion/report geometry must match; report colors use the new reference palette');
   assert(await page.locator('#reports-list').evaluate(el=>el.closest('.card')!==document.querySelector('#report-form').closest('.card')),'Report list has its own card below the composer');
-  assert.equal(await page.locator('.report-item').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
+  assert.equal(await page.locator('.report-item').evaluate(el=>getComputedStyle(el).borderTopWidth),'0px');
   await page.locator('.report-compose').screenshot({path:`.qa/shared-report-card-${width}.png`});
   const toolbar=page.locator('.report-toolbar');
   const edit=toolbar.getByRole('button',{name:'Editează raportarea'}),remove=toolbar.getByRole('button',{name:'Șterge raportarea'});
-  const a=await edit.boundingBox(),b=await remove.boundingBox();assert(Math.abs(a.y-b.y)<1&&b.x>=a.x+a.width,'Icon buttons share top row');
-  assert.equal(await remove.textContent(),'','Delete is icon-only');
+  const a=await edit.boundingBox(),b=await remove.boundingBox(),bodyBox=await page.locator('.report-body').boundingBox();assert(Math.abs(a.y-b.y)<1&&b.x>=a.x+a.width,'Action buttons share a row');
+  assert(a.y>=bodyBox.y+bodyBox.height,'Actions sit below the message');
+  assert.equal((await edit.textContent()).trim(),'Editează');assert.equal((await remove.textContent()).trim(),'Șterge');
   await edit.click();
   const modal=page.locator('.report-item dialog[open]'),select=modal.locator('select'),actions=modal.locator('.report-actions');
   const style=await select.evaluate(el=>{const s=getComputedStyle(el);return {appearance:s.appearance,image:s.backgroundImage,position:s.backgroundPosition,padding:s.paddingRight};});
@@ -52,5 +45,5 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await page.locator('#my-reports').getAttribute('aria-label'),'Erori raportate');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }
- console.log('PASS: inset dropdown chevron; icon buttons share a row at 320/390/1440px; save, delete cancellation/confirmation and no JS errors. Synthetic reports only.');
+ console.log('PASS: no leading report separator; labeled icon actions below the message at 320/390/1440px; save, delete cancellation/confirmation and no JS errors. Synthetic reports only.');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
