@@ -34,17 +34,25 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   const badge=page.locator('.report-state-badge');assert.equal(await badge.getAttribute('data-state'),'new');assert.equal(await badge.evaluate(el=>getComputedStyle(el).color),'rgb(234, 179, 8)');
   for(const [name,color]of [['Nou','rgb(234, 179, 8)'],['În lucru','rgb(249, 115, 22)'],['Rezolvat','rgb(34, 197, 94)'],['Închis','rgb(239, 68, 68)']])assert.equal(await menu.getByRole('menuitemradio',{name,exact:true}).locator('svg').evaluate(el=>getComputedStyle(el).color),color);
   const anchor=toolbar.getByRole('button',{name:'Stare: Nou',exact:true});
+  assert.equal(await anchor.textContent(),'Stare','Only the generic label is visible');
+  const shellStyles=await menu.evaluate(el=>{
+   const emoji=document.createElement('div');emoji.className='reaction-picker';document.body.append(emoji);
+   const properties=['backgroundColor','borderColor','borderWidth','borderRadius','padding','boxShadow','overflow','position'];
+   const snapshot=node=>properties.map(key=>getComputedStyle(node)[key]);
+   const result=[snapshot(el),snapshot(emoji)];emoji.remove();return result;
+  });assert.deepEqual(shellStyles[0],shellStyles[1],'State and emoji popovers share the same shell styles');
   await anchor.click();assert.equal(await menu.count(),0,'Second trigger click closes the state picker');await anchor.click();
   const beforeScroll=await page.evaluate(()=>({menu:document.querySelector('.report-state-menu:popover-open').getBoundingClientRect().top,button:document.querySelector('.report-state-trigger').getBoundingClientRect().top,scroll:scrollY}));
   await page.evaluate(async()=>{scrollBy(0,24);await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);});
   const afterScroll=await page.evaluate(()=>({menu:document.querySelector('.report-state-menu:popover-open').getBoundingClientRect().top,button:document.querySelector('.report-state-trigger').getBoundingClientRect().top,scroll:scrollY}));
   assert(afterScroll.scroll>beforeScroll.scroll,'Scroll fixture moves the page');assert(Math.abs((afterScroll.menu-afterScroll.button)-(beforeScroll.menu-beforeScroll.button))<1,'State picker stays anchored to its trigger on scroll');
-  await page.keyboard.press('End');assert.equal(await page.locator(':focus').textContent(),'Închis');await page.keyboard.press('Escape');assert.equal(await menu.count(),0);assert.equal(await page.locator(':focus').textContent(),'Stare: Nou');await toolbar.getByRole('button',{name:'Stare: Nou',exact:true}).click();
+  await page.keyboard.press('End');assert.equal(await page.locator(':focus').textContent(),'Închis');await page.keyboard.press('Escape');assert.equal(await menu.count(),0);assert.equal(await page.locator(':focus').textContent(),'Stare');await toolbar.getByRole('button',{name:'Stare: Nou',exact:true}).click();
   await menu.screenshot({path:`.qa/report-states-${width}.png`});
   await page.evaluate(()=>window.__communityTest.failReportUpdate=true);await menu.getByRole('menuitemradio',{name:'Rezolvat',exact:true}).click();await page.locator('.report-state-status').filter({hasText:'Conexiunea'}).waitFor();assert.equal(await page.evaluate(()=>window.__communityTest.reports[0].status),'new');
   await page.evaluate(()=>window.__communityTest.failReportUpdate=false);await menu.getByRole('menuitemradio',{name:'Rezolvat',exact:true}).click();
   await page.waitForFunction(()=>window.__communityTest.reports[0].status==='resolved');
   assert.equal(await badge.getAttribute('data-state'),'resolved');assert.equal(await badge.evaluate(el=>getComputedStyle(el).color),'rgb(34, 197, 94)');
+  assert.equal(await toolbar.getByRole('button',{name:'Stare: Rezolvat',exact:true}).textContent(),'Stare','Saved state updates the icon and accessible label, not the visible text');
   await page.waitForSelector('.report-item dialog[open]',{state:'hidden'});
   await toolbar.getByRole('button',{name:'Răspunde',exact:true}).click();
   const inline=page.locator('.report-inline-reply'),replyEditor=inline.locator('.discussion-prosemirror');
