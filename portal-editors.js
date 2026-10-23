@@ -50,14 +50,14 @@
   const body = document.createElement('div'); body.id = 'about-project-body'; paragraphs[0].before(body); paragraphs.forEach(p => body.append(p));
   const source = document.createElement('div'); source.hidden = true; source.id = 'about-editor';
   const form = document.createElement('form'); form.id = 'about-form';
-  const fields = [ ['about_title','Titlu',120,heading.textContent], ['about_body','Despre proiect',12000,paragraphs.map(p=>p.textContent).join('\n\n')], ['about_note','Notă (opțională)',2000,note.textContent] ];
+  const fields = [ ['about_title','Titlu',120,heading.textContent], ['about_body','Despre proiect',12000,paragraphs.map(p=>p.textContent).join('\n\n')] ];
   fields.forEach(([name,title,max,value]) => {
     const field = document.createElement('div'); field.className = 'field';
     const label = document.createElement('label'); label.htmlFor = name; label.textContent = title;
-    const input = document.createElement(name === 'about_title' ? 'input' : 'textarea'); input.id = name; input.name = name; input.maxLength = max; input.required = name !== 'about_note'; input.value = value;
+    const input = document.createElement(name === 'about_title' ? 'input' : 'textarea'); input.id = name; input.name = name; input.maxLength = max; input.required = true; input.value = value;
     field.append(label,input); form.append(field);
   });
-  const save = document.createElement('button'); save.type = 'submit'; save.className = 'btn'; save.textContent = 'Salvează modificările';
+  const save = document.createElement('button'); save.type = 'submit'; save.className = 'btn'; save.textContent = 'Salvează';
   const status = document.createElement('p'); status.className = 'form-status'; status.setAttribute('role','status');
   const cancel=document.createElement('button');cancel.type='button';cancel.className='btn about-cancel';cancel.textContent='Anulează';
   const end=document.createElement('div');end.className='form-end';end.append(cancel,save);form.append(end,status);form.hidden=true;
@@ -74,6 +74,12 @@
     if(!moderator||save.disabled)return;fields.forEach(([name])=>form.elements[name].value=saved[name]);status.textContent='';status.classList.remove('error');form.hidden=false;edit.hidden=true;edit.setAttribute('aria-expanded','true');
     if(window.BG3RO_MOUNT_CONTENT_EDITOR)api=window.BG3RO_MOUNT_CONTENT_EDITOR(form,form.elements.about_body,{minimum:1,label:'Despre proiect',placeholder:'Descrie proiectul…'});
     else if(saved.about_body.startsWith('BG3RO-RICH-1:')){status.textContent='Editorul nu s-a încărcat. Reîncarcă pagina pentru a păstra formatarea.';status.classList.add('error');save.disabled=true;}
+    // Fold the legacy separate note into the editable document without changing
+    // stored content until the administrator explicitly saves the form.
+    if(note.textContent.trim()){
+      if(api)api.editor.commands.insertContentAt(api.editor.state.doc.content.size,{type:'blockquote',content:note.textContent.split(/\r?\n/).map(text=>({type:'paragraph',content:text?[{type:'text',text}]:[]}))});
+      else if(!save.disabled)form.elements.about_body.value+='\n\n'+note.textContent;
+    }
     form.elements.about_title.focus({preventScroll:true});
   });
   cancel.addEventListener('click',()=>closeAbout());
@@ -97,7 +103,7 @@
     save.disabled=true;cancel.disabled=true;status.classList.remove('error');status.textContent='Se salvează…';
     try {
       let content;try{content=api?api.value():form.elements.about_body.value.trim();if(!content||content.length>12000||(!api&&content.startsWith('BG3RO-RICH-1:')))throw Error('Verifică textul sau reîncarcă editorul.');}catch(error){error.editorValidation=true;throw error;}
-      const values={about_title:form.elements.about_title.value.trim(),about_body:content,about_note:form.elements.about_note.value.trim()};
+      const values={about_title:form.elements.about_title.value.trim(),about_body:content,about_note:''};
       const {data,error}=await client.from('bg3ro_project_status').update(values).eq('id',1).select('about_title,about_body,about_note').maybeSingle();
       if(error||!data)throw error||new Error('Not saved');
       render(data);closeAbout();
