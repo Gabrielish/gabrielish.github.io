@@ -5,4 +5,9 @@
 .inbox-icon-button svg{display:block;flex:none}.inbox-page{font-size:12px;color:var(--muted);white-space:nowrap;min-width:35px;text-align:center}
 .contact-inbox>.form-status:empty{display:none}
 .contact-inbox .contact-messages:empty{display:none}
+.contact-inbox .contact-message .contact-actions{gap:14px;margin-top:12px}
+.contact-inbox .contact-actions>.btn{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);padding:2px 0;min-height:30px;font-size:12px;font-weight:400;border-radius:0;box-shadow:none}
+.contact-inbox .contact-actions>.btn svg{width:15px;height:15px;flex:none}
+.contact-inbox .contact-actions>.btn:hover{background:none;color:var(--gold);text-decoration:underline!important;text-underline-offset:3px}
+.contact-inbox .contact-actions>.btn:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
 @media(max-width:480px){.inbox-header{flex-wrap:wrap;gap:12px}.inbox-toolbar{margin-left:auto}}

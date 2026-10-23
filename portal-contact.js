@@ -18,6 +18,18 @@
   }
   const pageSize = 20;
   const node = (tag, text, className) => { const el=document.createElement(tag); if(text!==undefined)el.textContent=text; if(className)el.className=className; return el; };
+  function actionIcon(kind){
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    for(const [key,value] of Object.entries({viewBox:'0 0 24 24',width:15,height:15,fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false'}))svg.setAttribute(key,value);
+    const path=document.createElementNS(svg.namespaceURI,'path');
+    path.setAttribute('d',{
+      reply:'M9 10 4 15l5 5M4 15h10a6 6 0 0 0 0-12',
+      unread:'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm-2 2 10 7L22 6',
+      read:'M22 10 12 16 2 10m20 0v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10l9-7a2 2 0 0 1 2 0Z',
+      remove:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'
+    }[kind]);
+    svg.append(path);return svg;
+  }
   function status(target,message,error=false){const el=target.querySelector('.form-status');el.textContent=message;el.classList.toggle('error',error);}
   function authChanged(detail){
     generation++; unreadRequest++;clearInterval(unreadTimer);client=detail.client;owner=detail.moderator===true;offset=0;
@@ -45,10 +57,13 @@
         card.append(node('h3',(item.is_read?'':'Nou · ')+item.subject),node('p',item.name+' · '+item.email+' · '+new Date(item.created_at).toLocaleString('ro-RO'),'small'),node('p',item.body));
         const actions=node('div',undefined,'contact-actions');
         const reply=node('a','Răspunde prin e-mail','btn secondary');
+        reply.prepend(actionIcon('reply'));
         reply.href='mailto:'+encodeURIComponent(item.email)+'?subject='+encodeURIComponent('Re: '+item.subject);actions.append(reply);
         const read=node('button',item.is_read?'Marchează necitit':'Marchează citit','btn secondary');read.type='button';
+        read.prepend(actionIcon(item.is_read?'unread':'read'));
         read.onclick=()=>change(read,()=>activeClient.from('bg3ro_contact_messages').update({is_read:!item.is_read}).eq('id',item.id).select('id'));
         const remove=node('button','Șterge','btn secondary');remove.type='button';
+        remove.prepend(actionIcon('remove'));
         remove.onclick=()=>{if(confirm('Ștergi definitiv acest mesaj de contact?'))change(remove,()=>activeClient.from('bg3ro_contact_messages').delete().eq('id',item.id).select('id'));};
         actions.append(read,remove);card.append(actions);list.append(card);
       }

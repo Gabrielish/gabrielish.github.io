@@ -3,7 +3,7 @@ const source=fs.readFileSync(require.resolve('./information-pages.cjs'),'utf8');
 const {clickNav}=require('./nav-action.cjs');
 const sdk=source.slice(source.indexOf('function fakeSDK(){'),source.indexOf('\n(async()=>')).replace('auth:{getSession:',"auth:{signOut:async()=>{state.user=null;callback('SIGNED_OUT',null);return{error:null};},getSession:");
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
- for(const width of [390,1440])for(const owner of [false,true]){
+ for(const width of [320,390,1440])for(const owner of [false,true]){
   const page=await browser.newPage({viewport:{width,height:1000},reducedMotion:'reduce'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('https://baldursgate3.game/**',r=>r.abort());
   await page.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
@@ -23,8 +23,16 @@ const sdk=source.slice(source.indexOf('function fakeSDK(){'),source.indexOf('\n(
    assert.equal(await page.locator('[data-contact-pagination]').isVisible(),false);
    await page.locator('.inbox-header').screenshot({path:`.qa/inbox-header-${width}.png`});
    assert.equal(await page.locator('.contact-message img').count(),0);
+   const actions=page.locator('.contact-message .contact-actions');
+   assert.equal(await actions.locator('svg[aria-hidden="true"]').count(),3);
+   assert((await actions.getByRole('link',{name:'Răspunde prin e-mail',exact:true}).getAttribute('href')).startsWith('mailto:'));
+   const styles=await actions.locator('.btn').evaluateAll(buttons=>buttons.map(button=>{const s=getComputedStyle(button);return [s.borderTopWidth,s.backgroundColor,s.fontSize,s.minHeight];}));
+   for(const style of styles)assert.deepEqual(style,['0px','rgba(0, 0, 0, 0)','12px','30px']);
+   const unreadIcon=await actions.getByRole('button',{name:'Marchează citit',exact:true}).locator('path').getAttribute('d');
+   await page.locator('#contact-inbox').screenshot({path:`.qa/message-actions-${width}.png`});
    await page.getByRole('button',{name:'Marchează citit',exact:true}).click();
    await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje');
+   assert.notEqual(await actions.getByRole('button',{name:'Marchează necitit',exact:true}).locator('path').getAttribute('d'),unreadIcon);
    await page.getByRole('button',{name:'Marchează necitit',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (1)');
    await page.evaluate(()=>{for(let i=0;i<25;i++)window.__contactQA.rows.push({id:`extra-${i}`,name:'Test',email:'test@example.invalid',subject:'Mesaj de test',body:'Conținut sintetic',created_at:'2026-10-19T10:00:00Z',is_read:false});});
    await page.locator('#tab-despre').click();await tab.click();
