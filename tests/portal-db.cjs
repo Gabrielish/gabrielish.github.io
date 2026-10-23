@@ -184,6 +184,7 @@ const M = '33333333-3333-3333-3333-333333333333';
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/discussion-polls.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/report-author-editing.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/report-image-gallery.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/report-image-editing.sql'),'utf8'));
     console.log('PASS: portal migrations, role isolation, column privileges, rate limits, contact inbox, screenshots, manual update metadata validation, administrator-only editing/deletion, release isolation and private reaction aggregates/toggle permissions.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

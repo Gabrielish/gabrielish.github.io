@@ -30,6 +30,7 @@
   viewerImage.src=url;if(!viewer.open)viewer.showModal();
  }
  function error(message){const e=new Error(message);e.code='REPORT_PHOTO';return e;}
+ function reportPaths(report){return Array.isArray(report.screenshot_paths)&&report.screenshot_paths.length?[...report.screenshot_paths]:report.screenshot_path?[report.screenshot_path]:[];}
  async function prepare(file){
   if(!file||!file.size||file.size>limit)throw error('Alege o imagine JPG, PNG sau WebP de maximum 5 MB.');
   const bytes=new Uint8Array(await file.slice(0,16).arrayBuffer());
@@ -104,20 +105,41 @@
    }
    pending=null;thaw();
   },
-  async show(client,report,article){
-   const paths=Array.isArray(report.screenshot_paths)&&report.screenshot_paths.length?report.screenshot_paths:report.screenshot_path?[report.screenshot_path]:[];
+  edit(client,report,form){
+   const original=reportPaths(report),kept=new Set(original),controller={original,paths:()=>original.filter(path=>kept.has(path)),locked:false,container:null};
+   if(!original.length)return controller;
+   const container=document.createElement('div');container.className='report-edit-photos';controller.container=container;
+   const label=document.createElement('strong');label.textContent='Capturi de ecran';const note=document.createElement('p');note.className='small';note.textContent='Capturile eliminate vor fi șterse la salvarea modificărilor.';container.append(label,note);
+   form.querySelector('.discussion-compose-bottom').before(container);
+   this.show(client,report,container,{remove(path,tile){if(controller.locked)return;kept.delete(path);tile.remove();}}).catch(()=>{});
+   return controller;
+  },
+  async saveEdit(client,report,selection,title,body){
+   if(!selection.original.length){const {error:writeError}=await client.from('bg3ro_bug_reports').update({title,body}).eq('id',report.id);if(writeError)throw writeError;return;}
+   selection.locked=true;selection.container?.querySelectorAll('.report-photo-remove').forEach(button=>button.disabled=true);
+   try{
+    const {data,error:writeError}=await client.rpc('bg3ro_edit_report_images',{p_report_id:report.id,p_title:title,p_body:body,p_expected_paths:selection.original,p_keep_paths:selection.paths()});
+    if(writeError)throw error(writeError.message||'Raportarea nu a putut fi salvată.');
+    const removed=Array.isArray(data)?data:[];
+    for(let offset=0;offset<removed.length;offset+=1000){const {error:deleteError}=await client.storage.from(bucket).remove(removed.slice(offset,offset+1000));if(deleteError)throw error('Raportarea a fost salvată, dar capturile nu au fost șterse. Apasă din nou „Salvează modificările” pentru a relua ștergerea.');}
+   }finally{selection.locked=false;selection.container?.querySelectorAll('.report-photo-remove').forEach(button=>button.disabled=false);}
+  },
+  async show(client,report,article,editing=null){
+   const paths=reportPaths(report);
    if(!paths.length)return;
    const photos=document.createElement('div');photos.className='report-photos';
    const moderation=article.querySelector(':scope > form,:scope > .report-toolbar');if(moderation)moderation.before(photos);else article.append(photos);
    for(const expected of paths){
    if(!expected.startsWith(report.id+'/')||!(/^(screenshot|[0-9a-f-]{36})[.]jpg$/).test(expected.slice(report.id.length+1)))continue;
+   let tile=null;
+   if(editing){tile=document.createElement('div');tile.className='report-photo-thumbnail';const remove=document.createElement('button');remove.type='button';remove.className='report-photo-remove';remove.textContent='×';remove.setAttribute('aria-label','Elimină captura '+(paths.indexOf(expected)+1));remove.title='Elimină captura';remove.addEventListener('click',()=>editing.remove(expected,tile));tile.append(remove);photos.append(tile);}
    const {data,error:readError}=await client.storage.from(bucket).createSignedUrl(expected,3600);
    if(readError||!data?.signedUrl||!article.isConnected)continue;
    let url;try{url=new URL(data.signedUrl);if(url.origin!==new URL(window.BG3RO_CONFIG.supabaseUrl).origin||!url.pathname.startsWith('/storage/v1/object/sign/'+bucket+'/'))continue;}catch(_){continue;}
    const link=document.createElement('button');link.type='button';link.className='report-photo-link';link.setAttribute('aria-label','Deschide fotografia raportării');link.setAttribute('aria-haspopup','dialog');
    link.addEventListener('click',()=>openPhoto(url.href));
    const image=document.createElement('img');image.src=url.href;image.alt='Fotografie atașată raportării';image.loading='lazy';image.referrerPolicy='no-referrer';
-   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);photos.append(link);
+   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);if(tile)tile.prepend(link);else photos.append(link);
    }
    if(!photos.children.length)photos.remove();
   },

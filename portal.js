@@ -515,12 +515,13 @@
           if(inlineEdit){inlineEdit.api.focus();return;}
           inlineEdit=window.BG3RO_CREATE_REPORT_REPLY?.(layout,report.body,true);if(!inlineEdit)return;
           const {form,api,cancel}=inlineEdit;reportReplyEditors.add(api);form.querySelector('[type=submit]').textContent='Salvează modificările';
+          const photoEdit=window.BG3RO_REPORT_PHOTO.edit(client,report,form);
           cancel.addEventListener('click',()=>{if(form.querySelector('[type=submit]').disabled)return;api.destroy();reportReplyEditors.delete(api);form.remove();inlineEdit=null;edit.focus({preventScroll:true});});
           form.addEventListener('submit',event=>{event.preventDefault();submit(form,async()=>{
             if(!moderator&&report.author_id!==user?.id)return;
             let body;try{body=api.value();}catch(error){error.code='DISCUSSION_EDITOR';throw error;}
             const title=api.editor.getText().replace(/\s+/g,' ').trim().slice(0,120);
-            const {error}=await client.from('bg3ro_bug_reports').update({title,body}).eq('id',report.id);if(error)throw error;await loadReports();
+            await window.BG3RO_REPORT_PHOTO.saveEdit(client,report,photoEdit,title,body);await loadReports();
           });});form.scrollIntoView({block:'nearest',behavior:'instant'});api.focus();
         });edit.setAttribute('aria-label','Editează raportarea');
         const remove = actionButton('Șterge raportarea', async () => {

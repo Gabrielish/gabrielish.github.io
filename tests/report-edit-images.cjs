@@ -1,0 +1,35 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+const {clickNav}=require('./nav-action.cjs');
+const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
+const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('reports:[]','reports:window.__imageReports').replace('rpc:async()=>({data:moderator(),error:null}),',`rpc:async(name,args)=>{
+ if(name!=='bg3ro_edit_report_images')return{data:moderator(),error:null};
+ state.imageSaves=(state.imageSaves||0)+1;if(state.failImages)return{error:{message:'Network error'}};
+ const report=state.reports.find(r=>r.id===args.p_report_id);const removed=args.p_expected_paths.filter(path=>!args.p_keep_paths.includes(path));
+ Object.assign(report,{title:args.p_title,body:args.p_body,screenshot_paths:args.p_keep_paths,screenshot_path:args.p_keep_paths[0]||null});return{data:removed,error:null};
+ },storage:{from(){return{createSignedUrl:async path=>({data:{signedUrl:'https://test.supabase.co/storage/v1/object/sign/bg3ro-report-images/'+path},error:null}),remove:async paths=>{(state.imageDeletes||=[]).push(paths);return{data:paths,error:state.failDelete?{message:'Offline'}:null};}};}},`);
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{for(const width of [320,390,1440])for(const actor of ['guest','member','admin']){
+ const p=await browser.newPage({viewport:{width,height:1000},hasTouch:width<600,isMobile:width<600,reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.addInitScript(actor=>{
+  window.__qaOwner=actor==='admin';const id='11111111-1111-4111-8111-111111111111',paths=[id+'/screenshot.jpg',id+'/22222222-2222-4222-8222-222222222222.jpg',id+'/33333333-3333-4333-8333-333333333333.jpg'];
+  window.__imageReports=[{id,author_id:actor==='guest'?'guest':actor==='member'?'alice':'someone-else',author_name:'Autor',title:'Raport cu trei capturi',body:'Descriere sintetică pentru editarea capturilor.',status:'investigating',moderator_reply:'Răspuns salvat, care trebuie păstrat.',reply_author_name:'gabrielish',reply_author_avatar_url:'https://cdn.discordapp.com/embed/avatars/0.png',reply_created_at:null,platform:'windows',mod_version:'test',is_public:true,created_at:'2026-10-23T10:00:00Z',screenshot_path:paths[0],screenshot_paths:paths}];
+ },actor);
+ await p.route('https://baldursgate3.game/**',r=>r.abort());await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test'};"}));await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3D0AAAAASUVORK5CYII=','base64');await p.route('https://test.supabase.co/storage/**',r=>r.fulfill({contentType:'image/png',body:png}));
+ await p.goto('http://127.0.0.1:4173/#erori',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
+ if(actor!=='guest'){await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});}
+ const card=p.locator('.report-item'),edit=card.getByRole('button',{name:'Editează raportarea',exact:true}),form=p.locator('.report-inline-edit');
+ await p.waitForFunction(()=>document.querySelectorAll('.report-attachments .report-photo-link').length===3);
+ assert.equal(await card.locator('.report-answer .post-meta strong').textContent(),'gabrielish');assert.equal(await card.locator('.report-answer>.post-avatar').getAttribute('src'),'https://cdn.discordapp.com/embed/avatars/0.png');
+ await edit.click();const buttons=form.locator('.report-edit-photos .report-photo-remove');await buttons.first().waitFor();assert.equal(await buttons.count(),3);
+ assert.equal(await buttons.first().evaluate(el=>getComputedStyle(el).opacity),'1','Removal is visible without hovering');
+ await buttons.first().click();assert.equal(await buttons.count(),2);await form.getByRole('button',{name:'Anulează',exact:true}).click();assert.equal(await p.evaluate(()=>__communityTest.imageSaves||0),0);assert.equal(await p.evaluate(()=>__communityTest.reports[0].screenshot_paths.length),3);
+ await edit.click();await buttons.first().click();const editor=form.locator('.discussion-prosemirror');await editor.fill('Descriere corectată cu două capturi păstrate.');await editor.press('ControlOrMeta+a');await form.getByRole('button',{name:'Aldin',exact:true}).click();
+ await p.evaluate(()=>__communityTest.failImages=true);await form.getByRole('button',{name:'Salvează modificările'}).click();await form.locator('.form-status.error').waitFor();assert.equal(await buttons.count(),2);assert.equal(await p.evaluate(()=>__communityTest.reports[0].screenshot_paths.length),3);
+ await p.evaluate(()=>{__communityTest.failImages=false;__communityTest.failDelete=true;});await form.getByRole('button',{name:'Salvează modificările'}).click();await form.locator('.form-status').filter({hasText:'capturile nu au fost șterse'}).waitFor();assert.equal(await p.evaluate(()=>__communityTest.reports[0].screenshot_paths.length),2);assert.equal(await editor.locator('strong').textContent(),'Descriere corectată cu două capturi păstrate.');
+ await form.screenshot({path:`.qa/edit-report-images-${actor}-${width}.png`});
+ await p.evaluate(()=>__communityTest.failDelete=false);await form.getByRole('button',{name:'Salvează modificările'}).click();await form.waitFor({state:'detached'});
+ await p.waitForFunction(()=>document.querySelectorAll('.report-attachments .report-photo-link').length===2);assert.equal(await p.evaluate(()=>__communityTest.imageDeletes.length),2,'Cleanup retries the same removed image');
+ const saved=await p.evaluate(()=>__communityTest.reports[0]);assert(saved.body.startsWith('BG3RO-RICH-1:'));assert.equal(saved.status,'investigating');assert.equal(saved.moderator_reply,'Răspuns salvat, care trebuie păstrat.');assert(saved.screenshot_path.endsWith('/22222222-2222-4222-8222-222222222222.jpg'));
+ await edit.click();await buttons.first().click();await buttons.first().click();await form.getByRole('button',{name:'Salvează modificările'}).click();await form.waitFor({state:'detached'});assert.equal(await p.evaluate(()=>__communityTest.reports[0].screenshot_paths.length),0);assert.equal(await p.evaluate(()=>__communityTest.reports[0].screenshot_path),null);
+ assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await p.close();
+}console.log('PASS: guest/member/admin report image removal, visible X, cancel, atomic save failure, Storage retry, retained/all-removed galleries, identity and protected report state at 320/390/1440px.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

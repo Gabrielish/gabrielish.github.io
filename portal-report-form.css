@@ -88,6 +88,9 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 }
 .report-photos{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0}
 .report-photos .report-photo-link{margin:0}.report-photos .report-photo-link img{width:80px;height:80px;object-fit:cover}
+.report-edit-photos{margin-top:14px}.report-edit-photos>strong{font-size:13px}.report-edit-photos>.small{font-size:12px;margin:4px 0 12px}
+.report-edit-photos .report-photo-thumbnail{border-radius:10px;background:var(--field-bg)}
+.report-edit-photos .report-photo-remove{opacity:1!important;pointer-events:auto!important;z-index:1;font-size:21px;line-height:1}
 #report-form>.form-end{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;margin:18px 0 0}
 #report-form .report-submit{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:11px 18px;border-radius:10px;min-height:42px}
 .report-submit svg{width:18px;height:18px}
