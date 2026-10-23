@@ -31,8 +31,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await toolbar.getByRole('button',{name:'Stare: Nou',exact:true}).click();
   const menu=page.locator('.report-state-menu:popover-open');assert.equal(await menu.getByRole('menuitemradio').count(),4);assert.equal(await page.locator('.report-item dialog').count(),0);
   const menuBox=await menu.boundingBox();assert.equal(menuBox.width,208);assert(menuBox.height<=62,'State menu is as compact as the emoji picker');assert(menuBox.x>=0&&menuBox.x+menuBox.width<=width);
-  const badge=page.locator('.report-state-badge');assert.equal(await badge.getAttribute('data-state'),'new');assert.equal(await badge.evaluate(el=>getComputedStyle(el).color),'rgb(59, 130, 246)');
-  for(const [name,color]of [['Nou','rgb(59, 130, 246)'],['În lucru','rgb(249, 115, 22)'],['Rezolvat','rgb(34, 197, 94)'],['Închis','rgb(107, 114, 128)']])assert.equal(await menu.getByRole('menuitemradio',{name,exact:true}).locator('svg').evaluate(el=>getComputedStyle(el).color),color);
+  const badge=page.locator('.report-state-badge');assert.equal(await badge.getAttribute('data-state'),'new');assert.equal(await badge.evaluate(el=>getComputedStyle(el).color),'rgb(234, 179, 8)');
+  for(const [name,color]of [['Nou','rgb(234, 179, 8)'],['În lucru','rgb(249, 115, 22)'],['Rezolvat','rgb(34, 197, 94)'],['Închis','rgb(239, 68, 68)']])assert.equal(await menu.getByRole('menuitemradio',{name,exact:true}).locator('svg').evaluate(el=>getComputedStyle(el).color),color);
   const anchor=toolbar.getByRole('button',{name:'Stare: Nou',exact:true});
   await anchor.click();assert.equal(await menu.count(),0,'Second trigger click closes the state picker');await anchor.click();
   const beforeScroll=await page.evaluate(()=>({menu:document.querySelector('.report-state-menu:popover-open').getBoundingClientRect().top,button:document.querySelector('.report-state-trigger').getBoundingClientRect().top,scroll:scrollY}));
@@ -60,6 +60,9 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await inline.screenshot({path:`.qa/report-inline-reply-${width}.png`});
   await inline.getByRole('button',{name:'Răspunde',exact:true}).click();await page.waitForSelector('.report-project-reply strong');
   assert.equal(await page.locator('.report-project-reply strong').textContent(),'Răspuns de test cu formatare.');
+  assert.equal(await page.locator('.report-answer-label').textContent(),'Răspuns');
+  const answerBox=await page.locator('.report-answer').boundingBox(),reportBox=await page.locator('.report-body').boundingBox();
+  assert.equal(Math.round(answerBox.x-reportBox.x),width<=600?12:48,'Answer is indented like discussion replies');
   assert.equal(await inline.count(),0);assert.equal(await page.evaluate(()=>window.__communityTest.reports[0].status),'resolved','Reply does not change report status');
   await toolbar.getByRole('button',{name:'Editează răspunsul',exact:true}).click();assert.equal(await replyEditor.locator('strong').textContent(),'Răspuns de test cu formatare.');await inline.getByRole('button',{name:'Anulează',exact:true}).click();
   await edit.click();const editForm=page.locator('.report-inline-edit');await editForm.locator('.discussion-prosemirror').fill('Textul raportării corectat de administrator.');await editForm.getByRole('button',{name:'Salvează modificările',exact:true}).click();await page.waitForFunction(()=>window.__communityTest.reports[0].body==='Textul raportării corectat de administrator.');assert.equal(await page.evaluate(()=>window.__communityTest.reports[0].status),'resolved');

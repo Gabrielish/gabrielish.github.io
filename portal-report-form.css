@@ -49,15 +49,16 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 .report-state-option{display:grid;place-items:center;width:42px;height:44px;flex:1;min-width:0;padding:3px;border:1px solid transparent;border-radius:9px;background:none;color:var(--report-state-color)}
 .report-state-menu .report-state-option svg{width:25px;height:25px}
 .report-state-option:hover,.report-state-option[aria-checked=true]{border-color:var(--report-state-color);background:color-mix(in srgb,var(--report-state-color) 14%,transparent)}
-#reports-list [data-state=new]{--report-state-color:#3b82f6}
+#reports-list [data-state=new]{--report-state-color:#eab308}
 #reports-list [data-state=investigating]{--report-state-color:#f97316}
 #reports-list [data-state=resolved]{--report-state-color:#22c55e}
-#reports-list [data-state=closed]{--report-state-color:#6b7280}
+#reports-list [data-state=closed]{--report-state-color:#ef4444}
 .report-state-badge{color:var(--report-state-color);background:color-mix(in srgb,var(--report-state-color) 14%,transparent);border:1px solid color-mix(in srgb,var(--report-state-color) 40%,transparent)}
-.report-state-badge[data-state=closed]{color:#9ca3af}
 .report-state-trigger svg{color:var(--report-state-color)}
 .report-state-status{flex-basis:100%;color:#f3a9b7;font-size:12px}.report-state-status:empty{display:none}
 .report-project-reply{margin-top:8px}
+.report-answer{margin:16px 0 0 48px;min-width:0}
+@media(max-width:600px){.report-answer{margin-left:12px}}
 .report-title-row{overflow-wrap:anywhere}
 .report-title-row .report-platform-version{font-size:13px;font-weight:400;color:var(--muted)}
 .report-compose-heading{display:flex;align-items:center;gap:10px;font-size:19px!important;line-height:1.5;margin:0 0 20px!important;color:var(--text)!important}

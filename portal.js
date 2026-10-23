@@ -508,7 +508,7 @@
       const reportBody=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.body):element('div','post-body',report.body);reportBody.classList.add('report-body');
       if(!reportBody.textContent.replace(/\s+/g,' ').startsWith(report.title))content.append(title);
       content.append(reportBody);
-      if (report.moderator_reply){const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');content.append(element('strong', '', 'Răspunsul proiectului'),answer);}
+      if (report.moderator_reply){const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');const reply=element('div','report-answer');reply.append(element('strong','report-answer-label','Răspuns'),answer);content.append(reply);}
       if (moderator || (user && report.author_id===user.id)) {
         const toolbar=element('div','report-toolbar post-actions');let inlineEdit=null;
         const edit=discussionAction('Editează','edit',()=>{
