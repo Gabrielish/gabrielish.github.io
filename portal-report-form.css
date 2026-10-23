@@ -87,11 +87,11 @@
 .report-edit-photos .report-photo-thumbnail{border-radius:10px;background:var(--field-bg)}
 .report-edit-photos .report-photo-remove{opacity:1!important;pointer-events:auto!important;z-index:1;font-size:21px;line-height:1}
 #report-form>.form-end{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;margin:18px 0 0}
-#report-form .report-submit{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:11px 18px;border-radius:10px;min-height:42px}
-.report-submit svg{width:18px;height:18px}
+#report-form .report-submit{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;min-height:36px}
+.report-submit svg{width:16px;height:16px}
 #my-reports.report-feed{margin:0}.report-empty{text-align:center;padding:30px 0 34px;color:var(--muted)}
 .report-empty>svg{width:42px;height:42px;opacity:.5;margin:0 auto 18px}.report-empty p{font-size:14px;margin:0;color:var(--muted)}
 #my-reports .pager:has(button[hidden]){display:none}
-@media(max-width:600px){.report-compose-heading{font-size:17px!important;align-items:flex-start}.report-translation-notice{padding:12px}.report-translation-notice strong{font-size:12px}#report-photo-drop{padding:12px}#report-photo-drop .report-drop-content{flex-wrap:wrap}#report-photo-label{flex:1;min-width:130px}#report-photo-browse{margin-left:auto}#report-form .report-submit{font-size:13px;padding:10px 13px}.report-empty{padding-block:24px}}
+@media(max-width:600px){.report-compose-heading{font-size:17px!important;align-items:flex-start}.report-translation-notice{padding:12px}.report-translation-notice strong{font-size:12px}#report-photo-drop{padding:12px}#report-photo-drop .report-drop-content{flex-wrap:wrap}#report-photo-label{flex:1;min-width:130px}#report-photo-browse{margin-left:auto}#report-form .report-submit{font-size:12px}.report-empty{padding-block:24px}}
 @media(max-width:950px){.report-context{grid-template-columns:repeat(2,minmax(0,1fr))}.report-context>.field:first-child{grid-column:auto}}
 @media(max-width:600px){.report-context{grid-template-columns:1fr}.report-context>.report-photo-field{order:2}.report-photo-field{padding:14px}}

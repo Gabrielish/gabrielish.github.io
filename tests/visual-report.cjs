@@ -7,6 +7,7 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
  assert.equal(await p.locator('#erori>.card').count(),2,'Report composer and results have separate cards');assert(await p.locator('.report-empty').isVisible());
  assert((await p.locator('.report-translation-notice').innerText()).includes('doar raportării erorilor de traducere'));
  const form=p.locator('#report-form'),editor=p.locator('#report-editor .discussion-prosemirror');
+ const sizes=await p.evaluate(()=>['#discussion-form [type=submit]','#report-form .report-submit'].map(selector=>{const s=getComputedStyle(document.querySelector(selector));return [s.minHeight,s.padding,s.fontSize,s.lineHeight,s.borderRadius];}));assert.deepEqual(sizes[1],sizes[0],'Report action matches the compact discussion submit sizing');
  const upload=p.locator('#report-photo-browse');
  const uploadPalette=()=>upload.evaluate(el=>{const s=getComputedStyle(el);return [s.backgroundColor,s.color,s.borderTopColor];});
  const nexus=p.locator('.quick-download .btn.secondary');
