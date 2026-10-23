@@ -28,6 +28,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  }
  assert.equal(await page.locator('.rating-star').count(),5);assert.equal(await page.locator('.sidebar .author-line').count(),0);
  assert.equal(await page.locator('.quick-download a').count(),2,'Only the two download links remain');
+ assert.equal(await page.locator('.quick-download p').count(),0,'No public version note below the download buttons');
  assert(!(await page.locator('.quick-download').textContent()).includes('Fișierele și cerințele actualizate'));
  assert(!(await page.locator('.quick-download').textContent()).includes('Instrucțiuni de instalare'));
  assert.equal(await page.locator('.compatibility-actions button svg[aria-hidden="true"]').count(),2);
