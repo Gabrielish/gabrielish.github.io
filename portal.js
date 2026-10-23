@@ -467,7 +467,17 @@
       form.reset(); formStatus(form, ''); await loadReports();
     });
   });
-  const reportReplyEditors=new Set();
+  const reportReplyEditors=new Set();let openedReportState=null;
+  function closeReportState(){const opened=openedReportState;openedReportState=null;if(opened?.menu.matches(':popover-open'))opened.menu.hidePopover();opened?.button.setAttribute('aria-expanded','false');}
+  function placeReportState(){
+    const opened=openedReportState;if(!opened)return;
+    if(!opened.button.isConnected||!opened.menu.matches(':popover-open')){closeReportState();return;}
+    const r=opened.button.getBoundingClientRect(),m=opened.menu.getBoundingClientRect();
+    if(r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth){closeReportState();return;}
+    opened.menu.style.left=Math.max(12,Math.min(r.left,innerWidth-m.width-12))+'px';
+    opened.menu.style.top=Math.max(12,Math.min(r.top>m.height+16?r.top-m.height-8:r.bottom+8,innerHeight-m.height-12))+'px';
+  }
+  addEventListener('scroll',placeReportState,{capture:true,passive:true});addEventListener('resize',placeReportState);
   async function loadReports() {
     const request = ++reportsRequest;
     if (!client) return;
@@ -475,7 +485,7 @@
     const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
-    for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
+    closeReportState();for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
     target.replaceChildren(); tabCount('#tab-erori', 'Raportare erori', count); $('#more-reports').hidden = reportsLimit >= count;
     if (!data.length) {const empty=element('div','report-empty');empty.append(bugIcon(),element('p','','Nu a fost raportată încă nicio eroare.'));target.append(empty);}
     data.forEach(report => {
@@ -491,7 +501,7 @@
       copy.append(element('strong', '', report.author_name || 'Jucător'), date);
       if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete'));
       if (!report.is_public) copy.append(element('span', 'post-status', 'Privată'));
-      const stateBadge=element('span', 'post-status', statusLabels[report.status]);copy.append(stateBadge);
+      const stateBadge=element('span', 'post-status report-state-badge', statusLabels[report.status]);stateBadge.dataset.state=report.status;copy.append(stateBadge);
       header.append(copy); content.append(header); layout.append(avatar, content); article.append(layout);
       const title = element('h3', 'post-title report-title-row');
       title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${window.BG3RO_VERSIONS.version(report.mod_version)}`));
@@ -543,14 +553,14 @@
         const menu=element('div','report-state-menu');menu.id='report-states-'+report.id;menu.setAttribute('popover','auto');menu.setAttribute('role','menu');menu.setAttribute('aria-label','Stadiul raportării');
         const status=element('span','report-state-status');status.setAttribute('role','status');
         const stateButton=discussionAction('Stare: '+statusLabels[report.status],report.status,()=>{
-          if(menu.matches(':popover-open')){menu.hidePopover();return;}
-          menu.showPopover();stateButton.setAttribute('aria-expanded','true');const r=stateButton.getBoundingClientRect(),m=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(r.left,innerWidth-m.width-8))+'px';menu.style.top=Math.max(8,Math.min(r.bottom+6+m.height<=innerHeight-8?r.bottom+6:r.top-m.height-6,innerHeight-m.height-8))+'px';menu.querySelector('[aria-checked=true]')?.focus({preventScroll:true});
-        });stateButton.setAttribute('aria-haspopup','menu');stateButton.setAttribute('aria-controls',menu.id);stateButton.setAttribute('aria-expanded','false');
-        for(const value of ['new','investigating','resolved','closed']){const option=element('button','report-state-option',statusLabels[value]);option.type='button';option.dataset.state=value;option.prepend(discussionIcon(value));option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked',String(value===report.status));option.addEventListener('click',async()=>{
+          if(menu.matches(':popover-open')){closeReportState();return;}
+          closeReportState();menu.showPopover();openedReportState={menu,button:stateButton};stateButton.setAttribute('aria-expanded','true');placeReportState();menu.querySelector('[aria-checked=true]')?.focus({preventScroll:true});
+        });stateButton.classList.add('report-state-trigger');stateButton.dataset.state=report.status;stateButton.setAttribute('popovertarget',menu.id);stateButton.addEventListener('click',event=>event.preventDefault());stateButton.setAttribute('aria-haspopup','menu');stateButton.setAttribute('aria-controls',menu.id);stateButton.setAttribute('aria-expanded','false');
+        for(const value of ['new','investigating','resolved','closed']){const option=element('button','report-state-option');option.append(discussionIcon(value),element('span','visually-hidden',statusLabels[value]));option.title=statusLabels[value];option.type='button';option.dataset.state=value;option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked',String(value===report.status));option.addEventListener('click',async()=>{
           if(!moderator)return;menu.querySelectorAll('button').forEach(b=>b.disabled=true);status.textContent='';
-          try{const {error}=await client.from('bg3ro_bug_reports').update({status:value}).eq('id',report.id);if(error)throw error;report.status=value;stateBadge.textContent=statusLabels[value];stateButton.replaceChildren(discussionIcon(value),document.createTextNode('Stare: '+statusLabels[value]));stateButton.setAttribute('aria-expanded','false');menu.querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.state===value)));menu.hidePopover();stateButton.focus({preventScroll:true});}catch(error){status.textContent=readableError(error);}finally{menu.querySelectorAll('button').forEach(b=>b.disabled=false);}
+          try{const {error}=await client.from('bg3ro_bug_reports').update({status:value}).eq('id',report.id);if(error)throw error;report.status=value;stateBadge.textContent=statusLabels[value];stateBadge.dataset.state=value;stateButton.dataset.state=value;stateButton.replaceChildren(discussionIcon(value),document.createTextNode('Stare: '+statusLabels[value]));menu.querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.state===value)));closeReportState();stateButton.focus({preventScroll:true});}catch(error){status.textContent=readableError(error);}finally{menu.querySelectorAll('button').forEach(b=>b.disabled=false);}
         });menu.append(option);}
-        menu.addEventListener('toggle',()=>stateButton.setAttribute('aria-expanded',String(menu.matches(':popover-open'))));
+        menu.addEventListener('toggle',()=>{const open=menu.matches(':popover-open');stateButton.setAttribute('aria-expanded',String(open));if(!open&&openedReportState?.menu===menu)openedReportState=null;});
         menu.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)){event.preventDefault();options[event.key==='Home'?0:event.key==='End'?3:(i+(['ArrowLeft','ArrowUp'].includes(event.key)?3:1))%4].focus();}else if(event.key==='Escape'||event.key==='Tab'){if(event.key==='Escape')event.preventDefault();menu.hidePopover();stateButton.focus({preventScroll:true});}});
         toolbar.append(reply,stateButton,menu,status);
         }
