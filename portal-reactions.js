@@ -50,8 +50,9 @@
  function mount(parent,id){
   const wrap=node('div','post-reactions'),counts=node('div','reaction-counts'),trigger=node('button','reaction-trigger');
   trigger.type='button';trigger.title='Adaugă o reacție';trigger.setAttribute('aria-label','Adaugă o reacție');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-haspopup','dialog');
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const [key,value]of Object.entries({viewBox:'0 0 24 24',width:20,height:20,fill:'none',stroke:'currentColor','stroke-width':1.6,'stroke-linecap':'round','aria-hidden':'true'}))svg.setAttribute(key,value);
-  const circle=document.createElementNS(svg.namespaceURI,'circle');circle.setAttribute('cx','12');circle.setAttribute('cy','12');circle.setAttribute('r','9');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d','M8 14s1 3 4 3 4-3 4-3M8 9h.01M16 9h.01');svg.append(circle,path);trigger.append(svg);
+  // Lucide Smile (ISC/MIT); see assets/lucide-LICENSE.txt.
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const [key,value]of Object.entries({viewBox:'0 0 24 24',width:20,height:20,fill:'none',stroke:'currentColor','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true'}))svg.setAttribute(key,value);
+  const circle=document.createElementNS(svg.namespaceURI,'circle');circle.setAttribute('cx','12');circle.setAttribute('cy','12');circle.setAttribute('r','10');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d','M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01');svg.append(circle,path);trigger.append(svg);
   const panel=node('div','reaction-picker');panel.id='reaction-picker-'+(++sequence);panel.setAttribute('popover','auto');panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Alege o reacție');trigger.setAttribute('aria-controls',panel.id);
   const status=node('span','reaction-status');status.setAttribute('role','status');
   const item={id,wrap,counts,panel,trigger,status,busy:false};
