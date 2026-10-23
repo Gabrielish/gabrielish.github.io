@@ -16,14 +16,16 @@
 .rating-remove:hover{text-decoration:underline}.rating-remove:disabled{opacity:.5;cursor:wait}
 .sidebar-status{font-size:12px!important;line-height:1.7;color:#d7bc8a!important;margin:12px 0 0!important}
 .sidebar-status:empty{display:none}.sidebar-status.error{color:#e6a79d!important}
+/* Exact green-500 / red-500 tokens from the lokalizace.net compatibility card. */
+.compatibility-card{--compatibility-working:oklch(72.3% .219 149.579);--compatibility-broken:oklch(63.7% .237 25.331)}
 .compatibility-summary{background:#1a1b1e;border-radius:9px;padding:13px 12px;margin-bottom:16px}
 .compatibility-line{display:grid;grid-template-columns:minmax(28px,1fr) auto auto;align-items:center;gap:8px;font-size:11px;color:#a9aaa9}
-.compatibility-total{white-space:nowrap}.compatibility-line strong{font-size:13px;color:#86c397}.compatibility-track{height:6px;background:#2b2d2c;border-radius:8px;margin:0;overflow:hidden}
-#compatibility-fill{width:0;height:100%;background:#73b382;border-radius:inherit}
+.compatibility-total{white-space:nowrap}.compatibility-line strong{font-size:13px;color:var(--compatibility-working)}.compatibility-track{height:6px;background:#2b2d2c;border-radius:8px;margin:0;overflow:hidden}
+#compatibility-fill{width:0;height:100%;background:var(--compatibility-working);border-radius:inherit}
 .compatibility-counts{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10px;color:#a9aaa9;margin-top:9px}
-.compatibility-counts .is-working>.compatibility-icon{color:#86c397}.compatibility-counts .is-broken>.compatibility-icon{color:#e87f78}
+.compatibility-counts .is-working>.compatibility-icon{color:var(--compatibility-working)}.compatibility-counts .is-broken>.compatibility-icon{color:var(--compatibility-broken)}
 .compatibility-icon{display:inline-block;width:18px;height:18px;flex:none;vertical-align:middle}.compatibility-icon.is-down{transform:rotate(180deg)}
-.compatibility-count{display:inline-flex;align-items:center;gap:6px}.is-working>.compatibility-icon{color:#86c397}.is-broken>.compatibility-icon{color:#e87f78}
+.compatibility-count{display:inline-flex;align-items:center;gap:6px}.is-working>.compatibility-icon{color:var(--compatibility-working)}.is-broken>.compatibility-icon{color:var(--compatibility-broken)}
 .compatibility-counts .compatibility-icon{width:16px;height:16px}
 .compatibility-actions .btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
 .project-sidebar .field{margin-bottom:13px}.project-sidebar .field label{font-size:11px}
@@ -32,8 +34,11 @@
 .project-sidebar .compatibility-fields .field{min-width:0;margin:0}
 .compatibility-fields select{min-width:0;min-height:44px;padding:9px 8px}
 .compatibility-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.compatibility-actions .btn{width:auto;min-width:0;font-size:11px;padding-inline:7px}
-.compatibility-actions button[data-works=true][aria-pressed=true]{border-color:#35513d;background:#19271e;color:#86c397}
-.compatibility-actions button[data-works=false][aria-pressed=true]{border-color:#67413e;background:#2d1d1c;color:#e87f78}
+.compatibility-actions button[data-works=true]{--compatibility-accent:var(--compatibility-working)}
+.compatibility-actions button[data-works=false]{--compatibility-accent:var(--compatibility-broken)}
+.compatibility-actions .btn{background:transparent;border-color:var(--line);color:var(--text)}
+.compatibility-actions button:not([aria-pressed=true]):is(:hover,:focus-visible){border-color:color-mix(in oklab,var(--compatibility-accent) 50%,transparent);background:color-mix(in oklab,var(--compatibility-accent) 5%,transparent);color:var(--text)}
+.compatibility-actions button[data-works][aria-pressed=true]{border-color:var(--compatibility-accent);background:color-mix(in oklab,var(--compatibility-accent) 10%,transparent);color:var(--compatibility-accent)}
 .compatibility-actions[hidden],.compatibility-vote-panel[hidden],.compatibility-own[hidden]{display:none}
 .compatibility-own{display:flex;align-items:baseline;gap:4px 8px;flex-wrap:wrap;margin-top:10px;color:#a9aaa9;font-size:11px;line-height:1.7}
 .compatibility-own .compatibility-change{font-size:11px;min-height:28px;padding:3px 0}

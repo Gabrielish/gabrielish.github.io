@@ -13,6 +13,19 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  assert.equal(await page.locator('.compatibility-fields').isVisible(),false,'Guest mode cannot show the fields');
  assert.equal(await page.locator('.compatibility-actions').isVisible(),true,'Voting buttons remain available to prompt login');
  assert.equal(await page.locator('#compatibility-own').isVisible(),false,'No own report before voting');
+ await page.addStyleTag({content:'.compatibility-actions .btn{transition:none!important}'});
+ assert.equal(await page.locator('#compatibility-fill').evaluate(el=>getComputedStyle(el).backgroundColor),'oklch(0.723 0.219 149.579)','Exact reference green, not the previous pastel');
+ assert.equal(await page.locator('#compatibility-percent').evaluate(el=>getComputedStyle(el).color),'oklch(0.723 0.219 149.579)');
+ for(const [works,color]of [[true,'oklch(0.723 0.219 149.579)'],[false,'oklch(0.637 0.237 25.331)']]){
+  assert.equal(await page.locator('.compatibility-counts '+(works?'.is-working':'.is-broken')+' svg').evaluate(el=>getComputedStyle(el).color),color);
+  const button=page.locator(`[data-works="${works}"]`);
+  const expected=await page.evaluate(color=>{const p=document.createElement('span');document.body.append(p);const read=value=>{p.style.color=value;return getComputedStyle(p).color;};const values=[read(`color-mix(in oklab,${color} 50%,transparent)`),read(`color-mix(in oklab,${color} 5%,transparent)`),read(`color-mix(in oklab,${color} 10%,transparent)`)];p.remove();return values;},color);
+  await button.hover();assert.deepEqual(await button.evaluate(el=>{const s=getComputedStyle(el);return [s.borderColor,s.backgroundColor];}),expected.slice(0,2),'Reference hover uses 50% border and 5% fill');
+  await button.evaluate(el=>el.setAttribute('aria-pressed','true'));
+  assert.deepEqual(await button.evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.borderColor,s.backgroundColor];}),[color,color,expected[2]],'Selected state uses saturated color and 10% fill');
+  if(!works)await page.locator('.compatibility-card').screenshot({path:`.qa/compatibility-reference-${width}.png`});
+  await button.evaluate(el=>el.setAttribute('aria-pressed','false'));await page.mouse.move(0,0);
+ }
  assert.equal(await page.locator('.rating-star').count(),5);assert.equal(await page.locator('.sidebar .author-line').count(),0);
  assert.equal(await page.locator('.quick-download a').count(),2,'Only the two download links remain');
  assert(!(await page.locator('.quick-download').textContent()).includes('Fișierele și cerințele actualizate'));
