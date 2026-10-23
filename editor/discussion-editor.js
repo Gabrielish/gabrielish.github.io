@@ -120,13 +120,17 @@ if(textarea&&host){
  const palette=[['','Implicită'],['#ef4444','Roșu'],['#f97316','Portocaliu'],['#eab308','Galben'],['#22c55e','Verde'],['#3b82f6','Albastru'],['#a855f7','Mov'],['#ec4899','Roz'],['#6b7280','Gri']];
  const colorMenu=node('div');colorMenu.className='discussion-color-menu';colorMenu.id='editor-colors-'+(++colorMenuSequence);colorMenu.setAttribute('popover','auto');colorMenu.setAttribute('role','menu');colorMenu.setAttribute('aria-label','Culori pentru text');
  const closeColors=()=>{if(colorMenu.matches(':popover-open'))colorMenu.hidePopover();colorButton.setAttribute('aria-expanded','false');};
- const colorButton=button('Culoarea textului','A',()=>{
+ const colorButton=button('Culoarea textului','A',event=>{
+  event.preventDefault();
   if(colorMenu.matches(':popover-open')){closeColors();return;}
   colorMenu.showPopover();colorButton.setAttribute('aria-expanded','true');const r=colorButton.getBoundingClientRect(),m=colorMenu.getBoundingClientRect();
   colorMenu.style.left=Math.max(8,Math.min(r.left,innerWidth-m.width-8))+'px';
   colorMenu.style.top=Math.max(8,Math.min(r.bottom+5+m.height<=innerHeight-8?r.bottom+5:r.top-m.height-5,innerHeight-m.height-8))+'px';
   (colorMenu.querySelector('[aria-checked=true]')||colorMenu.querySelector('button'))?.focus({preventScroll:true});
  });
+ // Declare the invoker so native light-dismiss does not close the menu on
+ // pointerdown and then make our click handler reopen it immediately.
+ colorButton.setAttribute('popovertarget',colorMenu.id);
  colorButton.classList.add('discussion-color');colorButton.replaceChildren(node('span','A'),node('span','⌄'));colorButton.setAttribute('aria-haspopup','menu');colorButton.setAttribute('aria-controls',colorMenu.id);colorButton.setAttribute('aria-expanded','false');
  for(const [value,label]of palette){const option=node('button');option.type='button';option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.dataset.color=value;const swatch=node('span');swatch.className='editor-color-swatch';swatch.style.backgroundColor=value||'var(--panel)';swatch.setAttribute('aria-hidden','true');option.append(swatch,node('span',label));option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{closeColors();const chain=editor.chain().focus();value?chain.setColor(value).run():chain.unsetColor().run();});colorMenu.append(option);}
  group.append(colorMenu);
