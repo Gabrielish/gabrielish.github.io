@@ -147,6 +147,7 @@ return api;
 const mainForm=document.querySelector('#discussion-form');
 if(mainForm){
  const replyForm=mainForm.cloneNode(true);replyForm.id='reply-discussion-form';replyForm.removeAttribute('data-user-form');replyForm.hidden=true;replyForm.classList.add('is-inline-reply');
+ replyForm.querySelector('.discussion-identity')?.remove();
  for(const element of replyForm.querySelectorAll('[id]'))element.id='reply-'+element.id;
  for(const element of replyForm.querySelectorAll('[for]'))element.htmlFor='reply-'+element.htmlFor;
  const home=node('div');home.id='discussion-reply-home';home.hidden=true;home.append(replyForm);document.querySelector('#discussion-composer-home').append(home);

@@ -46,7 +46,8 @@ const moduleSource=`export const createClient=()=>{
   await root.locator(':scope > .post-content > .post-actions').getByRole('button',{name:'Răspunde',exact:true}).click();
   assert(await root.locator('#reply-discussion-form.is-inline-reply').isVisible());assert(await page.locator('.discussion-compose').isVisible(),'Main composer MUST remain visible');
   assert((await page.locator('#reply-reply-label').textContent()).includes('@Alex'));assert.equal(await page.locator('#reply-discussion-form button[type=submit]').textContent(),'Răspunde');
-  await page.locator('#reply-discussion-name').fill('Vizitator');await editor.fill('Un răspuns pe care vreau să îl păstrez.');
+  assert.equal(await page.locator('#reply-discussion-form [name=author_name]').count(),0,'Reply has no duplicate name input');
+  await page.locator('#discussion-name').fill('Vizitator');await editor.fill('Un răspuns pe care vreau să îl păstrez.');
   await mainEditor.fill('Ciornă independentă pentru un comentariu nou.');
   await page.locator('#post-root-two > .post-content > .post-actions').getByRole('button',{name:'Răspunde',exact:true}).click();
   assert(await page.locator('#post-root-two #reply-discussion-form').isVisible());assert((await editor.innerText()).includes('vreau să îl păstrez'));
@@ -80,7 +81,14 @@ const moduleSource=`export const createClient=()=>{
   for(const label of ['Răspunde','Citat','Link'])assert.equal(await root.locator('>.post-content>.post-actions').getByRole('button',{name:label,exact:true}).locator('svg').count(),1);
   await page.locator('#discussion-form').screenshot({path:`.qa/main-composer-${width}.png`});
   await page.locator('#reply-discussion-form').screenshot({path:`.qa/inline-reply-${width}.png`});
+  await page.locator('#discussion-name').fill('');
+  await page.locator('#reply-discussion-form button[type=submit]').click();
+  assert.equal(await page.evaluate(()=>window.__communityTest.comments.length),2,'Missing shared name blocks the reply');
+  assert.equal(await page.locator(':focus').getAttribute('id'),'discussion-name','Missing name focuses the main identity input');
+  assert((await editor.innerText()).trim(),'Name validation preserves the reply draft');
+  await page.locator('#discussion-name').fill('Nume actualizat');
   await page.locator('#reply-discussion-form button[type=submit]').click();await page.waitForFunction(()=>window.__communityTest.comments.length===3);
+  assert.equal(await page.evaluate(()=>window.__communityTest.comments.find(post=>post.parent_id)?.author_name),'Nume actualizat','Reply uses the latest name from the main composer');
   assert.equal(await page.locator('#discussion-form').count(),1);assert(await page.locator('#discussion-composer-home #discussion-form').isVisible());
   assert((await mainEditor.innerText()).includes('Ciornă independentă'),'Sending reply does not clear main draft');
   assert.equal(await page.locator('#post-root-one + .post-replies .reply').count(),1);

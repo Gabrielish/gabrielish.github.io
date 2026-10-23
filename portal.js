@@ -82,7 +82,6 @@
     const form=$('#reply-discussion-form');if(!form)return;
     if(form.querySelector('[type=submit]').disabled)return;
     replyContext=post;replyName=post.author_name;
-    if(user.is_anonymous && !form.elements.author_name.value)form.elements.author_name.value=$('#discussion-name').value;
     form.elements.parent_id.value=post.parent_id||post.id;form.elements.title.value='Răspuns';
     const label=$('#reply-reply-label');label.hidden=false;label.replaceChildren(discussionIcon('reply'),document.createTextNode('Răspuns către: '),element('strong','','@'+post.author_name));
     const preview=window.BG3RO_DISCUSSION_EDITOR?.render(post.body).textContent||post.body;
@@ -203,9 +202,6 @@
     ownAvatar.classList.toggle('post-avatar-default',ownAvatar.src.endsWith('discussion-avatar.svg'));
     $('#discussion-name').closest('.field').hidden=member;
     if($('#reply-discussion-form')){
-      const name=$('#reply-discussion-name');name.readOnly=member;
-      if(member)name.value=discordName();
-      name.closest('.field').hidden=member;
       $('#reply-discussion-form').hidden=!user || !replyContext;
     }
     $('#discussion-own-name').hidden=!member;$('#discussion-own-name').textContent=member?discordName():'';
@@ -436,15 +432,17 @@
   $('#next-comments').addEventListener('click', () => changeDiscussionPage(page + 1));
   for(const form of [$('#discussion-form'),$('#reply-discussion-form')].filter(Boolean))form.addEventListener('submit', event => {
     event.preventDefault(); if (!client || !user) return;
-    submit(event.currentTarget, async () => {
-      const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
+    const nameInput=$('#discussion-name');
+    if(user.is_anonymous){nameInput.value=nameInput.value.trim();if(!nameInput.reportValidity()){nameInput.scrollIntoView({block:'center',behavior:'instant'});nameInput.focus();return;}}
+    submit(form, async () => {
+      const values = Object.fromEntries(new FormData(form));
       let body=values.body.trim();
       let poll=null;
       try{if(!values.parent_id)poll=window.BG3RO_POLLS?.value();}catch(error){error.code='DISCUSSION_EDITOR';throw error;}
       const editor=form.id==='discussion-form'?window.BG3RO_DISCUSSION_EDITOR:window.BG3RO_REPLY_EDITOR;
       try { if(poll && !editor?.editor?.getText().trim())body='Sondaj: '+poll.question;else if(editor)body=editor.value(values.parent_id?replyName:''); }
       catch(error){error.code='DISCUSSION_EDITOR';throw error;}
-      const authorName=user.is_anonymous ? values.author_name.trim() : discordName();
+      const authorName=user.is_anonymous ? nameInput.value.trim() : discordName();
       const { error } = poll ? await client.rpc('bg3ro_publish_poll',{p_name:authorName,p_body:body,p_question:poll.question,p_options:poll.options,p_multiple:poll.multiple}) : await client.from('bg3ro_discussion_posts').insert({ author_id: user.id, author_name:authorName, title: values.parent_id ? 'Răspuns' : 'Comentariu', body, parent_id: values.parent_id || null });
       if (error) throw error;
       form.elements.body.value = '';editor?.clear();if(poll)window.BG3RO_POLLS.clear();if(values.parent_id)cancelReply();formStatus(values.parent_id?$('#discussion-form'):form, values.parent_id?'Răspunsul a fost publicat.':'Mesajul a fost publicat.');if (!values.parent_id) page = 0;await loadComments();
