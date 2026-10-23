@@ -3,6 +3,7 @@ const {clickNav}=require('./nav-action.cjs');
 const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
 let sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>'));
 sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
+ .replace("if(this.operation==='update'){state[key]","if(this.operation==='update'){if(state.failUpdate)return{data:null,error:{message:'Network error'}};state[key]")
  .replace("project_updates:'updates'","project_updates:'updates',releases:'releases'")
  .replace("key==='updates'||","key==='updates'||key==='releases'||")
  .replace("state[key].filter(matches).forEach(row=>Object.assign(row,this.payload));return{data:null,error:null}","const affected=state[key].filter(matches);affected.forEach(row=>Object.assign(row,this.payload));return{data:affected,error:null}")
@@ -17,22 +18,22 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   await page.goto('http://127.0.0.1:4173/#actualizari',{waitUntil:'networkidle'});
   await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await page.waitForSelector('#auth-dialog',{state:'hidden'});
   const releaseBefore=await page.locator('#updates-feed').textContent();
-  assert.equal(await page.locator('#admin-tools > .edit-control > button').count(),1,'Only one publication button remains');
+  assert.equal(await page.locator('#admin-tools .inline-update-publish > summary').count(),1,'Publication stays inline');
   assert.equal(await page.locator('#admin-tools').evaluate(el=>el.classList.contains('card')),false,'No administration card');
   assert.equal(await page.locator('#admin-tools > h2,#admin-tools > p').count(),0);
   await page.getByRole('button',{name:'Publică o actualizare',exact:true}).click();const form=page.locator('#update-form');
-  await form.locator('[name=title]').fill('Anunț manual');await form.locator('[name=body]').fill('Conținut pentru testarea actualizărilor manuale.');
-  const body=form.locator('[name=body]');
-  await body.fill('Am terminat revizia.\n\nTermeni consecvenți\nAcorduri corecte\n\n');
-  await body.evaluate(el=>el.setSelectionRange(el.value.indexOf('Termeni'),el.value.indexOf('\n\n',el.value.indexOf('Termeni'))));
-  await form.getByRole('button',{name:'Listă cu puncte',exact:true}).click();
-  assert((await body.inputValue()).includes('• Termeni consecvenți\n• Acorduri corecte'));
-  await body.evaluate(el=>el.setSelectionRange(el.value.length,el.value.length));
-  await form.getByRole('button',{name:'Adaugă link',exact:true}).click();
-  const linkPanel=form.locator('.content-link-panel');
-  await linkPanel.getByRole('button',{name:'Inserează linkul'}).click();
-  assert((await body.inputValue()).endsWith('[Raportează o eroare](#erori)'));
+  assert.equal(await page.locator('#actualizari dialog').count(),0,'No publication modal');
+  await form.locator('[name=title]').fill('Anunț manual');
+  const body=form.locator('.discussion-prosemirror');
+  await body.fill('Scurt');await form.locator('[type=submit]').click();await form.locator('.form-status.error').waitFor();assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),0);
+  await body.fill('x'.repeat(12001));await form.locator('[type=submit]').click();await form.locator('.form-status.error').waitFor();assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),0,'Update limit remains 12000 characters');
+  await body.fill('Am terminat revizia.');await body.press('ControlOrMeta+a');await form.getByRole('button',{name:'Aldin',exact:true}).click();
+  await body.press('ArrowRight');await body.press('Enter');await form.getByRole('button',{name:'Aldin',exact:true}).click();
+  await form.getByRole('button',{name:'Listă cu puncte',exact:true}).click();await body.pressSequentially('Termeni consecvenți');await body.press('Enter');await body.pressSequentially('Acorduri corecte');await body.press('Enter');await body.press('Enter');
+  await body.pressSequentially('Raportează o eroare');await body.press('Shift+Home');
+  await form.getByRole('button',{name:'Adaugă sau modifică linkul',exact:true}).click();await form.locator('.discussion-link-panel input').fill('#erori');await form.getByRole('button',{name:'Aplică linkul',exact:true}).click();
   await form.locator('[name=link_label]').fill('Pagina proiectului');await form.locator('[name=link_url]').fill('javascript:alert(1)');await form.locator('[name=badge_label]').fill('În lucru');
+  await form.screenshot({path:`.qa/inline-update-publish-${width}.png`});
   await form.locator('[type=submit]').click();await page.waitForSelector('#update-form .form-status.error');assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),0);
   await form.locator('[name=link_url]').fill('https://example.com/project');await form.locator('[type=submit]').click();
   await page.waitForSelector('#updates-feed .manual-update',{state:'attached'});await page.keyboard.press('Escape');
@@ -49,11 +50,17 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   const safety=await page.evaluate(()=>{const n=window.BG3RO_CONTENT.render('<img src=x onerror=alert(1)>\n\n[Periculos](javascript:alert(1))\n\n[Sigur](https://example.com)');return {images:n.querySelectorAll('img').length,links:[...n.querySelectorAll('a')].map(a=>a.href)};});
   assert.deepEqual(safety,{images:0,links:['https://example.com/']});
   assert.equal(await page.locator('#updates-feed .release-news .manual-update-toolbar').count(),0);
-  await manual.getByRole('button',{name:'Editează actualizarea',exact:true}).click();const modal=manual.locator('dialog[open]');
+  const actions=manual.locator('.manual-update-toolbar');assert.equal(await actions.locator('svg').count(),2);assert.equal(await actions.locator('button').first().textContent(),'Editează');
+  await manual.getByRole('button',{name:'Editează actualizarea',exact:true}).click();let modal=manual.locator('.update-inline-editor');
+  assert.equal(await manual.locator('dialog').count(),0,'Editing is inline');
   assert.equal(await modal.getByRole('button',{name:'Listă cu puncte',exact:true}).count(),1);
-  assert((await modal.locator('[name=body]').inputValue()).includes('[Raportează o eroare](#erori)'));
+  assert.equal(await modal.locator('.discussion-prosemirror ul li').count(),2);
+  assert.equal(await modal.locator('.discussion-prosemirror a').getAttribute('href'),'#erori');
+  await modal.locator('.discussion-prosemirror').fill('Ciornă care trebuie eliminată.');await modal.getByRole('button',{name:'Anulează',exact:true}).click();
+  await manual.getByRole('button',{name:'Editează actualizarea',exact:true}).click();modal=manual.locator('.update-inline-editor');assert.equal(await modal.locator('.discussion-prosemirror ul li').count(),2,'Cancel restores the saved rich content');
   await modal.locator('[name=title]').fill('Titlu editat');await modal.locator('[name=link_label]').fill('Alt link');await modal.locator('[name=link_url]').fill('https://example.com/edited');await modal.locator('[name=badge_label]').fill('Actualizat');
-  await modal.getByRole('button',{name:'Salvează modificările'}).click();
+  await page.evaluate(()=>window.__communityTest.failUpdate=true);await modal.getByRole('button',{name:'Salvează modificările'}).click();await modal.locator('.form-status').filter({hasText:'nu au fost salvate'}).waitFor();assert.equal(await modal.locator('.discussion-prosemirror ul li').count(),2,'Failure retains the rich draft');
+  await page.evaluate(()=>window.__communityTest.failUpdate=false);await modal.screenshot({path:`.qa/inline-update-edit-${width}.png`});await modal.getByRole('button',{name:'Salvează modificările'}).click();
   await page.waitForFunction(()=>document.querySelector('#updates-feed .manual-update .post-title')?.textContent==='Titlu editat');
   assert.equal(await manual.locator('.release-version-badge').textContent(),'Actualizat');
   assert.equal(await manual.locator('.release-news-link').getAttribute('href'),'https://example.com/edited');
@@ -66,5 +73,5 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   assert.equal(await page.locator('.manual-update-toolbar').count(),0);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }
- console.log('PASS: manual news publication, custom link and green label, unsafe URL rejection, modal editing, delete cancel/confirm, logout and unchanged automatic release news at 320/390/1440px.');
+ console.log('PASS: inline rich publication/editing, custom link and badge, internal links, unsafe URL rejection, cancel, deletion, logout and unchanged releases at 320/390/1440px.');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

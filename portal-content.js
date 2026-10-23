@@ -27,6 +27,11 @@
   target.append(document.createTextNode(text.slice(start)));
  }
  function render(text){
+  if(String(text||'').startsWith('BG3RO-RICH-1:')&&window.BG3RO_DISCUSSION_EDITOR){
+   const rich=window.BG3RO_DISCUSSION_EDITOR.render(text);rich.classList.add('rich-content');
+   for(const a of rich.querySelectorAll('a[href^="#"]')){a.removeAttribute('target');a.addEventListener('click',event=>{if(event.button||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const hash=a.getAttribute('href'),nav=document.querySelector('#tab-'+hash.slice(1))||document.querySelector('[data-go-tab="'+hash.slice(1)+'"]');if(nav){event.preventDefault();nav.click();}});}
+   return rich;
+  }
   const body=node('div');body.className='post-body rich-content';let paragraph=null,list=null;
   for(const line of String(text||'').split(/\r?\n/)){
    const bullet=line.match(/^\s*[-*•]\s+(.+)$/);
@@ -72,5 +77,4 @@
  }
  enhance.sequence=0;
  window.BG3RO_CONTENT={render,enhance};
- enhance(document.querySelector('#update-body'));
 })();

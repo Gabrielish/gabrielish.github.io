@@ -11,7 +11,7 @@ const fonts=['Arial','Georgia','Verdana','monospace'],sizes=['12px','14px','16px
 let colorMenuSequence=0;
 function textStyle(attrs={}){const clean={};if(fonts.includes(attrs.fontFamily))clean.fontFamily=attrs.fontFamily;if(sizes.includes(attrs.fontSize))clean.fontSize=attrs.fontSize;if(/^#[\da-f]{6}$/i.test(attrs.color||''))clean.color=attrs.color;return clean;}
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
-function safeURL(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
+function safeURL(value){if(['#despre','#actualizari','#descarcari','#discutii','#erori','#contact','#intrebari-frecvente'].includes(value))return value;try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
 function cleanDoc(value){
  let budget=2000;
  function clean(n,depth=0){
@@ -56,10 +56,10 @@ function render(body){
  }
  append(output,documentFor(body));return output;
 }
-function mount(form,isReply=false,isReport=false,idPrefix=''){
+function mount(form,isReply=false,isReport=false,idPrefix='',settings={}){
 let editor=null,cleanupResize=()=>{};
 const q=selector=>form.querySelector(idPrefix?selector.replaceAll('#discussion-','#'+idPrefix+'discussion-'):isReport?selector.replaceAll('#discussion-','#report-'):isReply?selector.replaceAll('#discussion-','#reply-discussion-'):selector);
-const minimum=isReport?20:10,maximum=isReport?6000:4000;
+const minimum=settings.minimum??(isReport?20:10),maximum=settings.maximum??(isReport?6000:4000);
 const textarea=q('#discussion-body');
 const host=q('#discussion-editor'),toolbar=q('#discussion-toolbar');
 function plainDoc(doc){return doc.content.every(n=>n.type==='paragraph'&&!n.attrs?.textAlign&&(n.content||[]).every(t=>t.type==='text'&&!(t.marks||[]).length));}
@@ -72,7 +72,7 @@ const api={render,documentFor,hasMention:body=>{
  textarea.value='';q('#discussion-character-count').textContent='';q('#discussion-editor-error').textContent='';
  q('#discussion-link-panel').hidden=true;const url=q('#discussion-link-url');url.disabled=true;url.value='';url.setCustomValidity('');
  const status=form.querySelector('.form-status');status.textContent='';status.classList.remove('error');
-},focus(){editor?.commands.focus();},destroy(){cleanupResize();editor?.destroy();},
+},focus(){editor?.view.focus();},destroy(){cleanupResize();editor?.destroy();},
  value(name=''){
   if(!editor)return textarea.value;
   const doc=cleanDoc(editor.getJSON());
@@ -85,7 +85,7 @@ const api={render,documentFor,hasMention:body=>{
   editor?.commands.insertContent([{type:'paragraph',content:[{type:'text',text:'@'+name}]},{type:'blockquote',content:documentFor(body).content},{type:'paragraph'}]);editor?.commands.focus('end');
  }};
 if(textarea&&host){
- editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':isReport?'Descrie eroarea de traducere':isReply?'Răspuns':'Mesaj','aria-multiline':'true','data-placeholder':isReport?'Descrie eroarea de traducere…':'Scrie un comentariu…',class:'discussion-prosemirror'},handlePaste(view,event){
+ editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':settings.label||(isReport?'Descrie eroarea de traducere':isReply?'Răspuns':'Mesaj'),'aria-multiline':'true','data-placeholder':settings.placeholder||(isReport?'Descrie eroarea de traducere…':'Scrie un comentariu…'),class:'discussion-prosemirror'},handlePaste(view,event){
   // Let ProseMirror parse only its schema; scripts/images/styles are not in the schema.
   if(event.clipboardData?.files.length){event.preventDefault();return true;}return false;
  }},onUpdate(){
@@ -109,7 +109,7 @@ if(textarea&&host){
   const trigger=node('button'),caption=node('span'),chevron=node('span','⌄'),menu=node('div');
   trigger.type='button';trigger.className='discussion-tool-select';trigger.setAttribute('aria-label',label);trigger.title=label;chevron.setAttribute('aria-hidden','true');trigger.append(caption,chevron);
   menu.className='discussion-editor-menu discussion-font-menu';menu.id='editor-font-'+(++colorMenuSequence);menu.setAttribute('popover','auto');menu.setAttribute('role','menu');menu.setAttribute('aria-label',label);
-  for(const [value,text]of options){const option=node('button',text);option.type='button';option.tabIndex=-1;option.dataset.value=value;option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{close();if(selection)editor.view.dispatch(editor.state.tr.setSelection(selection.resolve(editor.state.doc)));command(value);});menu.append(option);}
+  for(const [value,text]of options){const option=node('button',text);option.type='button';option.tabIndex=-1;option.dataset.value=value;option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{close();if(selection)editor.view.dispatch(editor.state.tr.setSelection(selection.resolve(editor.state.doc)));editor.view.focus();command(value);});menu.append(option);}
   function close(){if(menu.matches(':popover-open'))menu.hidePopover();trigger.setAttribute('aria-expanded','false');}
   function open(){selection=editor.state.selection.getBookmark();menu.showPopover();trigger.setAttribute('aria-expanded','true');const r=trigger.getBoundingClientRect(),m=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(r.left,innerWidth-m.width-8))+'px';menu.style.top=Math.max(8,Math.min(r.bottom+5+m.height<=innerHeight-8?r.bottom+5:r.top-m.height-5,innerHeight-m.height-8))+'px';(menu.querySelector('[aria-checked=true]')||menu.querySelector('button'))?.focus({preventScroll:true});}
   trigger.setAttribute('popovertarget',menu.id);trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-controls',menu.id);trigger.setAttribute('aria-expanded','false');
@@ -121,7 +121,9 @@ if(textarea&&host){
  }
  function button(label,icon,command,active){const b=node('button');b.type='button';b.title=label;b.setAttribute('aria-label',label);b.className='discussion-tool';
   if(icons[icon]){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const [k,v]of Object.entries({viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true'}))svg.setAttribute(k,v);const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',icons[icon]);svg.append(path);b.append(svg);}else b.textContent=icon;
-  b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',command);group.append(b);controls.push([b,active]);return b;
+  // Focus synchronously in this vanilla DOM editor: delayed Tiptap focus can
+  // otherwise steal the next keystroke from another field in the update form.
+  b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',event=>{editor.view.focus();command(event);});group.append(b);controls.push([b,active]);return b;
  }
  section('Font și mărime');
  select('Font',[['','Font'],...fonts.map(v=>[v,v])],'fontFamily',v=>v?editor.chain().focus().setFontFamily(v).run():editor.chain().focus().unsetFontFamily().run());
@@ -146,7 +148,7 @@ if(textarea&&host){
  // pointerdown and then make our click handler reopen it immediately.
  colorButton.setAttribute('popovertarget',colorMenu.id);
  colorButton.classList.add('discussion-color');colorButton.replaceChildren(node('span','A'),node('span','⌄'));colorButton.setAttribute('aria-haspopup','menu');colorButton.setAttribute('aria-controls',colorMenu.id);colorButton.setAttribute('aria-expanded','false');
- for(const [value,label]of palette){const option=node('button');option.type='button';option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.dataset.color=value;const swatch=node('span');swatch.className='editor-color-swatch';swatch.style.backgroundColor=value||'var(--panel)';swatch.setAttribute('aria-hidden','true');option.append(swatch,node('span',label));option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{closeColors();const chain=editor.chain().focus();value?chain.setColor(value).run():chain.unsetColor().run();});colorMenu.append(option);}
+ for(const [value,label]of palette){const option=node('button');option.type='button';option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.dataset.color=value;const swatch=node('span');swatch.className='editor-color-swatch';swatch.style.backgroundColor=value||'var(--panel)';swatch.setAttribute('aria-hidden','true');option.append(swatch,node('span',label));option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{closeColors();editor.view.focus();const chain=editor.chain().focus();value?chain.setColor(value).run():chain.unsetColor().run();});colorMenu.append(option);}
  group.append(colorMenu);
  colorMenu.addEventListener('toggle',()=>colorButton.setAttribute('aria-expanded',String(colorMenu.matches(':popover-open'))));
  colorMenu.addEventListener('keydown',event=>{const options=[...colorMenu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();options[event.key==='Home'?0:event.key==='End'?options.length-1:(i+(event.key==='ArrowDown'?1:-1)+options.length)%options.length].focus();}else if(event.key==='Escape'||event.key==='Tab'){if(event.key==='Escape')event.preventDefault();closeColors();colorButton.focus({preventScroll:true});}});
@@ -164,9 +166,9 @@ if(textarea&&host){
  const panel=q('#discussion-link-panel'),url=q('#discussion-link-url');url.disabled=true;
  const closeLink=()=>{panel.hidden=true;url.disabled=true;url.setCustomValidity('');};
  const link=button('Adaugă sau modifică linkul','link',()=>{url.disabled=false;url.value=editor.getAttributes('link').href||'';panel.hidden=false;url.focus();},()=>editor.isActive('link'));
- q('#discussion-link-save').onclick=()=>{const href=safeURL(url.value.trim());if(!href){url.setCustomValidity('Introdu o adresă http:// sau https:// validă.');url.reportValidity();return;}url.setCustomValidity('');editor.chain().focus().extendMarkRange('link').setLink({href}).run();closeLink();};
+ q('#discussion-link-save').onclick=()=>{const href=safeURL(url.value.trim());if(!href){url.setCustomValidity('Introdu o adresă http:// sau https:// validă.');url.reportValidity();return;}url.setCustomValidity('');editor.view.focus();editor.chain().focus().extendMarkRange('link').setLink({href}).run();closeLink();};
  url.oninput=()=>url.setCustomValidity('');
- q('#discussion-link-remove').onclick=()=>{editor.chain().focus().extendMarkRange('link').unsetLink().run();closeLink();};
+ q('#discussion-link-remove').onclick=()=>{editor.view.focus();editor.chain().focus().extendMarkRange('link').unsetLink().run();closeLink();};
  q('#discussion-link-cancel').onclick=()=>{closeLink();link.focus();};
  section('Istoric');
  button('Anulează ultima modificare','undo',()=>editor.chain().focus().undo().run());
@@ -192,6 +194,21 @@ if(mainForm){
  const home=node('div');home.id='discussion-reply-home';home.hidden=true;home.append(replyForm);document.querySelector('#discussion-composer-home').append(home);
  window.BG3RO_DISCUSSION_EDITOR=mount(mainForm);
  window.BG3RO_REPLY_EDITOR=mount(replyForm,true);
+ let contentSequence=0;
+ window.BG3RO_MOUNT_CONTENT_EDITOR=(form,textarea)=>{
+  const namespace='update-content-'+(++contentSequence)+'-',body=textarea.value,container=node('div');container.className='update-rich-editor';
+  for(const selector of ['.discussion-editor-shell','.discussion-link-panel','#reply-discussion-editor-error','#reply-discussion-character-count']){
+   const copy=replyForm.querySelector(selector).cloneNode(true);container.append(copy);
+  }
+  for(const el of container.querySelectorAll('[id]'))el.id=namespace+el.id.replace(/^reply-/,'');
+  for(const el of container.querySelectorAll('[for]'))el.htmlFor=namespace+el.htmlFor.replace(/^reply-/,'');
+  container.querySelector('.discussion-toolbar').replaceChildren();container.querySelector('.discussion-editor-content').replaceChildren();
+  const oldId=textarea.id;textarea.id=namespace+'discussion-body';const label=form.querySelector('label[for="'+oldId+'"]');if(label)label.htmlFor=textarea.id;
+  textarea.before(container);container.querySelector('textarea').replaceWith(textarea);textarea.maxLength=12000;
+  const api=mount(form,false,false,namespace,{maximum:12000,label:'Conținutul actualizării',placeholder:'Scrie actualizarea…'});
+  if(body&&!body.startsWith(prefix))api.editor.commands.setContent(window.BG3RO_CONTENT.render(body).innerHTML);
+  return api;
+ };
  let reportReplySequence=0;
  window.BG3RO_CREATE_REPORT_REPLY=(container,body='',editingReport=false)=>{
   const prefix='report-answer-'+(++reportReplySequence)+'-',form=replyForm.cloneNode(true);

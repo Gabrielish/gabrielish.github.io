@@ -586,7 +586,7 @@
     submit(event.currentTarget, async () => {
       const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
       const { error } = await client.from('bg3ro_project_updates').insert({ ...window.BG3RO_UPDATES.values(form), author_id: user.id });
-      if (error) throw error; form.reset(); formStatus(form, 'Actualizare publicată.'); await loadUpdates();
+      if (error) throw error; form.reset(); formStatus(form, ''); await loadUpdates();
     });
   });
   $('#progress-form').addEventListener('submit', event => {

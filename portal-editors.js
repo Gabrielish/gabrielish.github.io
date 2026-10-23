@@ -39,7 +39,7 @@
   const progress = mount(document.querySelector('#progress-form').closest('details'), 'Editează progresul traducerii', document.querySelector('.progress-card h2'));
   progress.id = 'progress-editor'; progress.hidden = true;
   mount(document.querySelector('#work-editor'), 'Editează secțiunea', document.querySelector('#current-work-title'));
-  document.querySelectorAll('#admin-tools > details').forEach(source => {
+  document.querySelectorAll('#admin-tools > details:not(.inline-update-publish)').forEach(source => {
     const title = source.querySelector('summary').textContent;
     const control = mount(source, title);
     const button = control.querySelector('button');

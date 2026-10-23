@@ -22,13 +22,14 @@ sdk=sdk.replace('updates:[]','updates:window.__qaUpdates,releases:window.__qaRel
   await page.goto('http://127.0.0.1:4173/#actualizari',{waitUntil:'networkidle'});
   const order=()=>page.locator('#updates-feed > article').evaluateAll(nodes=>nodes.map(n=>n.dataset.newsId));
   assert.deepEqual(await order(),['latest','manual','old'],'One chronological DOM order below pinned release');
-  assert.equal(await page.locator('#updates-feed .edit-pencil').count(),0,'Visitors cannot edit');
+  assert.equal(await page.locator('#updates-feed .manual-update-toolbar').count(),0,'Visitors cannot edit');
   await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await page.waitForSelector('#auth-dialog',{state:'hidden'});
   const old=page.locator('[data-news-id=old]'),latest=page.locator('[data-news-id=latest]');
   assert.equal(await latest.getByRole('button',{name:'Editează anunțul versiunii'}).count(),0);
   const snapshot=await page.evaluate(()=>JSON.stringify(window.__communityTest.releases.find(r=>r.id==='old')));
-  await old.getByRole('button',{name:'Editează anunțul versiunii'}).click();const modal=old.locator('dialog[open]');
-  await modal.locator('[name=news_title]').fill('Titlu vechi revizuit');await modal.locator('[name=news_body]').fill('• Corecții de text\n• Acorduri corectate');
+  await old.getByRole('button',{name:'Editează anunțul versiunii'}).click();const modal=old.locator('.update-inline-editor');assert.equal(await old.locator('dialog').count(),0);
+  await modal.locator('[name=news_title]').fill('Titlu vechi revizuit');const editor=modal.locator('.discussion-prosemirror');await editor.fill('Corecții de text');await editor.press('ControlOrMeta+a');await modal.getByRole('button',{name:'Listă cu puncte',exact:true}).click();await editor.locator('li p').click();await editor.press('End');await editor.press('Enter');await editor.pressSequentially('Acorduri corectate');
+  assert.equal(await editor.locator('li').count(),2,await editor.innerHTML());
   await modal.locator('[name=news_badge]').fill('Revizie');await modal.getByRole('button',{name:'Salvează anunțul'}).click();
   await page.waitForFunction(()=>document.querySelector('[data-news-id=old] .post-title')?.textContent==='Titlu vechi revizuit');
   assert.deepEqual(await order(),['latest','manual','old']);
