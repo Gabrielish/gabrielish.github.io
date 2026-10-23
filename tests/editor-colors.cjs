@@ -13,9 +13,12 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
   const selector={discussion:'#discussion-form',reply:'#reply-discussion-form',report:'#report-form','report-reply':'.report-inline-reply'}[kind],form=p.locator(selector),editor=form.locator('.discussion-prosemirror'),button=form.getByRole('button',{name:'Culoarea textului',exact:true});
   await editor.fill('Text de verificat pentru paleta de culori.');await editor.press('ControlOrMeta+a');await button.click();
   const menu=p.locator('.discussion-color-menu:popover-open');assert.equal(await menu.getByRole('menuitemradio').count(),9);assert.equal(await button.getAttribute('aria-expanded'),'true');
-  const box=await menu.boundingBox();assert(box.x>=0&&box.y>=0&&box.x+box.width<=width&&box.y+box.height<=900,'Menu stays within the viewport');
+  const box=await menu.boundingBox();assert.equal(box.width,144,'Menu matches the reference width');assert(box.x>=0&&box.y>=0&&box.x+box.width<=width&&box.y+box.height<=900,'Menu stays within the viewport');
+  for(const [label,hex]of [['Roșu','ef4444'],['Portocaliu','f97316'],['Galben','eab308'],['Verde','22c55e'],['Albastru','3b82f6'],['Mov','a855f7'],['Roz','ec4899'],['Gri','6b7280']]){
+   const option=menu.getByRole('menuitemradio',{name:label,exact:true});assert.equal(await option.getAttribute('data-color'),'#'+hex);assert.equal(await option.locator('.editor-color-swatch').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb('+hex.match(/../g).map(n=>parseInt(n,16)).join(', ')+')');
+  }
   if(kind==='discussion')await menu.screenshot({path:`.qa/editor-colors-${width}.png`});
-  await menu.getByRole('menuitemradio',{name:'Roșu',exact:true}).click();assert.equal(await editor.locator('span').evaluate(el=>el.style.color),'rgb(209, 77, 73)');assert.equal(await menu.count(),0);
+  await menu.getByRole('menuitemradio',{name:'Roșu',exact:true}).click();assert.equal(await editor.locator('span').evaluate(el=>el.style.color),'rgb(239, 68, 68)');assert.equal(await menu.count(),0);
   await button.click();assert.equal(await menu.getByRole('menuitemradio',{name:'Roșu',exact:true}).getAttribute('aria-checked'),'true');
   await p.keyboard.press('Escape');assert.equal(await menu.count(),0);assert(await button.evaluate(el=>el===document.activeElement));
   await button.click();await p.keyboard.press('Home');await p.keyboard.press('Enter');assert.equal(await editor.locator('span[style*=color]').count(),0,'Default removes the color mark');

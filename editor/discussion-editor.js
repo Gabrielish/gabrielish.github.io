@@ -117,7 +117,7 @@ if(textarea&&host){
  button('Cursiv','italic',()=>editor.chain().focus().toggleItalic().run(),()=>editor.isActive('italic'));
  button('Subliniat','underline',()=>editor.chain().focus().toggleUnderline().run(),()=>editor.isActive('underline'));
  button('Tăiat','strike',()=>editor.chain().focus().toggleStrike().run(),()=>editor.isActive('strike'));
- const palette=[['','Implicită'],['#d14d49','Roșu'],['#df7c2e','Portocaliu'],['#e2bb3e','Galben'],['#64c46b','Verde'],['#5f83eb','Albastru'],['#a05be9','Mov'],['#cf529c','Roz'],['#747986','Gri']];
+ const palette=[['','Implicită'],['#ef4444','Roșu'],['#f97316','Portocaliu'],['#eab308','Galben'],['#22c55e','Verde'],['#3b82f6','Albastru'],['#a855f7','Mov'],['#ec4899','Roz'],['#6b7280','Gri']];
  const colorMenu=node('div');colorMenu.className='discussion-color-menu';colorMenu.id='editor-colors-'+(++colorMenuSequence);colorMenu.setAttribute('popover','auto');colorMenu.setAttribute('role','menu');colorMenu.setAttribute('aria-label','Culori pentru text');
  const closeColors=()=>{if(colorMenu.matches(':popover-open'))colorMenu.hidePopover();colorButton.setAttribute('aria-expanded','false');};
  const colorButton=button('Culoarea textului','A',()=>{

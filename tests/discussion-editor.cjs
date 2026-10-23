@@ -66,7 +66,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    await page.locator('#discussion-form').getByRole('button',{name:'Aliniere justificată',exact:true}).click();
    assert.equal(await editor.locator('p').evaluate(el=>getComputedStyle(el).textAlign),'justify');
    const rich=await page.evaluate(()=>{const body=window.BG3RO_DISCUSSION_EDITOR.value();document.querySelector('#discussion-list').append(window.BG3RO_DISCUSSION_EDITOR.render(body));return body;});
-   assert(rich.includes('Georgia')&&rich.includes('20px')&&rich.includes('#64c46b'),'Font, size and color survive serialization');
+   assert(rich.includes('Georgia')&&rich.includes('20px')&&rich.includes('#22c55e'),'Font, size and color survive serialization');
    const styled=page.locator('#discussion-list>.discussion-rich span').last();
    assert.equal(await styled.evaluate(el=>getComputedStyle(el).fontSize),'20px');
    await page.locator('#discussion-form').getByRole('button',{name:'Elimină formatarea',exact:true}).click();

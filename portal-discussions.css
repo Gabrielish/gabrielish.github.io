@@ -12,7 +12,7 @@
 .discussion-color>span:first-child{text-decoration:underline;text-decoration-color:var(--editor-selected-color,currentColor);text-decoration-thickness:2px;text-underline-offset:4px}
 .discussion-color>span:last-child{font-size:12px;text-decoration:none}
 .discussion-color[aria-expanded=true]{background:#ddc9a71a;color:var(--gold)}
-.discussion-color-menu{position:fixed;inset:auto;margin:0;padding:8px;width:190px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow-y:auto;box-sizing:border-box;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px #0006}
+.discussion-color-menu{position:fixed;inset:auto;margin:0;padding:8px;width:144px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow-y:auto;box-sizing:border-box;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px #0006}
 .discussion-color-menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:6px 8px;border:0;border-radius:6px;background:transparent;color:inherit;font:inherit;font-size:13px;text-align:left}
 .discussion-color-menu button:hover,.discussion-color-menu button:focus-visible{background:var(--panel-soft);outline:1px solid var(--gold);outline-offset:-1px}
 .discussion-color-menu button[aria-checked=true]{color:var(--gold);background:var(--panel-soft)}
