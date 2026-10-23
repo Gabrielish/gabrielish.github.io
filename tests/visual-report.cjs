@@ -7,6 +7,13 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
  assert.equal(await p.locator('#erori>.card').count(),2,'Report composer and results have separate cards');assert(await p.locator('.report-empty').isVisible());
  assert((await p.locator('.report-translation-notice').innerText()).includes('doar raportării erorilor de traducere'));
  const form=p.locator('#report-form'),editor=p.locator('#report-editor .discussion-prosemirror');
+ const upload=p.locator('#report-photo-browse');
+ const uploadPalette=()=>upload.evaluate(el=>{const s=getComputedStyle(el);return [s.backgroundColor,s.color,s.borderTopColor];});
+ const uploadIdle=await uploadPalette();await upload.hover();const uploadHover=await uploadPalette();
+ assert.notDeepEqual(uploadHover,uploadIdle,'Upload button has a visible theme hover');
+ assert.equal(await upload.locator('svg').evaluate(el=>getComputedStyle(el).stroke),uploadHover[1],'Upload icon inherits hover foreground');
+ await p.mouse.move(0,0);await upload.focus();assert.deepEqual(await uploadPalette(),uploadHover,'Keyboard focus shares the hover treatment');
+ await upload.press('Tab');
  assert(await editor.isVisible());assert.equal(await p.locator('#report-title').isVisible(),false);assert.equal(await p.locator('#report-body').isVisible(),false);
  const palettes=await p.evaluate(()=>[
   ['.discussion-compose','.report-compose'],['#discussion-form .discussion-editor-shell','#report-form .discussion-editor-shell'],['#discussion-toolbar','#report-toolbar'],['#discussion-editor .discussion-prosemirror','#report-editor .discussion-prosemirror'],['#discussion-name','#report-name']
