@@ -108,8 +108,8 @@ if(textarea&&host){
   b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',command);group.append(b);controls.push([b,active]);return b;
  }
  section('Font și mărime');
- select('Font',[['','Implicit'],...fonts.map(v=>[v,v])],'fontFamily',v=>v?editor.chain().focus().setFontFamily(v).run():editor.chain().focus().unsetFontFamily().run());
- select('Mărimea textului',[['','Implicit'],...sizes.map(v=>[v,v.replace('px','')])],'fontSize',v=>v?editor.chain().focus().setFontSize(v).run():editor.chain().focus().unsetFontSize().run());
+ select('Font',[['','Font'],...fonts.map(v=>[v,v])],'fontFamily',v=>v?editor.chain().focus().setFontFamily(v).run():editor.chain().focus().unsetFontFamily().run());
+ select('Mărimea textului',[['','Font size'],...sizes.map(v=>[v,v.replace('px','')])],'fontSize',v=>v?editor.chain().focus().setFontSize(v).run():editor.chain().focus().unsetFontSize().run());
  section('Stilul textului');
  button('Aldin','bold',()=>editor.chain().focus().toggleBold().run(),()=>editor.isActive('bold'));
  button('Cursiv','italic',()=>editor.chain().focus().toggleItalic().run(),()=>editor.isActive('italic'));
@@ -139,7 +139,8 @@ if(textarea&&host){
  button('Refă modificarea','redo',()=>editor.chain().focus().redo().run());
  section('Curățare');
  button('Elimină formatarea','Tx',()=>editor.chain().focus().unsetAllMarks().clearNodes().run());
- function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));for(const [input,attribute]of selects)input.value=editor.getAttributes('textStyle')[attribute]||'';host.classList.toggle('is-empty',editor.isEmpty);}
+ function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));const defaults=getComputedStyle(editor.view.dom);for(const [input,attribute]of selects){input.options[0].textContent=attribute==='fontFamily'?defaults.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''):defaults.fontSize;input.value=editor.getAttributes('textStyle')[attribute]||'';}host.classList.toggle('is-empty',editor.isEmpty);}
+ window.addEventListener('resize',refresh);
  refresh();
 }
 return api;

@@ -10,6 +10,9 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.goto('http://127.0.0.1:4173/#discutii',{waitUntil:'networkidle'});await page.waitForSelector('html.portal-ready');
   const editor=page.locator('#discussion-editor .discussion-prosemirror'),replyEditor=page.locator('#reply-discussion-editor .discussion-prosemirror');
   assert(await editor.isVisible());assert.equal(await editor.getAttribute('contenteditable'),'true');
+  const defaults=await editor.evaluate(el=>{const style=getComputedStyle(el);return [style.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''),style.fontSize];});
+  assert.equal(await page.locator('#discussion-form select[aria-label="Font"] option:checked').textContent(),defaults[0]);
+  assert.equal(await page.locator('#discussion-form select[aria-label="Mărimea textului"] option:checked').textContent(),defaults[1]);
   assert.equal(await page.locator('#discussion-title').isVisible(),false);
   assert.equal(await page.locator('#discussion-body').isVisible(),false);
   await page.locator('#discussion-name').fill('Vizitator de test');
