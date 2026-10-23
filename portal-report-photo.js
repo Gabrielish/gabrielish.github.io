@@ -3,6 +3,7 @@
  const form=document.querySelector('#report-form'),input=document.querySelector('#report-photo');
  if(!form||!input)return;
  const preview=document.querySelector('#report-photo-preview'),remove=document.querySelector('#report-photo-remove'),hint=document.querySelector('#report-photo-status');
+ const thumbnail=document.querySelector('#report-photo-thumbnail');
  const drop=document.querySelector('#report-photo-drop'),browse=document.querySelector('#report-photo-browse'),fileLabel=document.querySelector('#report-photo-label');
  if(browse)browse.addEventListener('click',()=>{if(!input.disabled)input.click();});
  if(drop){
@@ -45,13 +46,13 @@
    return blob;
   }finally{bitmap.close();}
  }
- function clearPreview(){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;preview.removeAttribute('src');preview.hidden=true;remove.hidden=true;hint.textContent='';if(fileLabel)fileLabel.textContent='Captură de ecran (opțional, max. 5 MB)';}
+ function clearPreview(){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;preview.removeAttribute('src');preview.hidden=true;remove.hidden=true;if(thumbnail)thumbnail.hidden=true;hint.textContent='';if(fileLabel)fileLabel.textContent='Captură de ecran (opțional, max. 5 MB)';}
  input.addEventListener('change',async()=>{
   clearPreview();const file=input.files[0];if(!file)return;
-  try{await prepare(file);if(input.files[0]!==file)return;previewURL=URL.createObjectURL(file);preview.src=previewURL;preview.hidden=false;remove.hidden=false;if(fileLabel)fileLabel.textContent=file.name;}
+  try{await prepare(file);if(input.files[0]!==file)return;previewURL=URL.createObjectURL(file);preview.src=previewURL;preview.alt='Previzualizare: '+file.name;preview.hidden=false;remove.hidden=false;if(thumbnail)thumbnail.hidden=false;}
   catch(e){if(input.files[0]===file){input.value='';hint.textContent=e.message;}}
  });
- remove.addEventListener('click',()=>{input.value='';clearPreview();});
+ remove.addEventListener('click',()=>{input.value='';clearPreview();browse?.focus({preventScroll:true});});
  function thaw(){frozen.forEach(el=>el.disabled=false);frozen=[];}
  function reset(){pending=null;thaw();clearPreview();input.disabled=false;remove.disabled=false;}
  form.addEventListener('reset',reset);

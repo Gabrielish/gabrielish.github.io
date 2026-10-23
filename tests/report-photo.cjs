@@ -20,7 +20,7 @@ const assert=require('node:assert/strict');
   await page.locator('#report-photo').setInputFiles({name:'capture.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
   await page.waitForSelector('#report-photo-preview',{state:'visible'});
   await page.evaluate(()=>{const input=document.querySelector('#report-photo'),dt=new DataTransfer();dt.items.add(input.files[0]);document.querySelector('#report-photo-drop').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:dt}));});
-  await page.waitForFunction(()=>document.querySelector('#report-photo-label').textContent==='capture.png');
+  await page.waitForFunction(()=>document.querySelector('#report-photo-preview').alt==='Previzualizare: capture.png');assert.equal(await page.locator('#report-photo-label').textContent(),'Captură de ecran (opțional, max. 5 MB)');
   const results=await page.evaluate(async()=>{
    const calls={inserts:0,uploads:0,attaches:0,removes:0},id='11111111-1111-1111-1111-111111111111';
    let failUpload=true,failAttach=true;
