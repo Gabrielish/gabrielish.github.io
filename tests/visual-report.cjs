@@ -9,10 +9,16 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
  const form=p.locator('#report-form'),editor=p.locator('#report-editor .discussion-prosemirror');
  const upload=p.locator('#report-photo-browse');
  const uploadPalette=()=>upload.evaluate(el=>{const s=getComputedStyle(el);return [s.backgroundColor,s.color,s.borderTopColor];});
- const uploadIdle=await uploadPalette();await upload.hover();const uploadHover=await uploadPalette();
+ const nexus=p.locator('.quick-download .btn.secondary');
+ const nexusPalette=()=>nexus.evaluate(el=>{const s=getComputedStyle(el);return [s.backgroundColor,s.color,s.borderTopColor];});
+ const uploadIdle=await uploadPalette();assert.deepEqual(uploadIdle,await nexusPalette(),'Upload shares Nexus idle palette');
+ await nexus.hover();await p.waitForTimeout(220);const nexusHover=await nexusPalette();
+ await upload.hover();await p.waitForTimeout(220);const uploadHover=await uploadPalette();
+ assert.deepEqual(uploadHover,nexusHover,'Upload inherits the Nexus hover palette');
+ assert.equal(await upload.evaluate(el=>getComputedStyle(el).borderRadius),'18px','Upload keeps its rounded shape');
  assert.notDeepEqual(uploadHover,uploadIdle,'Upload button has a visible theme hover');
  assert.equal(await upload.locator('svg').evaluate(el=>getComputedStyle(el).stroke),uploadHover[1],'Upload icon inherits hover foreground');
- await p.mouse.move(0,0);await upload.focus();assert.deepEqual(await uploadPalette(),uploadHover,'Keyboard focus shares the hover treatment');
+ await p.mouse.move(0,0);await upload.focus();await p.waitForTimeout(220);assert.deepEqual(await uploadPalette(),uploadHover,'Keyboard focus shares the hover treatment');
  await upload.press('Tab');
  assert(await editor.isVisible());assert.equal(await p.locator('#report-title').isVisible(),false);assert.equal(await p.locator('#report-body').isVisible(),false);
  const palettes=await p.evaluate(()=>[

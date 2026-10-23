@@ -48,9 +48,9 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 #report-photo-drop{margin-top:18px;min-height:76px;padding:14px 16px;border-style:dashed;border-color:var(--line);background:var(--field-bg);border-radius:12px;align-items:stretch;text-align:left}
 #report-photo-drop .report-drop-content{display:flex;flex-direction:row;align-items:center;gap:10px;width:100%}
 #report-photo-label{font-size:13px;color:var(--muted);font-weight:400}
-#report-photo-browse{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--field-border);background:var(--field-bg);color:var(--text);border-radius:18px;min-height:36px;font-size:12px;padding:7px 12px}
-#report-photo-browse:is(:hover,:focus-visible):not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--bg)}
-#report-photo-browse:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+#report-photo-browse{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:7px;border-radius:18px;min-height:36px;font-size:13px;padding:7px 12px}
+/* Inherit the same .btn.secondary palette and hover as the Nexus download. */
+#report-photo-browse:focus-visible{background:#27231e;border-color:#b9976c;outline:2px solid var(--gold);outline-offset:3px}
 #report-photo-drop .report-drop-content>svg{flex:none;color:var(--muted)}
 #report-photo-preview{align-self:flex-start;margin-top:10px}#report-photo-remove{align-self:flex-start}
 #report-form>.form-end{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;margin:18px 0 0}
