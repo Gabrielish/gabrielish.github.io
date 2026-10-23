@@ -67,7 +67,7 @@ function serialize(doc){return plainDoc(doc)?doc.content.map(p=>(p.content||[]).
 const api={render,documentFor,hasMention:body=>{
  const first=documentFor(body).content?.[0];return first?.type==='paragraph'&&first.content?.[0]?.text?.startsWith('@');
 },get editor(){return editor;},clear(){editor?.commands.clearContent();textarea.value='';},reset(){
- for(const menu of form.querySelectorAll('.discussion-color-menu:popover-open'))menu.hidePopover();
+ for(const menu of form.querySelectorAll('.discussion-editor-menu:popover-open'))menu.hidePopover();
  if(editor){editor.commands.clearContent();editor.view.updateState(EditorState.create({schema:editor.schema,plugins:editor.state.plugins,doc:editor.state.doc}));editor.emit('selectionUpdate',{editor,transaction:editor.state.tr});}
  textarea.value='';q('#discussion-character-count').textContent='';q('#discussion-editor-error').textContent='';
  q('#discussion-link-panel').hidden=true;const url=q('#discussion-link-url');url.disabled=true;url.value='';url.setCustomValidity('');
@@ -104,21 +104,35 @@ if(textarea&&host){
  const controls=[],selects=[];
  let group=toolbar;
  function section(label){group=node('div');group.className='discussion-tool-group';group.setAttribute('role','group');group.setAttribute('aria-label',label);toolbar.append(group);}
- function select(label,options,attribute,command){const input=node('select');input.className='discussion-tool-select';input.setAttribute('aria-label',label);for(const [value,text]of options){const option=node('option',text);option.value=value;input.append(option);}input.onchange=()=>command(input.value);group.append(input);selects.push([input,attribute]);}
+ function select(label,options,attribute,command){
+  let selection=null;
+  const trigger=node('button'),caption=node('span'),chevron=node('span','⌄'),menu=node('div');
+  trigger.type='button';trigger.className='discussion-tool-select';trigger.setAttribute('aria-label',label);trigger.title=label;chevron.setAttribute('aria-hidden','true');trigger.append(caption,chevron);
+  menu.className='discussion-editor-menu discussion-font-menu';menu.id='editor-font-'+(++colorMenuSequence);menu.setAttribute('popover','auto');menu.setAttribute('role','menu');menu.setAttribute('aria-label',label);
+  for(const [value,text]of options){const option=node('button',text);option.type='button';option.tabIndex=-1;option.dataset.value=value;option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{close();if(selection)editor.view.dispatch(editor.state.tr.setSelection(selection.resolve(editor.state.doc)));command(value);});menu.append(option);}
+  function close(){if(menu.matches(':popover-open'))menu.hidePopover();trigger.setAttribute('aria-expanded','false');}
+  function open(){selection=editor.state.selection.getBookmark();menu.showPopover();trigger.setAttribute('aria-expanded','true');const r=trigger.getBoundingClientRect(),m=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(r.left,innerWidth-m.width-8))+'px';menu.style.top=Math.max(8,Math.min(r.bottom+5+m.height<=innerHeight-8?r.bottom+5:r.top-m.height-5,innerHeight-m.height-8))+'px';(menu.querySelector('[aria-checked=true]')||menu.querySelector('button'))?.focus({preventScroll:true});}
+  trigger.setAttribute('popovertarget',menu.id);trigger.setAttribute('aria-haspopup','menu');trigger.setAttribute('aria-controls',menu.id);trigger.setAttribute('aria-expanded','false');
+  trigger.addEventListener('mousedown',event=>event.preventDefault());trigger.addEventListener('click',event=>{event.preventDefault();menu.matches(':popover-open')?close():open();});
+  trigger.addEventListener('keydown',event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();open();}});
+  menu.addEventListener('toggle',()=>trigger.setAttribute('aria-expanded',String(menu.matches(':popover-open'))));
+  menu.addEventListener('keydown',event=>{const items=[...menu.querySelectorAll('button')],i=items.indexOf(document.activeElement);if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();items[event.key==='Home'?0:event.key==='End'?items.length-1:(i+(event.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}else if(event.key==='Escape'||event.key==='Tab'){if(event.key==='Escape')event.preventDefault();close();trigger.focus({preventScroll:true});}});
+  group.append(trigger,menu);selects.push({trigger,caption,menu,attribute,close});
+ }
  function button(label,icon,command,active){const b=node('button');b.type='button';b.title=label;b.setAttribute('aria-label',label);b.className='discussion-tool';
   if(icons[icon]){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const [k,v]of Object.entries({viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true'}))svg.setAttribute(k,v);const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',icons[icon]);svg.append(path);b.append(svg);}else b.textContent=icon;
   b.addEventListener('mousedown',e=>e.preventDefault());b.addEventListener('click',command);group.append(b);controls.push([b,active]);return b;
  }
  section('Font și mărime');
  select('Font',[['','Font'],...fonts.map(v=>[v,v])],'fontFamily',v=>v?editor.chain().focus().setFontFamily(v).run():editor.chain().focus().unsetFontFamily().run());
- select('Mărimea textului',[['','Font size'],...sizes.map(v=>[v,v.replace('px','')])],'fontSize',v=>v?editor.chain().focus().setFontSize(v).run():editor.chain().focus().unsetFontSize().run());
+ select('Mărimea textului',[['','Font size'],...sizes.map(v=>[v,v])],'fontSize',v=>v?editor.chain().focus().setFontSize(v).run():editor.chain().focus().unsetFontSize().run());
  section('Stilul textului');
  button('Aldin','bold',()=>editor.chain().focus().toggleBold().run(),()=>editor.isActive('bold'));
  button('Cursiv','italic',()=>editor.chain().focus().toggleItalic().run(),()=>editor.isActive('italic'));
  button('Subliniat','underline',()=>editor.chain().focus().toggleUnderline().run(),()=>editor.isActive('underline'));
  button('Tăiat','strike',()=>editor.chain().focus().toggleStrike().run(),()=>editor.isActive('strike'));
  const palette=[['','Implicită'],['#ef4444','Roșu'],['#f97316','Portocaliu'],['#eab308','Galben'],['#22c55e','Verde'],['#3b82f6','Albastru'],['#a855f7','Mov'],['#ec4899','Roz'],['#6b7280','Gri']];
- const colorMenu=node('div');colorMenu.className='discussion-color-menu';colorMenu.id='editor-colors-'+(++colorMenuSequence);colorMenu.setAttribute('popover','auto');colorMenu.setAttribute('role','menu');colorMenu.setAttribute('aria-label','Culori pentru text');
+ const colorMenu=node('div');colorMenu.className='discussion-editor-menu discussion-color-menu';colorMenu.id='editor-colors-'+(++colorMenuSequence);colorMenu.setAttribute('popover','auto');colorMenu.setAttribute('role','menu');colorMenu.setAttribute('aria-label','Culori pentru text');
  const closeColors=()=>{if(colorMenu.matches(':popover-open'))colorMenu.hidePopover();colorButton.setAttribute('aria-expanded','false');};
  const colorButton=button('Culoarea textului','A',event=>{
   event.preventDefault();
@@ -159,11 +173,12 @@ if(textarea&&host){
  button('Refă modificarea','redo',()=>editor.chain().focus().redo().run());
  section('Curățare');
  button('Elimină formatarea','Tx',()=>editor.chain().focus().unsetAllMarks().clearNodes().run());
- function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));const defaults=getComputedStyle(editor.view.dom),color=editor.getAttributes('textStyle').color||'';for(const option of colorMenu.querySelectorAll('button'))option.setAttribute('aria-checked',String(option.dataset.color===color));colorButton.style.setProperty('--editor-selected-color',color||'currentColor');for(const [input,attribute]of selects){input.options[0].textContent=attribute==='fontFamily'?defaults.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''):defaults.fontSize;input.value=editor.getAttributes('textStyle')[attribute]||'';}host.classList.toggle('is-empty',editor.isEmpty);}
+ function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));const defaults=getComputedStyle(editor.view.dom),color=editor.getAttributes('textStyle').color||'';for(const option of colorMenu.querySelectorAll('button'))option.setAttribute('aria-checked',String(option.dataset.color===color));colorButton.style.setProperty('--editor-selected-color',color||'currentColor');for(const {caption,menu,attribute}of selects){const fallback=attribute==='fontFamily'?defaults.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''):defaults.fontSize,value=editor.getAttributes('textStyle')[attribute]||'';caption.textContent=value||fallback;menu.firstElementChild.textContent=fallback+' (implicit)';for(const option of menu.querySelectorAll('button'))option.setAttribute('aria-checked',String(option.dataset.value===value));}host.classList.toggle('is-empty',editor.isEmpty);}
  window.addEventListener('resize',refresh);
- const closeOnScroll=event=>{if(!colorMenu.contains(event.target))closeColors();};
- window.addEventListener('scroll',closeOnScroll,true);window.addEventListener('resize',closeColors);
- cleanupResize=()=>{closeColors();colorMenu.remove();window.removeEventListener('resize',refresh);window.removeEventListener('resize',closeColors);window.removeEventListener('scroll',closeOnScroll,true);};
+ const closeMenus=()=>{closeColors();selects.forEach(picker=>picker.close());};
+ const closeOnScroll=event=>{if(!colorMenu.contains(event.target))closeColors();for(const picker of selects)if(!picker.menu.contains(event.target))picker.close();};
+ window.addEventListener('scroll',closeOnScroll,true);window.addEventListener('resize',closeMenus);
+ cleanupResize=()=>{closeMenus();colorMenu.remove();selects.forEach(picker=>picker.menu.remove());window.removeEventListener('resize',refresh);window.removeEventListener('resize',closeMenus);window.removeEventListener('scroll',closeOnScroll,true);};
  refresh();
 }
 return api;

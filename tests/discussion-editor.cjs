@@ -11,8 +11,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   const editor=page.locator('#discussion-editor .discussion-prosemirror'),replyEditor=page.locator('#reply-discussion-editor .discussion-prosemirror');
   assert(await editor.isVisible());assert.equal(await editor.getAttribute('contenteditable'),'true');
   const defaults=await editor.evaluate(el=>{const style=getComputedStyle(el);return [style.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''),style.fontSize];});
-  assert.equal(await page.locator('#discussion-form select[aria-label="Font"] option:checked').textContent(),defaults[0]);
-  assert.equal(await page.locator('#discussion-form select[aria-label="Mărimea textului"] option:checked').textContent(),defaults[1]);
+  assert.equal(await page.locator('#discussion-form button[aria-label="Font"]>span:first-child').textContent(),defaults[0]);
+  assert.equal(await page.locator('#discussion-form button[aria-label="Mărimea textului"]>span:first-child').textContent(),defaults[1]);
   assert.equal(await page.locator('#discussion-title').isVisible(),false);
   assert.equal(await page.locator('#discussion-body').isVisible(),false);
   await page.locator('#discussion-name').fill('Vizitator de test');
@@ -60,8 +60,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    await page.getByRole('button',{name:'Refă modificarea',exact:true}).click();
    assert.equal(await editor.locator('p').evaluate(el=>getComputedStyle(el).textAlign),'center');
    await page.evaluate(()=>window.BG3RO_DISCUSSION_EDITOR.editor.commands.selectAll());
-   await page.locator('#discussion-form').getByLabel('Font',{exact:true}).selectOption('Georgia');
-   await page.locator('#discussion-form').getByLabel('Mărimea textului',{exact:true}).selectOption('20px');
+   await page.locator('#discussion-form').getByRole('button',{name:'Font',exact:true}).click();await page.getByRole('menuitemradio',{name:'Georgia',exact:true}).click();
+   await page.locator('#discussion-form').getByRole('button',{name:'Mărimea textului',exact:true}).click();await page.getByRole('menuitemradio',{name:'20px',exact:true}).click();
    await page.locator('#discussion-form').getByRole('button',{name:'Culoarea textului',exact:true}).click();await page.getByRole('menuitemradio',{name:'Verde',exact:true}).click();
    await page.locator('#discussion-form').getByRole('button',{name:'Aliniere justificată',exact:true}).click();
    assert.equal(await editor.locator('p').evaluate(el=>getComputedStyle(el).textAlign),'justify');
