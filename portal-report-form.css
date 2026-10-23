@@ -3,7 +3,7 @@
 .report-identity{grid-template-columns:1fr}
 #report-form .field{gap:5px;margin-bottom:12px;min-width:0}
 #report-form .report-identity>.field,#report-form .report-details>.field{margin:0}
-#report-form .field :is(input,select){padding-top:9px;padding-bottom:9px;min-height:44px}
+#report-form .field select{padding-top:9px;padding-bottom:9px;min-height:44px}
 #report-form textarea{min-height:104px;height:104px;resize:none;overflow-y:auto}
 @media(max-width:950px){.report-details{grid-template-columns:repeat(2,minmax(0,1fr))}.report-details>.field:first-child{grid-column:1/-1}}
 @media(max-width:600px){.report-identity{grid-template-columns:1fr}#report-form .field :is(input,select,textarea){font-size:16px}}

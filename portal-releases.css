@@ -259,12 +259,10 @@
 @media(max-width:600px){.update-inline-editor{padding:10px}#admin-tools>.inline-update-publish{padding:16px}}
 /* Match the compact discussion fields and composer actions. */
 :is(.update-inline-editor,#update-form)>.field{gap:6px;margin-bottom:12px}
-:is(.update-inline-editor,#update-form)>.field>input{box-sizing:border-box;min-height:38px;padding:7px 10px;font-size:13px;line-height:22px}
 :is(.update-inline-editor,#update-form)>.form-end{align-items:center;gap:8px;margin-top:10px}
 :is(.update-inline-editor,#update-form)>.form-end>.btn{min-height:36px;padding:7px 14px;font-size:13px;line-height:20px}
 .update-inline-editor>.form-end>.update-cancel{font-weight:400;padding-inline:10px}
 .update-inline-editor>.form-end>.update-cancel:hover{background:none;color:var(--text);text-decoration:underline;text-underline-offset:3px}
 @media(max-width:600px){
- :is(.update-inline-editor,#update-form)>.field>input{min-height:40px;font-size:16px}
  :is(.update-inline-editor,#update-form)>.form-end>.btn{font-size:12px;padding:7px 12px}
 }

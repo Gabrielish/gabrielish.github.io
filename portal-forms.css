@@ -1,5 +1,10 @@
 /* One warm, neutral palette for every form, including browser autofill. */
 :root{--field-bg:#181919;--field-text:#f0e5d1;--field-border:#514638;--field-placeholder:#a9a294;--field-selection:#514632}
+/* One single-line input size across discussion, reports, updates and other forms.
+   Keep file pickers, checkboxes, hidden fields and multiline editors untouched. */
+:root{--text-input-height:38px;--text-input-font-size:13px}
+:root input:is(:not([type]),[type=text],[type=email],[type=url],[type=tel],[type=search],[type=password],[type=number],[type=date],[type=datetime-local],[type=time]){box-sizing:border-box;min-height:var(--text-input-height);padding:7px 10px;font-size:var(--text-input-font-size);line-height:22px}
+@media(max-width:600px){:root{--text-input-height:40px;--text-input-font-size:16px}}
 /* Shared introduction spacing for discussion and error-report composers. */
 .community-compose>h2{margin:0 0 12px}
 .community-compose>p.small{margin:0 0 18px}

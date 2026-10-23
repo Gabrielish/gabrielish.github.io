@@ -157,7 +157,6 @@
 #discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:36px minmax(0,1fr);gap:12px}
 #discutii .discussion-composer>.post-avatar{width:36px;height:36px}
 #discutii .discussion-identity{margin-bottom:10px;gap:4px}
-#discutii .discussion-identity input{min-height:38px;padding:7px 10px;font-size:13px}
 #discutii #discussion-own-name{margin-bottom:8px}
 /* Both tabs share this editor sizing so they cannot drift apart. */
 :is(#discutii,#erori) .discussion-editor-shell{border-radius:9px}
@@ -198,7 +197,6 @@
  #discutii{--discussion-card-block:14px}
  #discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:32px minmax(0,1fr);gap:8px}
  #discutii .discussion-composer>.post-avatar{width:32px;height:32px}
- #discutii .discussion-identity input{font-size:16px;min-height:40px}
  :is(#discutii,#erori) .discussion-tool{width:32px;height:34px}
  :is(#discutii,#erori) .discussion-tool-group{padding:0 3px}
  :is(#discutii,#erori) .discussion-prosemirror{min-height:120px;padding:11px;font-size:16px}
