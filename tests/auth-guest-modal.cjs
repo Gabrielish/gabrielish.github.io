@@ -18,6 +18,10 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await page.locator('#auth-guest').count(),0,'Login modal is Discord-only');
   await clickNav(page,'.topbar [data-auth-open]');
   assert(await page.locator('#auth-dialog').isVisible());
+  assert.equal(await page.locator('#auth-heading').textContent(),'Conectare');
+  assert.equal(await page.locator('#auth-dialog .dialog-copy').textContent(),'Bine ai venit pe BG3.RO!');
+  assert.equal((await page.locator('#discord-login').textContent()).trim(),'Conectează-te prin Discord');
+  assert.equal(await page.locator('#auth-consent').isChecked(),false,'Privacy checkbox is unchanged');
   await page.locator('#auth-dialog').screenshot({path:`.qa/auth-guest-modal-${width}.png`});
   await page.keyboard.press('Escape');
   await page.locator('#tab-discutii').click();
