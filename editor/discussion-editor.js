@@ -55,9 +55,9 @@ function render(body){
  }
  append(output,documentFor(body));return output;
 }
-function mount(form,isReply=false,isReport=false){
-let editor=null;
-const q=selector=>form.querySelector(isReport?selector.replaceAll('#discussion-','#report-'):isReply?selector.replaceAll('#discussion-','#reply-discussion-'):selector);
+function mount(form,isReply=false,isReport=false,idPrefix=''){
+let editor=null,cleanupResize=()=>{};
+const q=selector=>form.querySelector(idPrefix?selector.replaceAll('#discussion-','#'+idPrefix+'discussion-'):isReport?selector.replaceAll('#discussion-','#report-'):isReply?selector.replaceAll('#discussion-','#reply-discussion-'):selector);
 const minimum=isReport?20:10,maximum=isReport?6000:4000;
 const textarea=q('#discussion-body');
 const host=q('#discussion-editor'),toolbar=q('#discussion-toolbar');
@@ -70,7 +70,7 @@ const api={render,documentFor,hasMention:body=>{
  textarea.value='';q('#discussion-character-count').textContent='';q('#discussion-editor-error').textContent='';
  q('#discussion-link-panel').hidden=true;const url=q('#discussion-link-url');url.disabled=true;url.value='';url.setCustomValidity('');
  const status=form.querySelector('.form-status');status.textContent='';status.classList.remove('error');
-},focus(){editor?.commands.focus();},
+},focus(){editor?.commands.focus();},destroy(){cleanupResize();editor?.destroy();},
  value(name=''){
   if(!editor)return textarea.value;
   const doc=cleanDoc(editor.getJSON());
@@ -141,6 +141,7 @@ if(textarea&&host){
  button('Elimină formatarea','Tx',()=>editor.chain().focus().unsetAllMarks().clearNodes().run());
  function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));const defaults=getComputedStyle(editor.view.dom);for(const [input,attribute]of selects){input.options[0].textContent=attribute==='fontFamily'?defaults.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''):defaults.fontSize;input.value=editor.getAttributes('textStyle')[attribute]||'';}host.classList.toggle('is-empty',editor.isEmpty);}
  window.addEventListener('resize',refresh);
+ cleanupResize=()=>window.removeEventListener('resize',refresh);
  refresh();
 }
 return api;
@@ -154,6 +155,21 @@ if(mainForm){
  const home=node('div');home.id='discussion-reply-home';home.hidden=true;home.append(replyForm);document.querySelector('#discussion-composer-home').append(home);
  window.BG3RO_DISCUSSION_EDITOR=mount(mainForm);
  window.BG3RO_REPLY_EDITOR=mount(replyForm,true);
+ let reportReplySequence=0;
+ window.BG3RO_CREATE_REPORT_REPLY=(container,body='')=>{
+  const prefix='report-answer-'+(++reportReplySequence)+'-',form=replyForm.cloneNode(true);
+  form.id=prefix+'form';form.hidden=false;form.classList.add('report-inline-reply');
+  for(const el of form.querySelectorAll('[id]'))el.id=prefix+el.id.replace(/^reply-/,'');
+  for(const el of form.querySelectorAll('[for]'))el.htmlFor=prefix+el.htmlFor.replace(/^reply-/,'');
+  form.querySelector('.post-avatar')?.remove();form.querySelector('[id$="discussion-own-name"]')?.remove();form.querySelector('[id$="reply-label"]')?.remove();
+  form.querySelector('.discussion-toolbar').replaceChildren();form.querySelector('.discussion-editor-content').replaceChildren();
+  const textarea=form.querySelector('[name=body]');textarea.value=body;
+  const cancel=form.querySelector('[id$="cancel-reply"]');cancel.hidden=false;cancel.textContent='Anulează';
+  form.querySelector('[type=submit]').textContent='Răspunde';
+  container.append(form);const api=mount(form,true,false,prefix);api.reset();api.editor.commands.setContent(documentFor(body));
+  api.editor.view.dom.dataset.placeholder='Scrie un răspuns…';
+  return {form,api,cancel};
+ };
 }
 const reportForm=document.querySelector('#report-form');
 if(reportForm)window.BG3RO_REPORT_EDITOR=mount(reportForm,false,true);

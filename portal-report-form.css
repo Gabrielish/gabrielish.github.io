@@ -36,6 +36,15 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 .report-toolbar> .btn svg,.report-toolbar>.edit-control>.edit-pencil svg{width:15px;height:15px;flex:none;margin:0}
 .report-toolbar>.btn:hover,.report-toolbar>.edit-control>.edit-pencil:hover{color:var(--gold);background:none;text-decoration:underline;text-underline-offset:3px}
 #reports-list>.report-item:first-child{border-top:0;padding-top:0}
+.report-inline-reply.discussion-composer{grid-column:1/-1;min-width:0;margin-top:12px;padding:12px;background:var(--panel);border-color:var(--line)}
+.report-inline-reply .discussion-compose-main{display:block}
+.report-inline-reply .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Scrie un răspuns…'}
+.report-inline-reply .discussion-prosemirror{min-height:132px}
+.report-inline-reply .discussion-compose-bottom{margin-top:8px}
+.report-inline-reply [id$="cancel-reply"]{background:transparent;border:0;box-shadow:none;color:var(--muted);font-weight:400;padding:8px 10px;min-height:40px}
+.report-inline-reply [id$="cancel-reply"]:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+.report-inline-reply .form-status:empty{display:none}
+.report-project-reply{margin-top:8px}
 .report-title-row{overflow-wrap:anywhere}
 .report-title-row .report-platform-version{font-size:13px;font-weight:400;color:var(--muted)}
 .report-compose-heading{display:flex;align-items:center;gap:10px;font-size:19px!important;line-height:1.5;margin:0 0 20px!important;color:var(--text)!important}

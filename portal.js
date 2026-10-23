@@ -465,6 +465,7 @@
       form.reset(); formStatus(form, ''); await loadReports();
     });
   });
+  const reportReplyEditors=new Set();
   async function loadReports() {
     const request = ++reportsRequest;
     if (!client) return;
@@ -472,6 +473,7 @@
     const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path,author_avatar_url', { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
+    for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
     target.replaceChildren(); tabCount('#tab-erori', 'Raportare erori', count); $('#more-reports').hidden = reportsLimit >= count;
     if (!data.length) {const empty=element('div','report-empty');empty.append(bugIcon(),element('p','','Nu a fost raportată încă nicio eroare.'));target.append(empty);}
     data.forEach(report => {
@@ -494,21 +496,19 @@
       const reportBody=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.body):element('div','post-body',report.body);reportBody.classList.add('report-body');
       if(!reportBody.textContent.replace(/\s+/g,' ').startsWith(report.title))content.append(title);
       content.append(reportBody);
-      if (report.moderator_reply) content.append(element('strong', '', 'Răspunsul proiectului'), element('p', '', report.moderator_reply));
+      if (report.moderator_reply){const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');content.append(element('strong', '', 'Răspunsul proiectului'),answer);}
       if (moderator) {
         const form = element('form'); const field = element('div', 'field');
         const label = element('label', '', 'Stadiul raportării'); label.htmlFor = `state-${report.id}`;
         const select = element('select'); select.name = 'status'; select.id = label.htmlFor;
         ['new','investigating','resolved','closed'].forEach(value => { const option = element('option', '', statusLabels[value]); option.value = value; option.selected = report.status === value; select.append(option); });
         field.append(label, select);
-        const replyField = element('div', 'field'), replyLabel = element('label', '', report.is_public ? 'Răspuns public' : 'Răspuns privat pentru autor'), textarea = element('textarea');
-        textarea.name = 'reply'; textarea.id = `answer-${report.id}`; replyLabel.htmlFor = textarea.id; textarea.maxLength = 4000; textarea.value = report.moderator_reply || ''; replyField.append(replyLabel, textarea);
-        const button = element('button', 'btn secondary small-btn', 'Salvează răspunsul'); button.type = 'submit';
+        const button = element('button', 'btn secondary small-btn', 'Salvează stadiul'); button.type = 'submit';
         buttonIcon(button, ['M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2Z','M7 3v6h10V3M7 21v-8h10v8']);
         const actions = element('div', 'report-actions'); actions.append(button);
-        form.append(field, replyField, actions, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
+        form.append(field, actions, element('p', 'form-status')); form.querySelector('.form-status').setAttribute('role', 'status');
         form.addEventListener('submit', event => { event.preventDefault(); submit(form, async () => {
-          const { error: updateError } = await client.from('bg3ro_bug_reports').update({ status: select.value, moderator_reply: textarea.value.trim() }).eq('id', report.id);
+          const { error: updateError } = await client.from('bg3ro_bug_reports').update({ status: select.value }).eq('id', report.id);
           if (updateError) throw updateError; form.closest('dialog')?.close(); toast('Raportare actualizată.'); await loadReports();
         }); }); article.append(form);
         const remove = actionButton('Șterge raportarea', async () => {
@@ -524,7 +524,23 @@
         const toolbar = element('div', 'report-toolbar'); remove.setAttribute('aria-label', 'Șterge raportarea'); remove.title = 'Șterge raportarea';
         const editButton=editor.querySelector('.edit-pencil');editButton.append(document.createTextNode('Editează'));
         remove.replaceChildren(discussionIcon('delete'),document.createTextNode('Șterge'));
-        toolbar.classList.add('post-actions');toolbar.append(editor, remove);content.append(toolbar);
+        let inlineReply=null;
+        const reply=discussionAction(report.moderator_reply?'Editează răspunsul':'Răspunde','reply',()=>{
+          if(inlineReply){inlineReply.api.focus();return;}
+          inlineReply=window.BG3RO_CREATE_REPORT_REPLY?.(layout,report.moderator_reply||'');if(!inlineReply)return;
+          const {form:replyForm,api,cancel}=inlineReply;reportReplyEditors.add(api);
+          replyForm.querySelector('[type=submit]').textContent=report.moderator_reply?'Salvează răspunsul':'Răspunde';
+          const close=()=>{api.destroy();reportReplyEditors.delete(api);replyForm.remove();inlineReply=null;reply.focus({preventScroll:true});};
+          cancel.addEventListener('click',()=>{if(!replyForm.querySelector('[type=submit]').disabled)close();});
+          replyForm.addEventListener('submit',event=>{event.preventDefault();submit(replyForm,async()=>{
+            if(!moderator)return;
+            let body;try{body=api.value();}catch(error){error.code='DISCUSSION_EDITOR';throw error;}
+            const {error}=await client.from('bg3ro_bug_reports').update({moderator_reply:body}).eq('id',report.id);
+            if(error)throw error;await loadReports();
+          });});
+          replyForm.scrollIntoView({block:'nearest',behavior:'instant'});api.focus();
+        });
+        toolbar.classList.add('post-actions');toolbar.append(reply,editor, remove);content.append(toolbar);
       }
       target.append(article);
       window.BG3RO_REPORT_PHOTO.show(client, report, content).catch(() => {});
