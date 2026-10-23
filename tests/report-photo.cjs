@@ -8,6 +8,7 @@ const assert=require('node:assert/strict');
   const page=await browser.newPage({viewport:{width:390,height:844}});
   await page.route('http://localhost:4173/photo-fixture',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html></html>'}));await page.goto('http://localhost:4173/photo-fixture');
   await page.setContent('<form id="report-form"><input name="title" value="Test"><div id="report-photo-drop"><strong id="report-photo-label"></strong><input id="report-photo" type="file"><img id="report-photo-preview" hidden><button type="button" id="report-photo-remove" hidden>Remove</button><p id="report-photo-status"></p><button type="submit">Send</button></div></form><article id="report"><form></form></article>');
+  await page.addScriptTag({content:fs.readFileSync(require('node:path').join(__dirname,'../portal-image-viewer.js'),'utf8')});
   await page.addScriptTag({content:fs.readFileSync(require('node:path').join(__dirname,'../portal-report-photo.js'),'utf8')});
   const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=64;c.height=32;c.getContext('2d').fillRect(0,0,64,32);return c.toDataURL('image/png').split(',')[1]});
   await page.route('https://test.supabase.co/**',route=>route.fulfill({contentType:'image/png',body:Buffer.from(png,'base64')}));
