@@ -71,19 +71,20 @@ function syntheticSDK(){
       await p.locator('#discussion-name').evaluate(el=>el.value='Nume modificat manual');
       assert.equal(await p.locator('#discussion-title').getAttribute('type'),'hidden');
       await p.locator('#discussion-editor .discussion-prosemirror').fill('<img src=x onerror="window.injected=true"> Text de test.');
-      await p.locator('#discussion-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#discussion-form .form-status').textContent.includes('Mesaj'));
+      await p.locator('#discussion-form button[type=submit]').click();await p.waitForSelector('#discussion-list .post');
       assert.equal(await p.locator('#discussion-list .post-body img').count(),0);assert.equal(await p.evaluate(()=>window.injected),undefined);
       assert.equal(await p.evaluate(()=>window.__communityTest.comments.length),1);
       assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții (1)');
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].author_name),'Jucător Discord','Submission uses the account name, not the form value');
       assert.equal(await p.evaluate(()=>window.__communityTest.comments[0].status),'approved');
-      assert.equal(await p.locator('#discussion-form .form-status').textContent(),'Mesajul a fost publicat.');
+      assert.equal(await p.locator('#discussion-form .form-status').textContent(),'');assert(!(await p.locator('#discussion-form .form-status').isVisible()));
       assert.equal(await p.locator('#discussion-form button[type=submit]').textContent(),'Trimite');
       assert((await p.locator('#report-form button[type=submit]').textContent()).includes('Raportează o eroare'));
       await p.locator('#tab-erori').click();await p.locator('#report-editor .discussion-prosemirror').fill('Un context de test care descrie suficient de clar eroarea.');
       await p.evaluate(()=>window.__communityTest.failInsert=true);await p.locator('#report-form button[type=submit]').click();await p.waitForSelector('#report-form .form-status.error');assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),0);
       assert((await p.locator('#report-editor .discussion-prosemirror').innerText()).includes('Un context de test'));
-      await p.evaluate(()=>window.__communityTest.failInsert=false);await p.locator('#report-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#report-form .form-status').textContent.includes('trimis'));
+      await p.evaluate(()=>window.__communityTest.failInsert=false);await p.locator('#report-form button[type=submit]').click();await p.waitForSelector('.report-item');
+      assert.equal(await p.locator('#report-form .form-status').textContent(),'');assert(!(await p.locator('#report-form .form-status').isVisible()));
       assert.equal(await p.locator('.report-item').count(),1);assert.equal(await p.evaluate(()=>window.__communityTest.reports.length),1);
       assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (1)');
       if(owner){

@@ -89,6 +89,8 @@ const moduleSource=`export const createClient=()=>{
   await page.locator('#discussion-name').fill('Nume actualizat');
   await page.locator('#reply-discussion-form button[type=submit]').click();await page.waitForFunction(()=>window.__communityTest.comments.length===3);
   assert.equal(await page.evaluate(()=>window.__communityTest.comments.find(post=>post.parent_id)?.author_name),'Nume actualizat','Reply uses the latest name from the main composer');
+  assert.equal(await page.locator('#discussion-form .form-status').textContent(),'','No persistent reply confirmation in the main composer');
+  assert.equal(await page.locator('#reply-discussion-form .form-status').textContent(),'','Reply status clears after publishing');
   assert.equal(await page.locator('#discussion-form').count(),1);assert(await page.locator('#discussion-composer-home #discussion-form').isVisible());
   assert((await mainEditor.innerText()).includes('Ciornă independentă'),'Sending reply does not clear main draft');
   assert.equal(await page.locator('#post-root-one + .post-replies .reply').count(),1);

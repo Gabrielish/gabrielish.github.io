@@ -445,7 +445,7 @@
       const authorName=user.is_anonymous ? nameInput.value.trim() : discordName();
       const { error } = poll ? await client.rpc('bg3ro_publish_poll',{p_name:authorName,p_body:body,p_question:poll.question,p_options:poll.options,p_multiple:poll.multiple}) : await client.from('bg3ro_discussion_posts').insert({ author_id: user.id, author_name:authorName, title: values.parent_id ? 'Răspuns' : 'Comentariu', body, parent_id: values.parent_id || null });
       if (error) throw error;
-      form.elements.body.value = '';editor?.clear();if(poll)window.BG3RO_POLLS.clear();if(values.parent_id)cancelReply();formStatus(values.parent_id?$('#discussion-form'):form, values.parent_id?'Răspunsul a fost publicat.':'Mesajul a fost publicat.');if (!values.parent_id) page = 0;await loadComments();
+      form.elements.body.value = '';editor?.clear();if(poll)window.BG3RO_POLLS.clear();if(values.parent_id)cancelReply();formStatus(form,'');if (!values.parent_id) page = 0;await loadComments();
     });
   });
   $('#report-form').addEventListener('submit', event => {
@@ -461,7 +461,7 @@
       values.title=description.replace(/\s+/g,' ').slice(0,120);
       values.mod_version=values.mod_version||'Nespecificată';
       await window.BG3RO_REPORT_PHOTO.publish(client, { ...values, author_id: user.id, is_public: true });
-      form.reset(); formStatus(form, 'Raportarea a fost trimisă și este publică. O poți urmări mai jos.'); await loadReports();
+      form.reset(); formStatus(form, ''); await loadReports();
     });
   });
   async function loadReports() {

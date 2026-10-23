@@ -157,7 +157,7 @@
 :is(#discutii,#erori) .discussion-color{width:28px;height:32px}
 :is(#discutii,#erori) .discussion-prosemirror{min-height:132px;padding:12px 14px;line-height:1.65}
 #discutii .discussion-compose-bottom{margin-top:8px;gap:8px}
-#discutii .discussion-composer .form-status:empty{display:none}
+:is(#discutii .discussion-composer,#report-form) .form-status:empty{display:none}
 #discutii .discussion-compose-bottom .btn{min-height:36px;padding:7px 14px}
 #discutii .discussion-add-poll{min-height:36px;font-size:12px}
 #discutii #discussion-list{display:block;border:1px solid var(--line);border-radius:11px;background:var(--panel);overflow:hidden}
