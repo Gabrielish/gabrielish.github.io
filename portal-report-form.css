@@ -9,7 +9,6 @@
 @media(max-width:600px){.report-identity{grid-template-columns:1fr}#report-form .field :is(input,select,textarea){font-size:16px}}
 .report-photo-field{display:grid;gap:6px;margin:12px 0 16px;justify-items:start}
 #report-photo.report-file-input{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);padding:0;border:0;min-height:0}
-#report-photo-preview{max-width:100%;max-height:160px;border:1px solid #514a38;border-radius:10px;object-fit:contain}
 #report-photo-status:empty{display:none}
 #report-photo-status{margin:0;font-size:14px}
 .report-photo-link{display:block;margin:16px 0;width:fit-content;max-width:100%;padding:0;border:0;background:none;cursor:zoom-in}
@@ -69,13 +68,17 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 /* Inherit the same .btn.secondary palette and hover as the Nexus download. */
 #report-photo-browse:focus-visible{background:#27231e;border-color:#b9976c;outline:2px solid var(--gold);outline-offset:3px}
 #report-photo-drop .report-drop-content>svg{flex:none;color:var(--muted)}
-#report-photo-thumbnail{position:relative;align-self:flex-start;flex:none;width:80px;height:80px;margin-top:6px}
-#report-photo-thumbnail #report-photo-preview{display:block;width:80px;height:80px;max-width:none;max-height:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;object-fit:cover;background:var(--panel)}
-#report-photo-remove{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;width:24px;height:24px;min-height:24px;padding:0;border:0;border-radius:50%;background:#dc4545;color:#fff;cursor:pointer}
-#report-photo-remove:hover{background:#b92f36}#report-photo-remove:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+#report-photo-gallery{display:flex;flex-wrap:wrap;gap:14px;align-self:stretch;min-width:0;padding-top:6px}
+#report-photo-gallery:has(>.report-photo-thumbnail[hidden]){display:none}
+.report-photo-thumbnail{position:relative;flex:none;width:80px;height:80px}
+.report-photo-thumbnail .report-photo-preview{display:block;width:80px;height:80px;max-width:none;max-height:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px;object-fit:cover;background:var(--panel)}
+.report-photo-remove{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;width:24px;height:24px;min-height:24px;padding:0;border:0;border-radius:50%;background:#dc4545;color:#fff;cursor:pointer}
+.report-photo-remove:hover{background:#b92f36}.report-photo-remove:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 @media(hover:hover) and (pointer:fine){
- #report-photo-thumbnail:not(:hover):not(:focus-within) #report-photo-remove{opacity:0;pointer-events:none}
+ .report-photo-thumbnail:not(:hover):not(:focus-within) .report-photo-remove{opacity:0;pointer-events:none}
 }
+.report-photos{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0}
+.report-photos .report-photo-link{margin:0}.report-photos .report-photo-link img{width:80px;height:80px;object-fit:cover}
 #report-form>.form-end{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;margin:18px 0 0}
 #report-form .report-submit{display:inline-flex;align-items:center;gap:8px;font-weight:600;padding:11px 18px;border-radius:10px;min-height:42px}
 .report-submit svg{width:18px;height:18px}

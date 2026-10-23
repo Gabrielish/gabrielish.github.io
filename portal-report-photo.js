@@ -3,16 +3,19 @@
  const form=document.querySelector('#report-form'),input=document.querySelector('#report-photo');
  if(!form||!input)return;
  const preview=document.querySelector('#report-photo-preview'),remove=document.querySelector('#report-photo-remove'),hint=document.querySelector('#report-photo-status');
- const thumbnail=document.querySelector('#report-photo-thumbnail');
+ let thumbnail=document.querySelector('#report-photo-thumbnail');
+ if(!thumbnail){thumbnail=document.createElement('div');preview.before(thumbnail);thumbnail.append(preview,remove);}
+ const gallery=document.createElement('div');gallery.id='report-photo-gallery';thumbnail.before(gallery);gallery.append(thumbnail);
+ const template=thumbnail.cloneNode(true);input.multiple=true;
  const drop=document.querySelector('#report-photo-drop'),browse=document.querySelector('#report-photo-browse'),fileLabel=document.querySelector('#report-photo-label');
  if(browse)browse.addEventListener('click',()=>{if(!input.disabled)input.click();});
  if(drop){
   ['dragenter','dragover'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();if(!input.disabled)drop.classList.add('drag-over');}));
   ['dragleave','drop'].forEach(type=>drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('drag-over');}));
-  drop.addEventListener('drop',e=>{if(input.disabled)return;if(e.dataTransfer.files.length!==1){hint.textContent='Alege o singură fotografie.';return;}input.files=e.dataTransfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));});
+  drop.addEventListener('drop',e=>{if(!input.disabled)addFiles([...e.dataTransfer.files]);});
  }
  const bucket='bg3ro-report-images',limit=5*1024*1024;
- let previewURL,pending=null,frozen=[];
+ let selected=[],pending=null,frozen=[],selectionTask=Promise.resolve(),selectionEpoch=0,lockedEditors=[];
  let viewer=null,viewerImage=null;
  function openPhoto(url){
   if(!viewer){
@@ -46,49 +49,79 @@
    return blob;
   }finally{bitmap.close();}
  }
- function clearPreview(){if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;preview.removeAttribute('src');preview.hidden=true;remove.hidden=true;if(thumbnail)thumbnail.hidden=true;hint.textContent='';if(fileLabel)fileLabel.textContent='Captură de ecran (opțional, max. 5 MB)';}
- input.addEventListener('change',async()=>{
-  clearPreview();const file=input.files[0];if(!file)return;
-  try{await prepare(file);if(input.files[0]!==file)return;previewURL=URL.createObjectURL(file);preview.src=previewURL;preview.alt='Previzualizare: '+file.name;preview.hidden=false;remove.hidden=false;if(thumbnail)thumbnail.hidden=false;}
-  catch(e){if(input.files[0]===file){input.value='';hint.textContent=e.message;}}
- });
- remove.addEventListener('click',()=>{input.value='';clearPreview();browse?.focus({preventScroll:true});});
- function thaw(){frozen.forEach(el=>el.disabled=false);frozen=[];}
- function reset(){pending=null;thaw();clearPreview();input.disabled=false;remove.disabled=false;}
+ function syncInput(){const transfer=new DataTransfer();selected.forEach(item=>transfer.items.add(item.file));input.files=transfer.files;}
+ function renderSelection(){
+  gallery.replaceChildren();
+  const entries=selected.length?selected:[null];
+  entries.forEach((item,index)=>{const tile=template.cloneNode(true),image=tile.querySelector('img'),button=tile.querySelector('button');tile.className='report-photo-thumbnail';image.className='report-photo-preview';button.className='report-photo-remove';
+   tile.id=index?'':'report-photo-thumbnail';image.id=index?'':'report-photo-preview';button.id=index?'':'report-photo-remove';tile.hidden=!item;image.hidden=!item;button.hidden=!item;
+   if(item){image.src=item.url;image.alt='Previzualizare: '+item.file.name;button.setAttribute('aria-label','Elimină captura: '+item.file.name);button.title='Elimină captura';button.disabled=!!pending;
+    button.addEventListener('click',()=>{if(pending)return;selectionEpoch++;URL.revokeObjectURL(item.url);selected=selected.filter(entry=>entry!==item);syncInput();hint.textContent='';renderSelection();browse?.focus({preventScroll:true});});}
+   gallery.append(tile);
+  });
+  if(fileLabel)fileLabel.textContent='Capturi de ecran (opțional, max. 5 MB în total)';
+ }
+ function clearPreview(){selectionEpoch++;selected.forEach(item=>URL.revokeObjectURL(item.url));selected=[];input.value='';hint.textContent='';renderSelection();}
+ function addFiles(files){
+  const epoch=selectionEpoch;
+  selectionTask=selectionTask.then(async()=>{
+   if(pending||epoch!==selectionEpoch)return;if(!files.length){syncInput();return;}
+   try{
+    if(selected.reduce((sum,item)=>sum+item.file.size,0)+files.reduce((sum,file)=>sum+file.size,0)>limit)throw error('Capturile depășesc limita totală de 5 MB. Elimină o imagine sau alege fișiere mai mici.');
+    const prepared=[];for(const file of files)prepared.push({file,blob:await prepare(file),id:crypto.randomUUID()});
+    if(epoch!==selectionEpoch)return;
+    if([...selected,...prepared].reduce((sum,item)=>sum+item.blob.size,0)>limit)throw error('Capturile depășesc limita totală de 5 MB după procesare. Alege imagini mai mici.');
+    prepared.forEach(item=>item.url=URL.createObjectURL(item.file));selected.push(...prepared);hint.textContent='';renderSelection();
+   }catch(e){hint.textContent=e.message;}
+   finally{if(epoch===selectionEpoch)syncInput();}
+  });
+  return selectionTask;
+ }
+ input.addEventListener('change',()=>addFiles([...input.files]));
+ function thaw(){frozen.forEach(el=>el.disabled=false);frozen=[];lockedEditors.forEach(el=>el.contentEditable='true');lockedEditors=[];input.disabled=false;renderSelection();}
+ function freeze(){if(!frozen.length)frozen=[...form.querySelectorAll('input,select,textarea,button:not([type=submit])')].filter(el=>!el.disabled);frozen.forEach(el=>el.disabled=true);lockedEditors=[...form.querySelectorAll('[contenteditable=true]')];lockedEditors.forEach(el=>el.contentEditable='false');}
+ function reset(){pending=null;thaw();clearPreview();}
  form.addEventListener('reset',reset);
  window.addEventListener('bg3ro:auth',event=>{if(viewer?.open)viewer.close();if(!event.detail.userId&&!event.detail.guest){reset();input.value='';}});
  window.BG3RO_REPORT_PHOTO={
   async publish(client,payload){
-   const file=input.files[0],blob=file?await prepare(file):null;
+   await selectionTask;
    if(!pending){
     const query=client.from('bg3ro_bug_reports').insert(payload);
-    if(!blob){const result=await query;if(result.error)throw result.error;return;}
-    const {data,error:dbError}=await query.select('id').maybeSingle();if(dbError||!data?.id)throw dbError||error('Raportarea nu a putut fi publicată.');
-    pending={id:data.id,uploaded:false};
+    if(!selected.length){const result=await query;if(result.error)throw result.error;return;}
+    freeze();let result;try{result=await query.select('id').maybeSingle();}catch(e){thaw();throw e;}
+    const {data,error:dbError}=result;if(dbError||!data?.id){thaw();throw dbError||error('Raportarea nu a putut fi publicată.');}
+    pending={id:data.id,files:selected.map((item,index)=>({...item,path:data.id+'/'+(index?item.id:'screenshot')+'.jpg',uploaded:false}))};
    }
-   if(blob){
-    const path=pending.id+'/screenshot.jpg';
+   if(pending.files.length){
     try{
-     if(!pending.uploaded){const {error:uploadError}=await client.storage.from(bucket).upload(path,blob,{contentType:'image/jpeg',upsert:false});if(uploadError)throw uploadError;pending.uploaded=true;input.disabled=true;remove.disabled=true;}
-     const {error:attachError}=await client.rpc('bg3ro_attach_report_image',{p_report_id:pending.id});if(attachError)throw attachError;
+     for(const item of pending.files){if(item.uploaded)continue;const {error:uploadError}=await client.storage.from(bucket).upload(item.path,item.blob,{contentType:'image/jpeg',upsert:false});
+      if(uploadError&&String(uploadError.statusCode||uploadError.status)!=='409'&&!/already exists|duplicate/i.test(uploadError.message||''))throw uploadError;item.uploaded=true;}
+     const {error:attachError}=await client.rpc('bg3ro_attach_report_images',{p_report_id:pending.id,p_paths:pending.files.map(item=>item.path)});if(attachError)throw attachError;
     }catch(_){
-     if(!frozen.length)frozen=[...form.querySelectorAll('input:not([type=file]),select,textarea')].filter(el=>!el.disabled);frozen.forEach(el=>el.disabled=true);
-     throw error('Raportarea este publicată, dar fotografia nu a fost atașată. Apasă din nou „Publică raportarea” pentru a reîncerca fără să creezi un duplicat.');
+     throw error('Raportarea este publicată, dar imaginile nu au fost încă atașate. Apasă din nou „Raportează o eroare” pentru a relua încărcarea fără duplicate.');
     }
    }
-   pending=null;thaw();input.disabled=false;remove.disabled=false;
+   pending=null;thaw();
   },
   async show(client,report,article){
-   if(!report.screenshot_path)return;
-   const expected=report.id+'/screenshot.jpg';if(report.screenshot_path!==expected)return;
+   const paths=Array.isArray(report.screenshot_paths)&&report.screenshot_paths.length?report.screenshot_paths:report.screenshot_path?[report.screenshot_path]:[];
+   if(!paths.length)return;
+   const photos=document.createElement('div');photos.className='report-photos';
+   const moderation=article.querySelector(':scope > form,:scope > .report-toolbar');if(moderation)moderation.before(photos);else article.append(photos);
+   for(const expected of paths){
+   if(!expected.startsWith(report.id+'/')||!(/^(screenshot|[0-9a-f-]{36})[.]jpg$/).test(expected.slice(report.id.length+1)))continue;
    const {data,error:readError}=await client.storage.from(bucket).createSignedUrl(expected,3600);
-   if(readError||!data?.signedUrl||!article.isConnected)return;
-   let url;try{url=new URL(data.signedUrl);if(url.origin!==new URL(window.BG3RO_CONFIG.supabaseUrl).origin||!url.pathname.startsWith('/storage/v1/object/sign/'+bucket+'/'))return;}catch(_){return;}
+   if(readError||!data?.signedUrl||!article.isConnected)continue;
+   let url;try{url=new URL(data.signedUrl);if(url.origin!==new URL(window.BG3RO_CONFIG.supabaseUrl).origin||!url.pathname.startsWith('/storage/v1/object/sign/'+bucket+'/'))continue;}catch(_){continue;}
    const link=document.createElement('button');link.type='button';link.className='report-photo-link';link.setAttribute('aria-label','Deschide fotografia raportării');link.setAttribute('aria-haspopup','dialog');
    link.addEventListener('click',()=>openPhoto(url.href));
    const image=document.createElement('img');image.src=url.href;image.alt='Fotografie atașată raportării';image.loading='lazy';image.referrerPolicy='no-referrer';
-   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);const moderation=article.querySelector(':scope > form,:scope > .report-toolbar');if(moderation)moderation.before(link);else article.append(link);
+   image.addEventListener('error',()=>link.remove(),{once:true});link.append(image);photos.append(link);
+   }
+   if(!photos.children.length)photos.remove();
   },
-  async cleanup(client,path){if(path)try{await client.storage.from(bucket).remove([path]);}catch(_){/* Deleted-report images are no longer publicly readable. */}}
+  async cleanup(client,paths){const list=Array.isArray(paths)?paths:paths?[paths]:[];if(list.length)try{await client.storage.from(bucket).remove(list);}catch(_){/* Deleted-report images are no longer publicly readable. */}}
  };
+ renderSelection();
 })();

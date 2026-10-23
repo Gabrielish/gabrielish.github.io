@@ -24,9 +24,9 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
   const png=await p.evaluate(([w,h])=>{const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.fillStyle='#d7bc8a';ctx.fillRect(0,0,w,h);ctx.fillStyle='#111215';ctx.fillRect(w/4,h/4,w/2,h/2);return c.toDataURL('image/png').split(',')[1];},[imageWidth,imageHeight]);
   await p.locator('#report-photo').setInputFiles({name:'captura-de-test.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
   await p.locator('#report-photo-thumbnail').waitFor();
-  const preview=p.locator('#report-photo-preview'),remove=p.getByRole('button',{name:'Elimină captura',exact:true}),imageBox=await preview.boundingBox(),xBox=await remove.boundingBox();
+  const preview=p.locator('#report-photo-preview'),remove=p.getByRole('button',{name:/^Elimină captura:/}),imageBox=await preview.boundingBox(),xBox=await remove.boundingBox();
   assert.equal(imageBox.width,80);assert.equal(imageBox.height,80);assert(xBox.x<imageBox.x+imageBox.width&&xBox.x+xBox.width>imageBox.x+imageBox.width,'X overlaps the image right edge');assert(xBox.y<imageBox.y&&xBox.y+xBox.height>imageBox.y,'X overlaps the image top edge');
-  assert.equal(await p.locator('#report-photo-label').textContent(),'Captură de ecran (opțional, max. 5 MB)');
+  assert.equal(await p.locator('#report-photo-label').textContent(),'Capturi de ecran (opțional, max. 5 MB în total)');
   assert.equal(await preview.evaluate(el=>getComputedStyle(el).objectFit),'cover');
   await p.mouse.move(0,0);await p.evaluate(()=>document.activeElement?.blur());
   const mouseDevice=await p.evaluate(()=>matchMedia('(hover:hover) and (pointer:fine)').matches);
