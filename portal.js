@@ -482,7 +482,7 @@
     const request = ++reportsRequest;
     if (!client) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     closeReportState();for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
@@ -508,7 +508,7 @@
       const reportBody=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.body):element('div','post-body',report.body);reportBody.classList.add('report-body');
       if(!reportBody.textContent.replace(/\s+/g,' ').startsWith(report.title))content.append(title);
       content.append(reportBody);
-      if (report.moderator_reply){const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');const reply=element('div','report-answer');reply.append(element('strong','report-answer-label','Răspuns'),answer);content.append(reply);}
+      const photos=element('div','report-attachments');content.append(photos);
       if (moderator || (user && report.author_id===user.id)) {
         const toolbar=element('div','report-toolbar post-actions');let inlineEdit=null;
         const edit=discussionAction('Editează','edit',()=>{
@@ -566,8 +566,18 @@
         }
         toolbar.append(edit,remove);content.append(toolbar);
       }
+      if(report.moderator_reply){
+        const reply=element('div','report-answer post'),replyContent=element('div','post-content');
+        const replyAvatar=avatar.cloneNode();
+        const replyRemote=/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(report.reply_author_avatar_url||'');
+        replyAvatar.src=replyRemote?report.reply_author_avatar_url:'./assets/discussion-avatar.svg';replyAvatar.classList.toggle('post-avatar-default',!replyRemote);
+        if(replyRemote)replyAvatar.addEventListener('error',()=>{replyAvatar.src='./assets/discussion-avatar.svg';replyAvatar.classList.add('post-avatar-default');},{once:true});
+        const meta=element('div','post-meta');meta.append(element('strong','',report.reply_author_name||'Administrator'));
+        if(report.reply_created_at&&Number.isFinite(Date.parse(report.reply_created_at))){const time=element('time','',dateText(report.reply_created_at));time.dateTime=report.reply_created_at;meta.append(time);}
+        const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');replyContent.append(meta,answer);reply.append(replyAvatar,replyContent);content.append(reply);
+      }
       target.append(article);
-      window.BG3RO_REPORT_PHOTO.show(client, report, content).catch(() => {});
+      window.BG3RO_REPORT_PHOTO.show(client, report, photos).catch(() => {});
     });
   }
   $('#more-reports').addEventListener('click', async () => { reportsLimit += 20; await loadReports(); });

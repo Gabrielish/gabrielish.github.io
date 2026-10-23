@@ -57,8 +57,12 @@ html:has(.report-photo-viewer[open]){overflow:hidden}
 .report-state-trigger svg{color:var(--report-state-color)}
 .report-state-status{flex-basis:100%;color:#f3a9b7;font-size:12px}.report-state-status:empty{display:none}
 .report-project-reply{margin-top:8px}
-.report-answer{margin:16px 0 0 48px;min-width:0}
-@media(max-width:600px){.report-answer{margin-left:12px}}
+.report-answer{margin:16px 0 0;min-width:0}
+.report-attachments:empty{display:none}
+#reports-list .report-answer.post{grid-template-columns:36px minmax(0,1fr);gap:12px}
+#reports-list .report-answer>.post-avatar{width:36px;height:36px}
+.report-answer .report-project-reply{margin-top:0}
+@media(max-width:600px){#reports-list .report-answer.post{grid-template-columns:32px minmax(0,1fr);gap:8px}#reports-list .report-answer>.post-avatar{width:32px;height:32px}}
 .report-title-row{overflow-wrap:anywhere}
 .report-title-row .report-platform-version{font-size:13px;font-weight:400;color:var(--muted)}
 .report-compose-heading{display:flex;align-items:center;gap:10px;font-size:19px!important;line-height:1.5;margin:0 0 20px!important;color:var(--text)!important}

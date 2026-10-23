@@ -25,6 +25,10 @@ $$;
 select set_config('request.jwt.claim.sub',current_setting('bg3ro.qa_admin'),true),set_config('request.jwt.claims','{}',true);
 set local role authenticated;
 update public.bg3ro_bug_reports set status='resolved',moderator_reply='Răspuns al administratorului.' where id=current_setting('bg3ro.qa_report')::uuid;
+do $$ begin
+ if not exists(select 1 from public.bg3ro_bug_reports where id=current_setting('bg3ro.qa_report')::uuid and reply_author_name='Administrator' and reply_created_at is not null) then raise exception 'Missing server-stamped reply metadata';end if;
+end;$$;
+select pg_temp.must_deny_report_write(format('update public.bg3ro_bug_reports set reply_author_name=%L where id=%L','Autor fals',current_setting('bg3ro.qa_report')));
 reset role;
 select set_config('request.jwt.claim.sub',current_setting('bg3ro.qa_author'),true);
 set local role authenticated;
