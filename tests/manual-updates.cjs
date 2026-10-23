@@ -23,6 +23,10 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   assert.equal(await page.locator('#admin-tools > h2,#admin-tools > p').count(),0);
   await page.getByRole('button',{name:'Publică o actualizare',exact:true}).click();const form=page.locator('#update-form');
   assert.equal(await page.locator('#actualizari dialog').count(),0,'No publication modal');
+  const compact=async locator=>{
+   for(const input of await locator.locator(':scope > .field > input').all())assert.equal(Math.round((await input.boundingBox()).height),width<=600?40:38,'Compact input height');
+   for(const button of await locator.locator(':scope > .form-end > .btn').all())assert.equal(Math.round((await button.boundingBox()).height),36,'Discussion-sized action buttons');
+  };await compact(form);
   await form.locator('[name=title]').fill('Anunț manual');
   const body=form.locator('.discussion-prosemirror');
   await body.fill('Scurt');await form.locator('[type=submit]').click();await form.locator('.form-status.error').waitFor();assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),0);
@@ -53,6 +57,7 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   const actions=manual.locator('.manual-update-toolbar');assert.equal(await actions.locator('svg').count(),2);assert.equal(await actions.locator('button').first().textContent(),'Editează');
   await manual.getByRole('button',{name:'Editează actualizarea',exact:true}).click();let modal=manual.locator('.update-inline-editor');
   assert.equal(await manual.locator('dialog').count(),0,'Editing is inline');
+  await compact(modal);await modal.screenshot({path:`.qa/compact-update-edit-${width}.png`});
   assert.equal(await modal.getByRole('button',{name:'Listă cu puncte',exact:true}).count(),1);
   assert.equal(await modal.locator('.discussion-prosemirror ul li').count(),2);
   assert.equal(await modal.locator('.discussion-prosemirror a').getAttribute('href'),'#erori');
