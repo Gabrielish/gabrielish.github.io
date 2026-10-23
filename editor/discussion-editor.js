@@ -8,6 +8,7 @@ import {TextStyle,FontFamily,FontSize,Color} from '@tiptap/extension-text-style'
 const prefix='BG3RO-RICH-1:';
 const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']}),TextStyle,FontFamily,FontSize,Color];
 const fonts=['Arial','Georgia','Verdana','monospace'],sizes=['12px','14px','16px','18px','20px','24px'];
+let colorMenuSequence=0;
 function textStyle(attrs={}){const clean={};if(fonts.includes(attrs.fontFamily))clean.fontFamily=attrs.fontFamily;if(sizes.includes(attrs.fontSize))clean.fontSize=attrs.fontSize;if(/^#[\da-f]{6}$/i.test(attrs.color||''))clean.color=attrs.color;return clean;}
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 function safeURL(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
@@ -66,6 +67,7 @@ function serialize(doc){return plainDoc(doc)?doc.content.map(p=>(p.content||[]).
 const api={render,documentFor,hasMention:body=>{
  const first=documentFor(body).content?.[0];return first?.type==='paragraph'&&first.content?.[0]?.text?.startsWith('@');
 },get editor(){return editor;},clear(){editor?.commands.clearContent();textarea.value='';},reset(){
+ for(const menu of form.querySelectorAll('.discussion-color-menu:popover-open'))menu.hidePopover();
  if(editor){editor.commands.clearContent();editor.view.updateState(EditorState.create({schema:editor.schema,plugins:editor.state.plugins,doc:editor.state.doc}));editor.emit('selectionUpdate',{editor,transaction:editor.state.tr});}
  textarea.value='';q('#discussion-character-count').textContent='';q('#discussion-editor-error').textContent='';
  q('#discussion-link-panel').hidden=true;const url=q('#discussion-link-url');url.disabled=true;url.value='';url.setCustomValidity('');
@@ -115,7 +117,21 @@ if(textarea&&host){
  button('Cursiv','italic',()=>editor.chain().focus().toggleItalic().run(),()=>editor.isActive('italic'));
  button('Subliniat','underline',()=>editor.chain().focus().toggleUnderline().run(),()=>editor.isActive('underline'));
  button('Tăiat','strike',()=>editor.chain().focus().toggleStrike().run(),()=>editor.isActive('strike'));
- const colorLabel=node('label');colorLabel.className='discussion-color';colorLabel.title='Culoarea textului';colorLabel.append(node('span','A'));const color=node('input');color.type='color';color.value='#ddc9a7';color.setAttribute('aria-label','Culoarea textului');color.addEventListener('input',()=>editor.chain().focus().setColor(color.value).run());colorLabel.append(color);group.append(colorLabel);
+ const palette=[['','Implicită'],['#d14d49','Roșu'],['#df7c2e','Portocaliu'],['#e2bb3e','Galben'],['#64c46b','Verde'],['#5f83eb','Albastru'],['#a05be9','Mov'],['#cf529c','Roz'],['#747986','Gri']];
+ const colorMenu=node('div');colorMenu.className='discussion-color-menu';colorMenu.id='editor-colors-'+(++colorMenuSequence);colorMenu.setAttribute('popover','auto');colorMenu.setAttribute('role','menu');colorMenu.setAttribute('aria-label','Culori pentru text');
+ const closeColors=()=>{if(colorMenu.matches(':popover-open'))colorMenu.hidePopover();colorButton.setAttribute('aria-expanded','false');};
+ const colorButton=button('Culoarea textului','A',()=>{
+  if(colorMenu.matches(':popover-open')){closeColors();return;}
+  colorMenu.showPopover();colorButton.setAttribute('aria-expanded','true');const r=colorButton.getBoundingClientRect(),m=colorMenu.getBoundingClientRect();
+  colorMenu.style.left=Math.max(8,Math.min(r.left,innerWidth-m.width-8))+'px';
+  colorMenu.style.top=Math.max(8,Math.min(r.bottom+5+m.height<=innerHeight-8?r.bottom+5:r.top-m.height-5,innerHeight-m.height-8))+'px';
+  (colorMenu.querySelector('[aria-checked=true]')||colorMenu.querySelector('button'))?.focus({preventScroll:true});
+ });
+ colorButton.classList.add('discussion-color');colorButton.replaceChildren(node('span','A'),node('span','⌄'));colorButton.setAttribute('aria-haspopup','menu');colorButton.setAttribute('aria-controls',colorMenu.id);colorButton.setAttribute('aria-expanded','false');
+ for(const [value,label]of palette){const option=node('button');option.type='button';option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.dataset.color=value;const swatch=node('span');swatch.className='editor-color-swatch';swatch.style.backgroundColor=value||'var(--panel)';swatch.setAttribute('aria-hidden','true');option.append(swatch,node('span',label));option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{closeColors();const chain=editor.chain().focus();value?chain.setColor(value).run():chain.unsetColor().run();});colorMenu.append(option);}
+ group.append(colorMenu);
+ colorMenu.addEventListener('toggle',()=>colorButton.setAttribute('aria-expanded',String(colorMenu.matches(':popover-open'))));
+ colorMenu.addEventListener('keydown',event=>{const options=[...colorMenu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();options[event.key==='Home'?0:event.key==='End'?options.length-1:(i+(event.key==='ArrowDown'?1:-1)+options.length)%options.length].focus();}else if(event.key==='Escape'||event.key==='Tab'){if(event.key==='Escape')event.preventDefault();closeColors();colorButton.focus({preventScroll:true});}});
  section('Titluri');
  for(const level of [2,3])button('Titlu H'+level,'H'+level,()=>editor.chain().focus().toggleHeading({level}).run(),()=>editor.isActive('heading',{level}));
  section('Aliniere');
@@ -139,9 +155,11 @@ if(textarea&&host){
  button('Refă modificarea','redo',()=>editor.chain().focus().redo().run());
  section('Curățare');
  button('Elimină formatarea','Tx',()=>editor.chain().focus().unsetAllMarks().clearNodes().run());
- function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));const defaults=getComputedStyle(editor.view.dom);for(const [input,attribute]of selects){input.options[0].textContent=attribute==='fontFamily'?defaults.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''):defaults.fontSize;input.value=editor.getAttributes('textStyle')[attribute]||'';}host.classList.toggle('is-empty',editor.isEmpty);}
+ function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));const defaults=getComputedStyle(editor.view.dom),color=editor.getAttributes('textStyle').color||'';for(const option of colorMenu.querySelectorAll('button'))option.setAttribute('aria-checked',String(option.dataset.color===color));colorButton.style.setProperty('--editor-selected-color',color||'currentColor');for(const [input,attribute]of selects){input.options[0].textContent=attribute==='fontFamily'?defaults.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''):defaults.fontSize;input.value=editor.getAttributes('textStyle')[attribute]||'';}host.classList.toggle('is-empty',editor.isEmpty);}
  window.addEventListener('resize',refresh);
- cleanupResize=()=>window.removeEventListener('resize',refresh);
+ const closeOnScroll=event=>{if(!colorMenu.contains(event.target))closeColors();};
+ window.addEventListener('scroll',closeOnScroll,true);window.addEventListener('resize',closeColors);
+ cleanupResize=()=>{closeColors();colorMenu.remove();window.removeEventListener('resize',refresh);window.removeEventListener('resize',closeColors);window.removeEventListener('scroll',closeOnScroll,true);};
  refresh();
 }
 return api;
