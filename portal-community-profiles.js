@@ -7,18 +7,18 @@
  const date=value=>{const d=new Date(value);return Number.isFinite(d.valueOf())?new Intl.DateTimeFormat('ro-RO',{dateStyle:'medium',timeStyle:'short'}).format(d):'';};
  const profileLink=(content,id,name,avatar=false)=>{
   if(!uuid.test(id||''))return content;
-  const link=node('a',avatar?'profile-avatar-link':'profile-name-link');link.href='#profil/'+id;if(avatar)link.setAttribute('aria-label','Profilul lui '+(name||'utilizator'));link.append(content);return link;
+  const link=node('a',avatar?'profile-avatar-link':'profile-name-link');link.href='#profil/'+id;link.dataset.profileId=id;if(avatar)link.setAttribute('aria-label','Profilul lui '+(name||'utilizator'));link.append(content);return link;
  };
  window.BG3RO_PROFILE_LINK=profileLink;
  const avatar=(profile,large=false)=>{
   const image=node('img','post-avatar');image.alt='';image.width=image.height=large?108:36;image.referrerPolicy='no-referrer';
-  const safe=/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(profile.avatar_url||'');
+  const safe=window.BG3RO_SAFE_AVATAR(profile.avatar_url);
   image.src=safe?profile.avatar_url:'./assets/discussion-avatar.svg';image.classList.toggle('post-avatar-default',!safe);image.onerror=()=>{image.onerror=null;image.src='./assets/discussion-avatar.svg';image.classList.add('post-avatar-default');};return window.BG3RO_AVATAR_BADGE(image,profile.is_admin===true);
  };
  const root=document.querySelector('#despre').parentElement;
  const profilePanel=node('section','community-profile panel-stack');profilePanel.id='profil';profilePanel.hidden=true;root.append(profilePanel);
  const dmPanel=node('section','community-messages panel-stack');dmPanel.id='conversatii';dmPanel.hidden=true;root.append(dmPanel);
- const nav=document.querySelector('.navbar-actions'),ownLink=node('a','nav-login nav-community','Profilul meu'),dmLink=node('a','nav-login nav-community','Mesaje private');ownLink.hidden=dmLink.hidden=true;dmLink.href='#conversatii';nav.prepend(ownLink,dmLink);
+ const nav=document.querySelector('.navbar-actions'),ownLink=node('a','nav-login nav-community','Profilul meu'),dmLink=node('a','nav-login nav-community','Mesaje private');ownLink.id='nav-profile';dmLink.id='nav-private-messages';ownLink.hidden=dmLink.hidden=true;dmLink.href='#conversatii';nav.prepend(ownLink,dmLink);
  let client=null,userId=null,epoch=0,profileRequest=0,inboxRequest=0,threadRequest=0,selected=null,peer=null,inbox=[],messages=[],limit=100,more=false,editor=null,timer=null,profileId=null,sending=false;
  const drafts=new Map();let lastRoute='',starting=false;
  const heading=node('div','community-page-heading');heading.append(node('h2','','Mesaje private'),button('Mesaj nou','plus',()=>{searchWrap.hidden=false;search.focus();}));
@@ -48,7 +48,7 @@
   profilePanel.replaceChildren(node('p','small','Se încarcă profilul…'));
   if(!client||!uuid.test(id||'')){profilePanel.replaceChildren(node('div','card','Profilul nu este disponibil.'));return;}
   try{
-   const [result,activity]=await Promise.all([client.from('bg3ro_profiles').select('id,display_name,avatar_url,joined_at,is_admin').eq('id',id).maybeSingle(),client.from('bg3ro_discussion_posts').select('id,body,created_at,parent_id',{count:'exact'}).eq('author_id',id).eq('status','approved').order('created_at',{ascending:false}).limit(10)]);
+   const [result,activity]=await Promise.all([client.from('bg3ro_profiles').select('id,display_name,avatar_url,joined_at,is_admin,bio').eq('id',id).maybeSingle(),client.from('bg3ro_discussion_posts').select('id,body,created_at,parent_id',{count:'exact'}).eq('author_id',id).eq('status','approved').order('created_at',{ascending:false}).limit(10)]);
    if(!current(ticket)||request!==profileRequest)return;if(result.error)throw result.error;
    const profile=result.data;if(!profile){profilePanel.replaceChildren(node('div','card','Profilul nu a fost găsit.'));return;}
    const hero=node('header','card profile-hero'),identity=node('div','profile-identity'),title=node('h1','',profile.display_name),joined=node('p','profile-joined');
@@ -63,7 +63,7 @@
     for(const post of activity.data||[]){const article=node('article','profile-activity-item'),time=node('time','',date(post.created_at));time.dateTime=post.created_at;article.append(time,window.BG3RO_CONTENT.render(post.body));feed.append(article);}
     if((activity.count||0)>10)feed.append(node('p','small','Cele mai recente 10 postări publice.'));
    }
-   columns.append(feed,stats);profilePanel.replaceChildren(hero,columns);
+   columns.append(feed,stats);profilePanel.replaceChildren(hero);if(profile.bio){const bio=node('section','card profile-bio');bio.append(node('h2','','Despre mine'),window.BG3RO_CONTENT.render(profile.bio));profilePanel.append(bio);}profilePanel.append(columns);
   }catch{if(current(ticket)&&request===profileRequest){profilePanel.replaceChildren(node('div','card','Profilul nu a putut fi încărcat.'),button('Reîncearcă',null,loadProfile));}}
  }
  async function startConversation(id){
@@ -76,7 +76,7 @@
  async function loadInbox(){
   if(!client||!userId)return;const ticket=epoch,request=++inboxRequest;
   try{const {data,error}=await client.rpc('bg3ro_dm_inbox');if(!current(ticket)||request!==inboxRequest)return;if(error)throw error;inbox=Array.isArray(data)?data:[];list.replaceChildren();
-   const unread=inbox.reduce((sum,row)=>sum+Number(row.unread||0),0);dmLink.textContent=unread?'Mesaje private ('+unread+')':'Mesaje private';
+   const unread=inbox.reduce((sum,row)=>sum+Number(row.unread||0),0);if(window.BG3RO_ACCOUNT_NAV)window.BG3RO_ACCOUNT_NAV.messages(unread);else dmLink.textContent=unread?'Mesaje private ('+unread+')':'Mesaje private';
    if(!inbox.length)list.append(node('p','dm-empty','Nu ai încă nicio conversație.'));
    for(const row of inbox){const link=node('a','dm-conversation');link.href='#conversatii/'+row.id;link.classList.toggle('is-unread',Number(row.unread)>0);if(row.id===selected)link.setAttribute('aria-current','true');const text=node('span','dm-conversation-copy');text.append(node('strong','',row.display_name),node('span','',row.last_body?preview(row.last_body):'Niciun mesaj'));link.append(avatar(row),text);if(Number(row.unread)>0)link.append(node('span','dm-unread',String(row.unread)));list.append(link);}
    note(inboxStatus,'');

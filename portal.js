@@ -4,7 +4,7 @@
   const $$ = selector => [...document.querySelectorAll(selector)];
   const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori', 'mesaje'];
   let messagesAllowed = false;
-  const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni', 'profil', 'conversatii'];
+  const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni', 'profil', 'conversatii', 'setari', 'notificari'];
   const routeIds = [...ids, ...informationIds];
   const tabs = $$('.tab-list a');
   const panels = ids.map(id => document.getElementById(id));
