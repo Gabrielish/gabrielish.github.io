@@ -102,6 +102,7 @@ if(textarea&&host){
  cleanupListeners=()=>{textarea.removeEventListener('input',syncTextarea);form.removeEventListener('reset',resetEditor);};
  const icons={bold:'M6 4h7a4 4 0 0 1 0 8H6m0-8v16h8a4 4 0 0 0 0-8H6',italic:'M16 4H9m6 0L9 20m-5 0h7',underline:'M6 3v7a6 6 0 0 0 12 0V3M4 21h16',strike:'M17 5c-1-2-3-2-5-2-6 0-7 7-2 8m-6 1h16m-5 2c5 3 1 8-4 7-2 0-4-1-5-3',bullet:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',ordered:'M9 6h12M9 12h12M9 18h12M3 4v5M2 9h3M2 14c3-3 4 0 1 2l-1 2h3',quote:'M10 11H4V7h6v6c0 3-2 5-5 5m15-7h-6V7h6v6c0 3-2 5-5 5',code:'m8 5-7 7 7 7m8-14 7 7-7 7',left:'M3 5h18M3 10h12M3 15h18M3 20h12',center:'M3 5h18M6 10h12M3 15h18M6 20h12',right:'M3 5h18M9 10h12M3 15h18M9 20h12',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2m3 6a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',undo:'M3 4v6h6M3 10a9 9 0 1 1 1 9',redo:'M21 4v6h-6m6 0a9 9 0 1 0-1 9'};
  icons.justify='M3 5h18M3 10h18M3 15h18M3 20h18';
+ icons.separator='M4 12h16';
  const controls=[],selects=[];
  let group=toolbar;
  function section(label){group=node('div');group.className='discussion-tool-group';group.setAttribute('role','group');group.setAttribute('aria-label',label);toolbar.append(group);}
@@ -163,6 +164,7 @@ if(textarea&&host){
  section('Citat și cod');
  button('Citat','quote',()=>editor.chain().focus().toggleBlockquote().run(),()=>editor.isActive('blockquote'));
  button('Cod','code',()=>editor.chain().focus().toggleCodeBlock().run(),()=>editor.isActive('codeBlock'));
+ button('Linie orizontală','separator',()=>editor.chain().focus().setHorizontalRule().run());
  section('Linkuri');
  const panel=q('#discussion-link-panel'),url=q('#discussion-link-url');url.disabled=true;
  const closeLink=()=>{panel.hidden=true;url.disabled=true;url.setCustomValidity('');};

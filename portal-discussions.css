@@ -74,6 +74,7 @@
 .discussion-rich blockquote,.discussion-prosemirror blockquote{border-left:3px solid var(--gold);margin:12px 0;padding:10px 14px;background:#ddc9a70b;color:var(--muted)}
 .discussion-rich pre,.discussion-prosemirror pre{background:#08090b;border:1px solid var(--line);padding:12px;border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere}
 .discussion-rich :is(h2,h3),.discussion-prosemirror :is(h2,h3){font-size:18px;margin:14px 0 10px}
+.discussion-rich hr,.discussion-prosemirror hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .discussion-rich a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
 .discussion-pagination{text-align:center;padding:0 0 8px}
 .discussion-pagination nav,#discussion-pages{display:flex;align-items:center;justify-content:center;gap:8px}
