@@ -9,12 +9,12 @@ const sdk=source.slice(source.indexOf('function fakeSDK(){'),source.indexOf('\n(
   await page.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
   await page.addInitScript(value=>window.__qaContactOwner=value,owner);
   await page.goto('http://127.0.0.1:4173/#mesaje',{waitUntil:'networkidle'});await page.waitForSelector('html.portal-ready');
-  const tab=page.locator('#tab-mesaje');
+  const tab=page.locator('#message-contact-tab');assert.equal(await page.locator('#tab-mesaje').count(),0);
   if(!owner){
    assert.equal(await tab.isVisible(),false);assert.equal(await page.locator('#contact-inbox').isVisible(),false);assert.equal(await page.locator('.contact-message').count(),0);
    await page.locator('#tab-despre').focus();await page.keyboard.press('End');assert.equal(await page.evaluate(()=>document.activeElement.id),'tab-erori');
   }else{
-   await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (1)');
+   await page.waitForFunction(()=>document.querySelector('#message-contact-tab').textContent==='Contact (1)');
    assert(await page.locator('#mesaje').isVisible());assert.equal(await page.locator('#actualizari #contact-inbox').count(),0);
    assert.equal(await page.locator('[data-contact-summary]').textContent(),'1 mesaj');
    assert.equal(await page.locator('#contact-inbox h2').count(),0,'No redundant inbox heading');
@@ -26,32 +26,33 @@ const sdk=source.slice(source.indexOf('function fakeSDK(){'),source.indexOf('\n(
    const actions=page.locator('.contact-message .contact-actions');
    assert.equal(await actions.locator('svg[aria-hidden="true"]').count(),3);
    assert((await actions.getByRole('link',{name:'Răspunde prin e-mail',exact:true}).getAttribute('href')).startsWith('mailto:'));
+   await actions.getByRole('link',{name:'Răspunde prin e-mail',exact:true}).click();await page.locator('.contact-reply-form .discussion-prosemirror').fill('Răspuns de test prin e-mail.');await page.locator('.contact-reply-form > label > input').fill('Re: subiect QA');await page.evaluate(()=>{window.__mailLaunch='';document.addEventListener('click',e=>{const link=e.target.closest('a[href^="mailto:"]');if(link){window.__mailLaunch=link.href;e.preventDefault();}},true);});await page.getByRole('button',{name:'Deschide e-mailul',exact:true}).click();const email=new URL(await page.evaluate(()=>window.__mailLaunch));assert.equal(email.searchParams.get('subject'),'Re: subiect QA');assert.equal(email.searchParams.get('body'),'Răspuns de test prin e-mail.');await page.getByRole('button',{name:'Anulează',exact:true}).click();
    const styles=await actions.locator('.btn').evaluateAll(buttons=>buttons.map(button=>{const s=getComputedStyle(button);return [s.borderTopWidth,s.backgroundColor,s.fontSize,s.minHeight];}));
    for(const style of styles)assert.deepEqual(style,['0px','rgba(0, 0, 0, 0)','12px','30px']);
    const unreadIcon=await actions.getByRole('button',{name:'Marchează citit',exact:true}).locator('path').getAttribute('d');
    await page.locator('#contact-inbox').screenshot({path:`.qa/message-actions-${width}.png`});
    await page.getByRole('button',{name:'Marchează citit',exact:true}).click();
-   await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje');
+   await page.waitForFunction(()=>document.querySelector('#message-contact-tab').textContent==='Contact');
    assert.notEqual(await actions.getByRole('button',{name:'Marchează necitit',exact:true}).locator('path').getAttribute('d'),unreadIcon);
-   await page.getByRole('button',{name:'Marchează necitit',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (1)');
+   await page.getByRole('button',{name:'Marchează necitit',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#message-contact-tab').textContent==='Contact (1)');
    await page.evaluate(()=>{for(let i=0;i<25;i++)window.__contactQA.rows.push({id:`extra-${i}`,name:'Test',email:'test@example.invalid',subject:'Mesaj de test',body:'Conținut sintetic',created_at:'2026-10-19T10:00:00Z',is_read:false});});
-   await page.locator('#tab-despre').click();await tab.click();
-   await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (26)');
+   await page.locator('#tab-despre').click();await clickNav(page,'#nav-private-messages');await tab.click();
+   await page.waitForFunction(()=>document.querySelector('#message-contact-tab').textContent==='Contact (26)');
    assert.equal(await page.locator('.contact-message').count(),20);
    assert(await page.locator('[data-contact-pagination]').isVisible());
    assert.equal(await page.locator('[data-contact-page]').textContent(),'1 / 2');
    await page.locator('[data-contact-next]').click();await page.waitForFunction(()=>document.querySelector('[data-contact-page]').textContent==='2 / 2');
    assert.equal(await page.locator('.contact-message').count(),6);
    await page.locator('[data-contact-prev]').click();await page.waitForFunction(()=>document.querySelector('[data-contact-page]').textContent==='1 / 2');
-   await page.getByRole('button',{name:'Marchează citit',exact:true}).first().click();await page.waitForFunction(()=>document.querySelector('#tab-mesaje').textContent==='Mesaje (25)');
+   await page.getByRole('button',{name:'Marchează citit',exact:true}).first().click();await page.waitForFunction(()=>document.querySelector('#message-contact-tab').textContent==='Contact (25)');
    await page.locator('.tab-list').screenshot({path:`.qa/messages-tab-${width}.png`});
    await page.locator('[data-contact-next]').click();await page.waitForFunction(()=>document.querySelector('[data-contact-page]').textContent==='2 / 2');
    await page.evaluate(()=>window.__contactQA.rows=[]);await page.locator('[data-contact-refresh]').click();
    await page.waitForFunction(()=>document.querySelector('[data-contact-summary]').textContent==='Niciun mesaj');
    assert.equal(await page.locator('[data-contact-pagination]').isVisible(),false);
-   await clickNav(page,'#sign-out');await page.waitForSelector('#tab-mesaje',{state:'hidden'});
-   assert.equal(await page.locator('#mesaje').isVisible(),false);assert(page.url().endsWith('#despre'));
-   assert.equal(await page.locator('.contact-message').count(),0);assert.equal(await tab.textContent(),'Mesaje','Unread total cleared on logout');
+   await clickNav(page,'#sign-out');await page.waitForSelector('#message-contact-tab',{state:'hidden'});
+   assert.equal(await page.locator('#mesaje').isVisible(),false);assert(page.url().endsWith('#conversatii/contact'));
+   assert.equal(await page.locator('.contact-message').count(),0);assert.equal(await tab.textContent(),'Contact','Unread total cleared on logout');
   }
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }

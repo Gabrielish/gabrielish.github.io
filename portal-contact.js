@@ -2,7 +2,7 @@
   'use strict';
   const form = document.querySelector('#contact-form');
   const inbox = document.querySelector('#contact-inbox');
-  const messagesTab = document.querySelector('#tab-mesaje');
+  const messagesTab = document.querySelector('#message-contact-tab');
   if (!form && !inbox) return;
   let client = null, owner = false, offset = 0, generation = 0, sending = false;
   let unreadRequest = 0, unreadTimer;
@@ -12,10 +12,13 @@
     try{
       const {count,error}=await client.from('bg3ro_contact_messages').select('id',{count:'exact',head:true}).eq('is_read',false);
       if(ticket!==unreadRequest||!owner||error||!Number.isFinite(count))return;
-      messagesTab.textContent=count>0?`Mesaje (${count})`:'Mesaje';
-      messagesTab.setAttribute('aria-label',count>0?`Mesaje (${count} necitite)`:'Mesaje');
+      messagesTab.textContent=count>0?`Contact (${count})`:'Contact';
+      window.BG3RO_ACCOUNT_NAV?.contacts(count);
+      messagesTab.setAttribute('aria-label',count>0?`Contact (${count} necitite)`:'Contact');
     }catch(_){/* Keep the last known count on transient network failures. */}
   }
+  const replyEditors=new Set();
+  const clearReplies=()=>{for(const editor of replyEditors)editor.destroy();replyEditors.clear();};
   const pageSize = 20;
   const node = (tag, text, className) => { const el=document.createElement(tag); if(text!==undefined)el.textContent=text; if(className)el.className=className; return el; };
   function actionIcon(kind){
@@ -32,8 +35,8 @@
   }
   function status(target,message,error=false){const el=target.querySelector('.form-status');el.textContent=message;el.classList.toggle('error',error);}
   function authChanged(detail){
-    generation++; unreadRequest++;clearInterval(unreadTimer);client=detail.client;owner=detail.moderator===true;offset=0;
-    if(messagesTab){messagesTab.textContent='Mesaje';messagesTab.setAttribute('aria-label','Mesaje');}
+    clearReplies();generation++; unreadRequest++;clearInterval(unreadTimer);client=detail.client;owner=detail.moderator===true;offset=0;
+    if(messagesTab){messagesTab.textContent='Contact';messagesTab.setAttribute('aria-label','Contact');window.BG3RO_ACCOUNT_NAV?.contacts(0);}
     if(form){
       form.querySelector('[type=submit]').disabled=!client||sending;
       if(!client)status(form,'Formularul este indisponibil momentan. Scrie la gabrielish@proton.me.',true);
@@ -51,14 +54,14 @@
       if(request!==generation||!owner)return;
       if(error)throw error;
       if(offset>0&&offset>=(count||0)){offset=Math.max(0,(Math.ceil((count||0)/pageSize)-1)*pageSize);return loadInbox();}
-      list.replaceChildren();
+      clearReplies();list.replaceChildren();
       for(const item of data||[]){
         const card=node('article',undefined,'contact-message');
         card.append(node('h3',(item.is_read?'':'Nou · ')+item.subject),node('p',item.name+' · '+item.email+' · '+new Date(item.created_at).toLocaleString('ro-RO'),'small'),node('p',item.body));
         const actions=node('div',undefined,'contact-actions');
         const reply=node('a','Răspunde prin e-mail','btn secondary');
         reply.prepend(actionIcon('reply'));
-        reply.href='mailto:'+encodeURIComponent(item.email)+'?subject='+encodeURIComponent('Re: '+item.subject);actions.append(reply);
+        reply.href='mailto:'+encodeURIComponent(item.email)+'?subject='+encodeURIComponent('Re: '+item.subject);reply.onclick=event=>{event.preventDefault();const existing=card.querySelector('.contact-reply-form');if(existing){existing.querySelector('.discussion-prosemirror')?.focus();return;}const compose=node('form',undefined,'contact-reply-form'),label=node('label','Subiect'),subject=node('input'),body=node('textarea'),end=node('div',undefined,'form-end'),cancel=node('button','Anulează','btn secondary'),open=node('button','Deschide e-mailul','btn');subject.value='Re: '+item.subject;subject.maxLength=200;subject.required=true;label.append(subject);body.maxLength=6000;body.setAttribute('aria-label','Răspuns prin e-mail');cancel.type='button';open.type='submit';end.append(cancel,open);compose.append(node('p','Către: '+item.email,'small'),label,body,end,node('p','E-mailul se deschide ca text simplu. Trimiterea se finalizează în aplicația ta de e-mail.','small'));card.append(compose);const editor=window.BG3RO_MOUNT_CONTENT_EDITOR(compose,body,{minimum:1,maximum:6000,label:'Răspuns prin e-mail',placeholder:'Scrie răspunsul…'});replyEditors.add(editor);cancel.onclick=()=>{editor.destroy();replyEditors.delete(editor);compose.remove();};compose.onsubmit=e=>{e.preventDefault();if(!owner||!compose.reportValidity())return;const text=editor.editor.getText({blockSeparator:'\n'}).trim();if(!text){editor.editor.commands.focus();return;}const link=node('a');link.href='mailto:'+encodeURIComponent(item.email)+'?subject='+encodeURIComponent(subject.value)+'&body='+encodeURIComponent(text);compose.append(link);link.click();link.remove();};};actions.append(reply);
         const read=node('button',item.is_read?'Marchează necitit':'Marchează citit','btn secondary');read.type='button';
         read.prepend(actionIcon(item.is_read?'unread':'read'));
         read.onclick=()=>change(read,()=>activeClient.from('bg3ro_contact_messages').update({is_read:!item.is_read}).eq('id',item.id).select('id'));
@@ -91,7 +94,7 @@
   }
   // Reuse the main page client, session and server-verified moderator state.
   addEventListener('bg3ro:auth',event=>authChanged(event.detail));
-  addEventListener('bg3ro:tab',event=>{if(owner&&event.detail.id==='mesaje'){loadInbox();loadUnread();}});
+  addEventListener('bg3ro:tab',event=>{if(owner&&event.detail.id==='conversatii'){loadInbox();loadUnread();}});
   addEventListener('focus',()=>{if(owner)loadUnread();});
   document.addEventListener('visibilitychange',()=>{if(owner&&!document.hidden)loadUnread();});
   if(!form)return;

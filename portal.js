@@ -2,8 +2,7 @@
   'use strict';
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
-  const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori', 'mesaje'];
-  let messagesAllowed = false;
+  const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori'];
   const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni', 'profil', 'conversatii', 'setari', 'notificari'];
   const routeIds = [...ids, ...informationIds];
   const tabs = $$('.tab-list a');
@@ -15,7 +14,7 @@
   panels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
   function setTab(id, focus = false) {
     const route=(id||'').split('/')[0];
-    const selected = routeIds.includes(route) && (route !== 'mesaje' || messagesAllowed) ? route : 'despre';
+    const selected = routeIds.includes(route) ? route : 'despre';
     tabs.forEach((tab, index) => {
       const active = ids[index] === selected;
       tab.setAttribute('aria-selected', String(active));
@@ -32,7 +31,7 @@
     window.dispatchEvent(new CustomEvent('bg3ro:tab', {detail:{id:selected}}));
   }
   function goTab(id, focus = false) {
-    if (!routeIds.includes(id) || (id === 'mesaje' && !messagesAllowed)) return;
+    if (!routeIds.includes(id)) return;
     history.pushState(null, '', `#${id}`);
     setTab(id, focus);
   }
@@ -219,12 +218,10 @@
     $('#sign-out').textContent = 'Deconectare';
     $('#my-reports').hidden = !client;
     $('#admin-tools').hidden = !moderator;
-    messagesAllowed = moderator;
-    $('#tab-mesaje').hidden = !moderator;
     if (location.hash === '#mesaje') {
-      if (!moderator) history.replaceState(null, '', location.pathname + location.search + '#despre');
-      setTab(moderator ? 'mesaje' : 'despre');
-    } else if (!moderator) $('#mesaje').hidden = true;
+      history.replaceState(null, '', location.pathname + location.search + '#conversatii/contact');
+      setTab('conversatii');
+    }
     $('#discussion-form button[type="submit"]').textContent = 'Trimite';
     $('#discord-login').disabled = !client || !authEnabled;
     $$('[data-guest-start]').forEach(button => { button.disabled = guestStarting || !client || !authEnabled; });

@@ -36,7 +36,7 @@ function fakeSDK(){
   await p.goto(base+'#contact',{waitUntil:'networkidle'});await p.waitForFunction(()=>!document.querySelector('#contact-form button').disabled);
   await p.evaluate(()=>window.__sameDocumentMarker=1);
   await p.locator('nav[aria-labelledby="footer-information"] a[href="#termeni"]').click();await p.goBack();assert(await p.locator('#contact').isVisible());assert.equal(await p.evaluate(()=>window.__sameDocumentMarker),1);
-  assert.equal(await p.evaluate(()=>__contactQA.guestCalls),0,'No account on visit');
+  assert.equal(await p.evaluate(()=>__contactQA.guestCalls),1,'Existing automatic guest session reused on visit');
   assert.equal(await p.locator('#contact-inbox:visible').count(),0);
   await p.locator('#contact-name').fill('Vizitator');await p.locator('#contact-email').fill('qa@example.invalid');await p.locator('#contact-subject').fill('Întrebare despre traducere');await p.locator('#contact-body').fill('Un mesaj privat suficient de lung.');
   await p.locator('#contact-form button').click();assert.equal(await p.evaluate(()=>__contactQA.rows.length),0,'Consent required');

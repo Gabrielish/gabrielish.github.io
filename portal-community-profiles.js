@@ -18,18 +18,18 @@
  const root=document.querySelector('#despre').parentElement;
  const profilePanel=node('section','community-profile panel-stack');profilePanel.id='profil';profilePanel.hidden=true;root.append(profilePanel);
  const dmPanel=node('section','community-messages panel-stack');dmPanel.id='conversatii';dmPanel.hidden=true;root.append(dmPanel);
- const nav=document.querySelector('.navbar-actions'),ownLink=node('a','nav-login nav-community','Profilul meu'),dmLink=node('a','nav-login nav-community','Mesaje private');ownLink.id='nav-profile';dmLink.id='nav-private-messages';ownLink.hidden=dmLink.hidden=true;dmLink.href='#conversatii';nav.prepend(ownLink,dmLink);
- let client=null,userId=null,epoch=0,profileRequest=0,inboxRequest=0,threadRequest=0,selected=null,peer=null,inbox=[],messages=[],limit=100,more=false,editor=null,timer=null,profileId=null,sending=false;
+ const nav=document.querySelector('.navbar-actions'),ownLink=node('a','nav-login nav-community','Profilul meu'),dmLink=node('a','nav-login nav-community','Mesaje');ownLink.id='nav-profile';dmLink.id='nav-private-messages';ownLink.hidden=dmLink.hidden=true;dmLink.href='#conversatii';nav.prepend(ownLink,dmLink);
+ let client=null,userId=null,admin=false,epoch=0,profileRequest=0,inboxRequest=0,threadRequest=0,selected=null,peer=null,inbox=[],messages=[],limit=100,more=false,editor=null,timer=null,profileId=null,sending=false;
  const drafts=new Map();let lastRoute='',starting=false;
- const heading=node('div','community-page-heading');heading.append(node('h2','','Mesaje private'),button('Mesaj nou','plus',()=>{searchWrap.hidden=false;search.focus();}));
- const gate=node('div','card community-login');gate.append(node('h3','','Conectează-te pentru mesaje private'),node('p','','Folosește contul Discord pentru a trimite și primi mesaje.'),button('Conectare cu Discord',null,()=>document.querySelector('[data-auth-open]').click()));
+ const heading=node('div','community-page-heading');heading.append(node('h2','','Mesaje'),button('Mesaj nou','plus',()=>{searchWrap.hidden=false;search.focus();}));
+ const gate=node('div','card community-login');gate.append(node('h3','','Conectează-te pentru mesaje'),node('p','','Folosește contul Discord pentru a trimite și primi mesaje.'),button('Conectare cu Discord',null,()=>document.querySelector('[data-auth-open]').click()));
  const layout=node('div','dm-layout card'),sidebar=node('aside','dm-sidebar');sidebar.setAttribute('aria-label','Conversații');
  const searchWrap=node('div','dm-search'),searchLabel=node('label','','Caută un utilizator'),search=node('input'),searchResults=node('div','dm-search-results');search.id='dm-search';search.type='search';search.placeholder='Nume utilizator…';search.maxLength=40;searchLabel.htmlFor=search.id;searchWrap.append(searchLabel,search,searchResults);searchWrap.hidden=true;
  const list=node('nav','dm-conversations');list.setAttribute('aria-label','Conversațiile tale');sidebar.append(searchWrap,list);
  const thread=node('div','dm-thread'),threadHead=node('div','dm-thread-heading'),history=node('div','dm-history'),threadEmpty=node('p','dm-empty','Alege o conversație sau începe un mesaj nou.');history.setAttribute('aria-label','Mesajele conversației');history.setAttribute('role','region');history.tabIndex=0;
  const older=button('Mesaje mai vechi',null,()=>{limit+=100;loadThread(false,true);},'btn secondary small-btn');older.hidden=true;
  const form=node('form','dm-form'),body=node('textarea');body.name='body';body.id='private-message-body';body.maxLength=12000;body.setAttribute('aria-label','Mesaj privat');const submit=node('button','btn','Trimite');submit.type='submit';const end=node('div','form-end'),status=node('p','form-status');status.setAttribute('role','status');end.append(submit);form.append(body,end,status);form.hidden=true;
- const inboxStatus=node('p','form-status');inboxStatus.setAttribute('role','status');thread.append(threadHead,older,history,threadEmpty,form);layout.append(sidebar,thread);dmPanel.append(heading,gate,layout,inboxStatus);
+ const inboxStatus=node('p','form-status');inboxStatus.setAttribute('role','status');thread.append(threadHead,older,history,threadEmpty,form);layout.append(sidebar,thread);const sources=document.querySelector('#message-sources'),contactPanel=document.querySelector('#mesaje');dmPanel.append(heading,sources,gate,layout,inboxStatus,contactPanel);
  const note=(target,text,error=false)=>{target.textContent=text;target.classList.toggle('error',error);};
  function current(ticket){return ticket===epoch;}
  function saveDraft(){if(selected&&editor)drafts.set(selected,editor.editor.getJSON());}
@@ -38,8 +38,9 @@
   if(lastRoute!==location.hash&&(part==='profil'||part==='conversatii')){lastRoute=location.hash;requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));}else lastRoute=location.hash;
   if(part==='profil'){profileId=arg;loadProfile();}
   if(part==='conversatii'){
+   const contact=arg==='contact'&&admin;sources.hidden=!admin;contactPanel.hidden=!contact;gate.hidden=!!userId;layout.hidden=!userId||contact;inboxStatus.hidden=contact;for(const a of sources.querySelectorAll('a')){if(a.id===(contact?'message-contact-tab':'message-conversations-tab'))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
    const next=uuid.test(arg||'')?arg:null;if(next!==selected){saveDraft();selected=next;peer=null;messages=[];limit=100;threadRequest++;editor?.editor.commands.clearContent();if(drafts.has(next))editor?.editor.commands.setContent(drafts.get(next));note(status,'');}
-   layout.classList.toggle('has-conversation',!!selected);gate.hidden=!!userId;layout.hidden=!userId;heading.lastElementChild.hidden=!userId;
+   layout.classList.toggle('has-conversation',!!selected);gate.hidden=!!userId;layout.hidden=!userId||contact;heading.lastElementChild.hidden=!userId||contact;
    if(userId){loadInbox();if(selected)loadThread(true);else paintThread();}
   }
  }
@@ -76,7 +77,7 @@
  async function loadInbox(){
   if(!client||!userId)return;const ticket=epoch,request=++inboxRequest;
   try{const {data,error}=await client.rpc('bg3ro_dm_inbox');if(!current(ticket)||request!==inboxRequest)return;if(error)throw error;inbox=Array.isArray(data)?data:[];list.replaceChildren();
-   const unread=inbox.reduce((sum,row)=>sum+Number(row.unread||0),0);if(window.BG3RO_ACCOUNT_NAV)window.BG3RO_ACCOUNT_NAV.messages(unread);else dmLink.textContent=unread?'Mesaje private ('+unread+')':'Mesaje private';
+   const unread=inbox.reduce((sum,row)=>sum+Number(row.unread||0),0);if(window.BG3RO_ACCOUNT_NAV)window.BG3RO_ACCOUNT_NAV.messages(unread);else dmLink.textContent=unread?'Mesaje private ('+unread+')':'Mesaje';
    if(!inbox.length)list.append(node('p','dm-empty','Nu ai încă nicio conversație.'));
    for(const row of inbox){const link=node('a','dm-conversation');link.href='#conversatii/'+row.id;link.classList.toggle('is-unread',Number(row.unread)>0);if(row.id===selected)link.setAttribute('aria-current','true');const text=node('span','dm-conversation-copy');text.append(node('strong','',row.display_name),node('span','',row.last_body?preview(row.last_body):'Niciun mesaj'));link.append(avatar(row),text);if(Number(row.unread)>0)link.append(node('span','dm-unread',String(row.unread)));list.append(link);}
    note(inboxStatus,'');
@@ -118,7 +119,7 @@
  const refresh=button('Reîncarcă',null,()=>{loadInbox();if(selected)loadThread(false);},'btn secondary small-btn');heading.insertBefore(refresh,heading.lastElementChild);
  document.addEventListener('DOMContentLoaded',()=>{editor=window.BG3RO_MOUNT_CONTENT_EDITOR(form,body,{minimum:1,label:'Mesaj privat',placeholder:'Scrie un mesaj…'});submit.disabled=false;},{once:true});
  addEventListener('bg3ro:auth',event=>{
-  const previous=userId;epoch++;profileRequest++;inboxRequest++;threadRequest++;client=event.detail.client;userId=event.detail.userId;ownLink.hidden=dmLink.hidden=!userId;if(userId)ownLink.href='#profil/'+userId;
+  const previous=userId;epoch++;profileRequest++;inboxRequest++;threadRequest++;client=event.detail.client;userId=event.detail.userId;admin=event.detail.moderator===true;ownLink.hidden=dmLink.hidden=!userId;if(userId)ownLink.href='#profil/'+userId;
   if(previous!==userId){drafts.clear();messages=[];inbox=[];peer=null;list.replaceChildren();history.replaceChildren();editor?.editor.commands.clearContent();editor?.editor.setEditable(true);body.value='';searchResults.replaceChildren();search.value='';searchRequest++;clearTimeout(searchTimer);note(status,'');note(inboxStatus,'');sending=false;submit.disabled=false;}
   clearInterval(timer);route();if(userId){loadInbox();timer=setInterval(()=>{if(document.hidden)return;loadInbox();if(location.hash.startsWith('#conversatii/')&&selected)loadThread(false);},20000);}
  });
