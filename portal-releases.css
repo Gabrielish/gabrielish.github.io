@@ -293,6 +293,13 @@
 .release-file-picker>.btn,.release-replacement>.btn,#upload-release-file{min-height:36px;padding:7px 12px;font-size:12px}
 input.release-archive-input{position:absolute;width:1px;height:1px;min-height:0;padding:0;border:0;overflow:hidden;clip-path:inset(50%)}
 #release-editor>details>summary{font-size:13px;color:var(--gold);cursor:pointer}#release-editor>details>p.small{font-size:12px}
+/* Publication entry points match the plain add-section action in About. */
+#admin-tools>.inline-update-publish:not([open]),#release-editor:not(:has(>details[open])){padding:0;border:0;background:none;box-shadow:none}
+#admin-tools>.inline-update-publish>summary,#release-editor>details>summary{display:flex;align-items:center;gap:6px;width:fit-content;min-height:30px;padding:2px 0;background:none;border:0;border-radius:0;box-shadow:none;color:var(--gold);font-size:12px;font-weight:400;list-style:none;cursor:pointer}
+#admin-tools>.inline-update-publish>summary::-webkit-details-marker,#release-editor>details>summary::-webkit-details-marker{display:none}
+#admin-tools>.inline-update-publish>summary::marker,#release-editor>details>summary::marker{content:''}
+#admin-tools>.inline-update-publish>summary>svg,#release-editor>details>summary>svg{width:16px;height:16px;flex:none}
+#admin-tools>.inline-update-publish>summary:hover,#release-editor>details>summary:hover{background:none;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
 .release-hidden-label{display:inline-block;font-size:12px;background:#d7bc8a16;color:var(--gold);padding:3px 8px;border-radius:5px;margin-bottom:10px}.release-is-hidden{border-style:dashed}
 :is(.release-notes,.release-description) .rich-content>p{white-space:normal;margin:0 0 10px;font:inherit;color:inherit;line-height:inherit}
 :is(.release-notes,.release-description) .rich-content>ul,:is(.release-notes,.release-description) .rich-content>ol{margin:10px 0;padding-left:24px}

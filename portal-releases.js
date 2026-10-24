@@ -319,6 +319,7 @@
     if (rows.length) draw();
     load();
   });
+  const publishDetails=$('#release-editor>details'),publishToggle=publishDetails.querySelector('summary'),publishPlus=outlineIcon(['M12 5v14M5 12h14']);publishPlus.setAttribute('stroke-width','1.7');publishToggle.prepend(publishPlus);publishToggle.setAttribute('role','button');publishToggle.setAttribute('aria-expanded',String(publishDetails.open));publishDetails.addEventListener('toggle',()=>publishToggle.setAttribute('aria-expanded',String(publishDetails.open)));
   const publishing=$('#release-publish-form'),publishingPlatform=platformField($('#release-kind').closest('.form-grid'),'all');publishingPlatform.id='release-platform';publishingPlatform.previousElementSibling.htmlFor=publishingPlatform.id;$('#release-kind').closest('.form-grid').classList.add('release-publish-platform-row');
   $('#release-kind').closest('.form-grid').insertBefore(publishingPlatform.closest('.field'),$('#release-version').closest('.field'));
   const archiveChoose=filePicker($('#release-archive'));$('#upload-release-file').classList.add('secondary','small-btn');
