@@ -3,16 +3,19 @@
 .discussion-composer{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px}
 .discussion-compose-main{min-width:0}.discussion-identity{max-width:320px}
 #discussion-own-name{display:block;margin:0 0 12px;font-size:14px}
-.discussion-editor-shell{border:1px solid var(--field-border);border-radius:12px;overflow:hidden;background:#0d0f11}
-.discussion-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 0;padding:7px;border-bottom:1px solid var(--line);background:#101215}
-.discussion-tool-group{display:flex;align-items:center;gap:2px;border-right:1px solid var(--line);padding:0 6px;max-width:100%}
-.discussion-tool-group:last-child{border-right:0}.discussion-tool-select{width:auto;max-width:110px;min-height:34px;padding:5px 22px 5px 7px;border:0;border-radius:4px;background:transparent;color:var(--muted);font:inherit;font-size:12px}
-.discussion-tool-select{display:inline-flex;align-items:center;justify-content:space-between;gap:16px;padding-right:7px;cursor:pointer;white-space:nowrap}
+/* Shared component sizing, independent of the tab or form using it. */
+:root{--rich-editor-height:132px}
+.discussion-editor-shell{border:1px solid var(--field-border);border-radius:9px;overflow:hidden;background:#0d0f11}
+.discussion-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;padding:5px;border-bottom:1px solid var(--line);background:#101215}
+.discussion-tool-group{display:flex;align-items:center;gap:1px;border-right:1px solid var(--line);padding:0 4px;max-width:100%}
+.discussion-tool-group:last-child{border-right:0}.discussion-tool-select{width:auto;max-width:96px;min-height:32px;padding:4px 19px 4px 5px;border:0;border-radius:4px;background:transparent;color:var(--muted);font:inherit;font-size:12px}
+.discussion-tool-select{display:inline-flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;white-space:nowrap}
 .discussion-tool-select>span:first-child{overflow:hidden;text-overflow:ellipsis}
 .discussion-tool-select>span:last-child{flex:none}
 .discussion-tool-select:hover,.discussion-tool-select[aria-expanded=true]{background:#ddc9a71a;color:var(--gold)}
 .discussion-tool-select:focus-visible{outline:1px solid var(--gold);outline-offset:1px}
-.discussion-color{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:42px;height:36px;color:var(--muted);font-size:16px;cursor:pointer}
+.discussion-color{display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:16px;cursor:pointer}
+.discussion-tool.discussion-color{width:42px}
 .discussion-color>span:first-child{text-decoration:underline;text-decoration-color:var(--editor-selected-color,currentColor);text-decoration-thickness:2px;text-underline-offset:4px}
 .discussion-color>span:last-child{font-size:12px;text-decoration:none}
 .discussion-color[aria-expanded=true]{background:#ddc9a71a;color:var(--gold)}
@@ -21,11 +24,11 @@
 .discussion-editor-menu button:hover,.discussion-editor-menu button:focus-visible{background:var(--panel-soft);outline:1px solid var(--gold);outline-offset:-1px}
 .discussion-editor-menu button[aria-checked=true]{color:var(--gold);background:var(--panel-soft)}
 .editor-color-swatch{display:block;flex:none;width:17px;height:17px;border:1px solid var(--line);border-radius:4px}
-.discussion-tool{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex:none;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;padding:0}
+.discussion-tool{display:inline-flex;align-items:center;justify-content:center;width:30px;height:32px;flex:none;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;padding:0}
 .discussion-tool:hover,.discussion-tool[aria-pressed=true]{background:#ddc9a71a;color:var(--gold)}
 .discussion-tool svg{flex:none}.discussion-tool:disabled{opacity:.4;cursor:default}
-.discussion-editor-content{max-height:360px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
-.discussion-prosemirror{min-height:180px;padding:18px;outline:none;font-size:14px;line-height:1.85;overflow-wrap:anywhere;color:var(--text)}
+.discussion-editor-content{height:var(--rich-editor-height);max-height:var(--rich-editor-height);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.discussion-prosemirror{min-height:var(--rich-editor-height);padding:12px 14px;outline:none;font-size:14px;line-height:1.65;overflow-wrap:anywhere;color:var(--text)}
 .discussion-editor-shell:focus-within{border-color:#8c8069}
 .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Scrie un comentariu…';color:var(--field-placeholder);float:left;height:0;pointer-events:none}
 .discussion-compose-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
@@ -80,17 +83,14 @@
 .discussion-page:disabled{opacity:.35;cursor:default}
 .page-ellipsis{color:var(--muted);font-size:12px}
 #comments-page{font-size:12px;color:var(--muted);margin:18px 0 0}
-@media(max-width:600px){.discussion-composer{grid-template-columns:32px minmax(0,1fr);gap:10px}.discussion-composer>.post-avatar{width:32px;height:32px}.discussion-compose.card{padding-block:18px}.discussion-prosemirror{padding:12px;min-height:160px;font-size:16px}.discussion-toolbar{padding:6px;gap:2px}.discussion-tool{width:32px;height:34px}.discussion-tool:nth-child(n){margin-right:0}.discussion-compose-bottom{align-items:end}.discussion-compose-bottom .form-end{flex-direction:row;flex-wrap:wrap}.discussion-page{min-width:32px;height:36px;padding:0 8px}.discussion-pagination nav,#discussion-pages{gap:5px}.discussion-compose-bottom .btn{font-size:12px;padding:8px 12px}}
+@media(max-width:600px){.discussion-composer{grid-template-columns:32px minmax(0,1fr);gap:10px}.discussion-composer>.post-avatar{width:32px;height:32px}.discussion-compose.card{padding-block:18px}.discussion-tool:nth-child(n){margin-right:0}.discussion-compose-bottom{align-items:end}.discussion-compose-bottom .form-end{flex-direction:row;flex-wrap:wrap}.discussion-page{min-width:32px;height:36px;padding:0 8px}.discussion-pagination nav,#discussion-pages{gap:5px}.discussion-compose-bottom .btn{font-size:12px;padding:8px 12px}}
 @media(max-width:600px){
  .discussion-compose-main{display:contents}
  .discussion-compose-main>*{grid-column:1/-1}
  .discussion-compose-main>.discussion-identity,.discussion-compose-main>#discussion-own-name{grid-column:2;grid-row:1;margin:0;max-width:none}
  .discussion-composer>.post-avatar{grid-column:1;grid-row:1;margin-top:4px}
  #discussion-own-name{align-self:center;font-size:13px;overflow-wrap:anywhere}
- .discussion-toolbar{display:flex;gap:5px 0}
- .discussion-tool{width:30px;height:34px;min-width:0}
- .discussion-tool-group{padding:0 3px;gap:0}
- .discussion-tool-select{max-width:104px;font-size:12px}
+ .discussion-tool{min-width:0}
  #discussion-list>.post-thread{padding:16px 12px}
  .discussion-compose-bottom{margin-top:0}
 }
@@ -105,7 +105,6 @@
 .is-inline-reply #reply-reply-label strong{color:var(--text);margin-left:5px;overflow-wrap:anywhere}
 .is-inline-reply[hidden]{display:none}
 .reply-excerpt{color:#a9aaa9;font-style:italic;margin-left:8px;overflow-wrap:anywhere}
-.is-inline-reply .discussion-prosemirror{min-height:170px}
 .is-inline-reply .discussion-compose-bottom{justify-content:flex-end;align-items:center;gap:12px;margin-top:10px}
 .is-inline-reply [id$="discussion-character-count"]{display:none}
 .is-inline-reply .form-end{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:10px;margin:0 0 0 auto}
@@ -126,7 +125,7 @@
 .reaction-option[aria-pressed=true],.report-state-option[aria-checked=true]{border-color:var(--gold);background:#ddc9a714}
 .reaction-status{font-size:11px;color:#e6a79d}.reaction-status:empty{display:none}
 @keyframes reaction-open{from{opacity:0;transform:translateY(5px) scale(.96)}to{opacity:1;transform:none}}
-@media(max-width:600px){.is-inline-reply.discussion-composer{padding:11px;margin-top:12px}.post>.is-inline-reply.discussion-composer{grid-column:1/-1}.is-inline-reply .discussion-compose-bottom{flex-wrap:wrap;align-items:center}.is-inline-reply .form-end{margin-left:auto}.reply-excerpt{display:block;margin:5px 0 0}.reaction-option{font-size:23px;width:38px}.is-inline-reply .discussion-prosemirror{min-height:150px}}
+@media(max-width:600px){.is-inline-reply.discussion-composer{padding:11px;margin-top:12px}.post>.is-inline-reply.discussion-composer{grid-column:1/-1}.is-inline-reply .discussion-compose-bottom{flex-wrap:wrap;align-items:center}.is-inline-reply .form-end{margin-left:auto}.reply-excerpt{display:block;margin:5px 0 0}.reaction-option{font-size:23px;width:38px}}
 @media(prefers-reduced-motion:reduce){:is(.reaction-picker,.report-state-menu):popover-open{animation:none}:is(.reaction-option,.report-state-option){transition:none}:is(.reaction-option,.report-state-option):hover,:is(.reaction-option,.report-state-option):focus-visible{transform:none}}
 :is(#discussion-list,#reports-list,#updates-feed) .post{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;padding:0;border:0}
 .post-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#24221e;flex-shrink:0}
@@ -158,14 +157,6 @@
 #discutii .discussion-composer>.post-avatar{width:36px;height:36px}
 #discutii .discussion-identity{margin-bottom:10px;gap:4px}
 #discutii #discussion-own-name{margin-bottom:8px}
-/* Both tabs share this editor sizing so they cannot drift apart. */
-:is(#discutii,#erori) .discussion-editor-shell{border-radius:9px}
-:is(#discutii,#erori) .discussion-toolbar{padding:5px;gap:4px 0}
-:is(#discutii,#erori) .discussion-tool-group{padding:0 4px;gap:1px}
-:is(#discutii,#erori) .discussion-tool{width:30px;height:32px}
-:is(#discutii,#erori) .discussion-tool-select{min-height:32px;max-width:96px;padding:4px 19px 4px 5px}
-:is(#discutii,#erori) .discussion-color{width:42px;height:32px}
-:is(#discutii,#erori) .discussion-prosemirror{min-height:132px;padding:12px 14px;line-height:1.65}
 #discutii .discussion-compose-bottom{margin-top:8px;gap:8px}
 :is(#discutii .discussion-composer,#report-form) .form-status:empty{display:none}
 #discutii .discussion-compose-bottom .btn{min-height:36px;padding:7px 14px}
@@ -189,7 +180,6 @@
 #discutii .post-mention{margin-bottom:6px}
 #discutii .is-inline-reply.discussion-composer{padding:12px;margin-top:10px}
 #discutii .is-inline-reply #reply-reply-label{margin-bottom:8px;padding-bottom:8px}
-#discutii .is-inline-reply .discussion-prosemirror{min-height:120px}
 #discutii .is-inline-reply .form-end>.btn{min-height:36px}
 @media(max-width:950px){#discutii{--discussion-card-inline:24px}}
 @media(max-width:760px){#discutii{--discussion-card-inline:21px}}
@@ -197,9 +187,10 @@
  #discutii{--discussion-card-block:14px}
  #discutii .discussion-composer:not(.is-inline-reply){grid-template-columns:32px minmax(0,1fr);gap:8px}
  #discutii .discussion-composer>.post-avatar{width:32px;height:32px}
- :is(#discutii,#erori) .discussion-tool{width:32px;height:34px}
- :is(#discutii,#erori) .discussion-tool-group{padding:0 3px}
- :is(#discutii,#erori) .discussion-prosemirror{min-height:120px;padding:11px;font-size:16px}
+ :root{--rich-editor-height:120px}
+ .discussion-tool{width:32px;height:34px}
+ .discussion-tool-group{padding:0 3px}
+ .discussion-prosemirror{padding:11px;font-size:16px}
  #discutii #discussion-list .post{grid-template-columns:32px minmax(0,1fr);gap:8px}
  #discutii #discussion-list .post-avatar{width:32px;height:32px}
  #discutii .post-replies{margin-left:12px}

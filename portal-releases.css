@@ -248,7 +248,7 @@
 .update-inline-editor>.form-end,#update-form>.form-end{display:flex;flex-direction:row;justify-content:flex-end;gap:10px;margin:14px 0 0}
 .update-inline-editor .update-cancel{background:none;border:0;box-shadow:none;color:var(--muted)}
 .update-inline-editor .form-status:empty,#update-form .form-status:empty{display:none}
-.update-rich-editor{min-width:0}.update-rich-editor .discussion-prosemirror{min-height:150px}
+.update-rich-editor{min-width:0}
 .update-rich-editor [id$="discussion-character-count"]{display:none}
 .update-rich-editor .discussion-prosemirror>p:first-child:before{content:none}
 .update-rich-editor .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Scrie actualizarea…'}

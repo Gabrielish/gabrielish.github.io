@@ -33,7 +33,6 @@
 .report-inline-reply.discussion-composer{grid-column:1/-1;min-width:0;margin-top:12px;padding:12px;background:var(--panel);border-color:var(--line)}
 .report-inline-reply .discussion-compose-main{display:block}
 .report-inline-reply .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Scrie un răspuns…'}
-.report-inline-reply .discussion-prosemirror{min-height:132px}
 .report-inline-reply .discussion-compose-bottom{margin-top:8px}
 .report-inline-reply [id$="cancel-reply"]{background:transparent;border:0;box-shadow:none;color:var(--muted);font-weight:400;padding:8px 10px;min-height:40px}
 .report-inline-reply [id$="cancel-reply"]:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
