@@ -19,7 +19,11 @@ function syntheticSDK(){
       signInAnonymously:async()=>{state.guestCalls=(state.guestCalls||0)+1;state.user={id:'guest',is_anonymous:true,user_metadata:{}};const session={user:state.user};setTimeout(()=>authCallback('SIGNED_IN',session),0);return{data:{session},error:null}},
       exchangeCodeForSession:async code=>{state.exchangeCode=code;if(code==='expired')return{data:{session:null},error:{message:'expired'}};state.user={id:'alice',user_metadata:{full_name:'Jucător Discord',moderator:true}};return{data:{session:{user:state.user}},error:null}},
       signOut:async()=>{state.user=null;authCallback('SIGNED_OUT',null);return{error:null}}},
-    rpc:async()=>({data:moderator(),error:null}),
+    rpc:async(name,args)=>{if(name==='bg3ro_reorder_about_sections'){
+      const current=[...state.about].sort((a,b)=>a.sort_order-b.sort_order||a.id.localeCompare(b.id)).map(row=>row.id);
+      if(!moderator()||state.failOrder||JSON.stringify(current)!==JSON.stringify(args.p_expected)||new Set(args.p_ids).size!==current.length||args.p_ids.some(id=>!current.includes(id)))return{data:null,error:{message:'Cannot reorder'}};
+      args.p_ids.forEach((id,index)=>state.about.find(row=>row.id===id).sort_order=(index+1)*10);return{data:true,error:null};
+    }return{data:moderator(),error:null};},
     from(table){
       const query={operation:'select',filters:[],single:false,payload:null,orders:[],bounds:null,
         select(){return this},eq(key,value){this.filters.push([key,value]);return this},is(key,value){this.filters.push([key,value]);return this},in(key,value){this.filters.push([key,value]);return this},order(key,options){this.orders.push([key,options?.ascending!==false]);return this},limit(){return this},range(a,b){this.bounds=[a,b];return this},maybeSingle(){this.single=true;return this},

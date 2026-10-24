@@ -9,17 +9,33 @@ set local role authenticated;
 with added as(insert into public.bg3ro_about_sections(title,body,is_visible) values('Test ascuns','Text privat al rubricii de test.',false) returning id)
  select set_config('bg3ro.section_id',id,true) from added;
 do $$begin if not exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Admin cannot read hidden section';end if;end;$$;
+select set_config('bg3ro.original_order',(select array_agg(id order by sort_order,id)::text from public.bg3ro_about_sections),true),
+ set_config('bg3ro.original_content',(select jsonb_agg(to_jsonb(s)-'sort_order' order by id)::text from public.bg3ro_about_sections s),true);
+select public.bg3ro_reorder_about_sections((select array_agg(id order by sort_order desc,id desc) from public.bg3ro_about_sections),current_setting('bg3ro.original_order')::text[]);
+do $$begin
+ if (select jsonb_agg(to_jsonb(s)-'sort_order' order by id)::text from public.bg3ro_about_sections s)<>current_setting('bg3ro.original_content') then raise exception 'Reorder changed section content';end if;
+ if (select array_agg(id order by sort_order,id) from public.bg3ro_about_sections)<>(select array_agg(value order by position desc) from unnest(current_setting('bg3ro.original_order')::text[]) with ordinality a(value,position)) then raise exception 'Reorder failed';end if;
+end;$$;
+select pg_temp.section_denied(format('select public.bg3ro_reorder_about_sections(%L::text[],%L::text[])',current_setting('bg3ro.original_order'),current_setting('bg3ro.original_order')));
+select pg_temp.section_denied(format('select public.bg3ro_reorder_about_sections(array[''unknown''],%L::text[])',(select array_agg(id order by sort_order,id)::text from public.bg3ro_about_sections)));
+select set_config('bg3ro.reversed_order',(select array_agg(id order by sort_order,id)::text from public.bg3ro_about_sections),true);
+select pg_temp.section_denied(format('select public.bg3ro_reorder_about_sections(%L::text[],%L::text[])',array_fill('work'::text,array[cardinality(current_setting('bg3ro.reversed_order')::text[])])::text,current_setting('bg3ro.reversed_order')));
+select pg_temp.section_denied(format('select public.bg3ro_reorder_about_sections(%L::text[],%L::text[])',array_replace(current_setting('bg3ro.reversed_order')::text[],'work','unknown')::text,current_setting('bg3ro.reversed_order')));
+select pg_temp.section_denied(format('select public.bg3ro_reorder_about_sections(%L::text[],%L::text[])',array_replace(current_setting('bg3ro.reversed_order')::text[],'work',null)::text,current_setting('bg3ro.reversed_order')));
+do $$begin if (select array_agg(id order by sort_order,id)::text from public.bg3ro_about_sections)<>current_setting('bg3ro.reversed_order') then raise exception 'Rejected reorder changed positions';end if;end;$$;
 select pg_temp.section_denied('update public.bg3ro_about_sections set translation_percent=101 where id=''progress''');
 select pg_temp.section_denied('insert into public.bg3ro_about_sections(title,body) values(''Gol'','''')');
 select pg_temp.section_denied('update public.bg3ro_about_sections set kind=''gallery'' where id=''work''');
 reset role;
 select set_config('request.jwt.claim.sub','',true);
 set local role anon;
+select pg_temp.section_denied('select public.bg3ro_reorder_about_sections(array[''work''],array[''work''])');
 do $$begin if exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Anonymous read hidden section';end if;end;$$;
 select pg_temp.section_denied('insert into public.bg3ro_about_sections(title,body) values(''Neautorizat'',''Neautorizat'')');
 reset role;
 select set_config('request.jwt.claim.sub',current_setting('bg3ro.sections_member'),true),set_config('request.jwt.claims','{"is_anonymous":true}',true);
 set local role authenticated;
+select pg_temp.section_denied('select public.bg3ro_reorder_about_sections(array[''work''],array[''work''])');
 do $$declare affected integer;begin
  if exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Guest read hidden section';end if;
  update public.bg3ro_about_sections set title='Atac' where id='work';get diagnostics affected=row_count;if affected<>0 then raise exception 'Guest updated section';end if;
