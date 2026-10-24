@@ -7,7 +7,7 @@
  const richForms=new Map();
  function mountBody(form){const textarea=form.querySelector('textarea'),api=window.BG3RO_MOUNT_CONTENT_EDITOR?window.BG3RO_MOUNT_CONTENT_EDITOR(form,textarea):{value(){if(textarea.value.startsWith('BG3RO-RICH-1:'))throw Error('Editorul de text nu s-a încărcat. Reîncarcă pagina pentru a păstra formatarea.');if(textarea.value.trim().length<10||textarea.value.length>12000)throw Error('Scrie între 10 și 12000 de caractere.');return textarea.value;},focus(){textarea.focus();},reset(){textarea.value='';},destroy(){}};richForms.set(form,api);return api;}
  function dispose(form){richForms.get(form)?.destroy();richForms.delete(form);}
- function action(label,kind,callback){const button=el('button','btn update-action');button.type='button';button.append(icon(kind==='delete'?'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7':'m16 3 5 5M4 20l4-1L21 6a2.8 2.8 0 0 0-4-4L4 15l-1 6Z'),el('span','',label));button.addEventListener('click',callback);return button;}
+ function action(label,kind,callback){const paths={delete:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7',edit:'m16 3 5 5M4 20l4-1L21 6a2.8 2.8 0 0 0-4-4L4 15l-1 6Z',hide:'M3 3l18 18M7 7a18 18 0 0 0-6 5c3 5 8 8 13 6M10 5c5-1 9 3 11 7l-4 5',show:'M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Zm14 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0'};const button=el('button','btn update-action');button.type='button';button.append(icon(paths[kind]||paths.edit),el('span','',label));button.addEventListener('click',callback);return button;}
  function field(form,name,label,type,max,value=''){
   const wrap=el('div','field'),l=el('label','',label),input=el(type==='textarea'?'textarea':'input');
   input.name=name;input.id='manual-update-'+(++sequence);l.htmlFor=input.id;input.maxLength=max;input.value=value||'';
@@ -33,6 +33,7 @@
  document.addEventListener('DOMContentLoaded',()=>{if(publish)mountBody(publish);},{once:true});
  window.BG3RO_UPDATES={values,action,mountBody,disposeWithin(nodes){for(const form of [...richForms.keys()])if(nodes.some(node=>node.contains(form))){dispose(form);}},render(client,data,target,moderator,userId,reload){
   data.forEach(stored=>{
+   if(!moderator&&stored.is_visible===false)return;
    const update={...stored};for(const field of ['title','body','badge_label'])update[field]=window.BG3RO_VERSIONS.text(update[field]);
    const article=el('article','card manual-update'),layout=el('div','post'),content=el('div','post-content'),header=el('div','manual-update-header'),meta=el('div','post-meta'),avatar=el('img','post-avatar');
    const remote=/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(update.author_avatar_url||'');
@@ -40,6 +41,7 @@
    if(remote)avatar.addEventListener('error',()=>{avatar.classList.add('post-avatar-default');avatar.src='./assets/discussion-avatar.svg';},{once:true});
    const time=el('time','',new Intl.DateTimeFormat('ro-RO',{dateStyle:'medium'}).format(new Date(update.published_at)));time.dateTime=update.published_at;
    meta.append(el('strong','',update.author_name||'Gabrielish'),time);
+   if(update.is_visible===false){article.classList.add('news-is-hidden');meta.append(el('span','news-hidden-label','Ascuns — vizibil doar administratorului'));}
    const url=safeURL(update.link_url);if(url&&update.link_label){const a=el('a','release-news-link');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon(chain),el('span','',update.link_label));meta.append(a);}
    if(update.badge_label)meta.append(el('span','release-version-badge',update.badge_label));
    header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(avatar,content);article.append(layout);target.append(article);
@@ -60,6 +62,11 @@
     });
     form.scrollIntoView({block:'nearest',behavior:'instant'});api.focus();
     });edit.setAttribute('aria-label','Editează actualizarea');toolbar.append(edit);
+    const visibility=action(update.is_visible===false?'Afișează':'Ascunde',update.is_visible===false?'show':'hide',async()=>{
+     if(visibility.disabled||form?.querySelector('[type=submit]').disabled)return;if(form&&!confirm('Închizi editorul și schimbi vizibilitatea actualizării?'))return;for(const b of toolbar.querySelectorAll('button'))b.disabled=true;
+     try{const {data,error}=await client.from('bg3ro_project_updates').update({is_visible:update.is_visible===false}).eq('id',update.id).select('id');if(error||!data?.length)throw error||Error('Not saved');await reload();document.querySelector('#updates-feed [data-news-id="'+CSS.escape(update.id)+'"] [data-news-visibility]')?.focus({preventScroll:true});}
+     catch{const status=el('p','form-status error','Vizibilitatea nu a fost salvată. Încearcă din nou.');status.setAttribute('role','status');content.append(status);}finally{for(const b of toolbar.querySelectorAll('button'))b.disabled=false;}
+    });visibility.setAttribute('aria-label',(update.is_visible===false?'Afișează':'Ascunde')+' actualizarea');visibility.dataset.newsVisibility='true';toolbar.append(visibility);
    }
    const remove=action('Șterge','delete',()=>{});remove.setAttribute('aria-label','Șterge actualizarea');remove.title='Șterge actualizarea';toolbar.append(remove);content.append(toolbar);
    remove.addEventListener('click',async()=>{if(remove.disabled||!confirm('Ștergi această actualizare publicată manual?'))return;remove.disabled=true;

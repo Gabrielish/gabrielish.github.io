@@ -56,8 +56,9 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   await reportLink.click();assert(await page.locator('#erori').isVisible());await page.locator('#tab-actualizari').click();
   const safety=await page.evaluate(()=>{const n=window.BG3RO_CONTENT.render('<img src=x onerror=alert(1)>\n\n[Periculos](javascript:alert(1))\n\n[Sigur](https://example.com)');return {images:n.querySelectorAll('img').length,links:[...n.querySelectorAll('a')].map(a=>a.href)};});
   assert.deepEqual(safety,{images:0,links:['https://example.com/']});
-  assert.equal(await page.locator('#updates-feed .release-news .manual-update-toolbar').count(),0);
-  const actions=manual.locator('.manual-update-toolbar');assert.equal(await actions.locator('svg').count(),2);assert.equal(await actions.locator('button').first().textContent(),'Editează');
+  assert.equal(await page.locator('#updates-feed .release-news .manual-update-toolbar').count(),1);
+  const actions=manual.locator('.manual-update-toolbar');assert.equal(await actions.locator('svg').count(),3);assert.equal(await actions.locator('button').first().textContent(),'Editează');
+  await page.evaluate(()=>window.__communityTest.failUpdate=true);await manual.getByRole('button',{name:'Ascunde actualizarea',exact:true}).click();await manual.locator('.form-status.error').waitFor();assert.equal(await manual.locator('.news-hidden-label').count(),0);await page.evaluate(()=>window.__communityTest.failUpdate=false);await manual.getByRole('button',{name:'Ascunde actualizarea',exact:true}).click();await manual.locator('.news-hidden-label').waitFor();assert.equal(await page.evaluate(()=>window.__communityTest.updates[0].is_visible),false);await manual.getByRole('button',{name:'Afișează actualizarea',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.manual-update .news-hidden-label'));
   await manual.getByRole('button',{name:'Editează actualizarea',exact:true}).click();let modal=manual.locator('.update-inline-editor');
   assert.equal(await manual.locator('dialog').count(),0,'Editing is inline');
   await compact(modal);await modal.screenshot({path:`.qa/compact-update-edit-${width}.png`});
@@ -73,6 +74,7 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   assert.equal(await manual.locator('.release-version-badge').textContent(),'Actualizat');
   assert.equal(await manual.locator('.release-news-link').getAttribute('href'),'https://example.com/edited');
   await manual.screenshot({path:`.qa/manual-update-${width}.png`});
+  await manual.getByRole('button',{name:'Ascunde actualizarea',exact:true}).click();await manual.locator('.news-hidden-label').waitFor();await clickNav(page,'#sign-out');await page.waitForFunction(()=>!document.querySelector('.manual-update'));await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await manual.getByRole('button',{name:'Afișează actualizarea',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.manual-update .news-hidden-label'));
   page.once('dialog',d=>d.dismiss());await manual.getByRole('button',{name:'Șterge actualizarea',exact:true}).click();assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),1);
   page.once('dialog',d=>d.accept());await manual.getByRole('button',{name:'Șterge actualizarea',exact:true}).click();await page.waitForFunction(()=>window.__communityTest.updates.length===0);
   assert.equal(await page.locator('#updates-feed').textContent(),releaseBefore,'Automatic release news is unchanged');

@@ -32,5 +32,13 @@
    }catch(_){status.textContent='Anunțul nu a fost salvat. Încearcă din nou.';}finally{save.disabled=false;}
   });
  }
- window.BG3RO_NEWS={commit,releaseEditor};
+ function releaseVisibility(article,row,client,reload){
+  const content=article.querySelector('.post-content'),hidden=row.news_is_visible===false;let tools=content.querySelector('.manual-update-toolbar');if(!tools){tools=document.createElement('div');tools.className='manual-update-toolbar';content.append(tools);}
+  if(hidden){article.classList.add('news-is-hidden');const badge=document.createElement('span');badge.className='news-hidden-label';badge.textContent='Ascuns — vizibil doar administratorului';content.querySelector('.post-meta').append(badge);}
+  const button=window.BG3RO_UPDATES.action(hidden?'Afișează':'Ascunde',hidden?'show':'hide',async()=>{if(button.disabled||article.querySelector('form [type=submit]')?.disabled)return;const source=article.querySelector('[id^="release-news-editor-"]');if(source&&!source.hidden&&!confirm('Închizi editorul și schimbi vizibilitatea anunțului?'))return;for(const b of tools.querySelectorAll('button'))b.disabled=true;
+   try{const {data,error}=await client.from('bg3ro_releases').update({news_is_visible:hidden}).eq('id',row.id).select('id');if(error||!data?.length)throw error||Error('Not saved');await reload();document.querySelector('#updates-feed [data-news-id="'+CSS.escape(row.id)+'"] [data-news-visibility]')?.focus({preventScroll:true});}
+   catch{const status=document.createElement('p');status.className='form-status error';status.setAttribute('role','status');status.textContent='Vizibilitatea anunțului nu a fost salvată. Încearcă din nou.';content.append(status);}finally{for(const b of tools.querySelectorAll('button'))b.disabled=false;}
+  });button.dataset.newsVisibility='true';button.setAttribute('aria-label',(hidden?'Afișează':'Ascunde')+' anunțul versiunii');button.title='Schimbă doar anunțul din Actualizări, nu și descărcarea';tools.append(button);
+ }
+ window.BG3RO_NEWS={commit,releaseEditor,releaseVisibility};
 })();

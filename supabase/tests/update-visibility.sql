@@ -1,0 +1,52 @@
+begin;
+select set_config('qa.news_admin',gen_random_uuid()::text,true),set_config('qa.news_member',gen_random_uuid()::text,true),set_config('qa.news_version',gen_random_uuid()::text,true);
+insert into auth.users(id) values(current_setting('qa.news_admin')::uuid),(current_setting('qa.news_member')::uuid);
+insert into bg3ro_private.moderators(user_id) values(current_setting('qa.news_admin')::uuid);
+select set_config('request.jwt.claim.sub',current_setting('qa.news_admin'),true),set_config('request.jwt.claims','{}',true);
+set local role authenticated;
+with added as(insert into public.bg3ro_project_updates(title,body) values('Anunț de test','Un text suficient de lung pentru verificare.') returning id)select set_config('qa.news_id',id::text,true) from added;
+with added as(insert into public.bg3ro_releases(kind,version,platform,title,description,file_name,file_bytes,download_url) values('translation',current_setting('qa.news_version'),'all','Versiune de test','Descrierea versiunii.','qa-news.rar',128,'https://github.com/Gabrielish/bg3ro/releases/download/qa/qa-news.rar') returning id)select set_config('qa.release_news_id',id::text,true) from added;
+reset role;
+select set_config('qa.news_snapshot',(select (to_jsonb(n)-'is_visible')::text from public.bg3ro_project_updates n where id=current_setting('qa.news_id')::uuid),true),set_config('qa.release_news_snapshot',(select (to_jsonb(r)-'news_is_visible')::text from public.bg3ro_releases r where id=current_setting('qa.release_news_id')::uuid),true);
+set local role authenticated;
+update public.bg3ro_project_updates set is_visible=false where id=current_setting('qa.news_id')::uuid;
+update public.bg3ro_releases set news_is_visible=false where id=current_setting('qa.release_news_id')::uuid;
+do $$begin if not exists(select 1 from public.bg3ro_project_updates where id=current_setting('qa.news_id')::uuid and not is_visible) then raise exception 'Owner cannot restore hidden news';end if;end;$$;
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role anon;
+do $$begin
+ if exists(select 1 from public.bg3ro_project_updates where id=current_setting('qa.news_id')::uuid) then raise exception 'Hidden manual news is public';end if;
+ if not exists(select 1 from public.bg3ro_releases where id=current_setting('qa.release_news_id')::uuid and is_visible and not news_is_visible) then raise exception 'News visibility removed the download';end if;
+end;$$;
+reset role;
+select set_config('request.jwt.claim.sub',current_setting('qa.news_member'),true),set_config('request.jwt.claims','{"is_anonymous":true}',true);
+set local role authenticated;
+do $$declare affected integer;begin
+ if exists(select 1 from public.bg3ro_project_updates where id=current_setting('qa.news_id')::uuid) then raise exception 'Guest sees hidden manual news';end if;
+ update public.bg3ro_project_updates set is_visible=true where id=current_setting('qa.news_id')::uuid;get diagnostics affected=row_count;if affected<>0 then raise exception 'Guest changed news visibility';end if;
+ update public.bg3ro_releases set news_is_visible=true where id=current_setting('qa.release_news_id')::uuid;get diagnostics affected=row_count;if affected<>0 then raise exception 'Guest changed release news';end if;
+end;$$;
+reset role;
+select set_config('request.jwt.claims','{}',true);
+set local role authenticated;
+do $$declare affected integer;begin
+ update public.bg3ro_project_updates set is_visible=true where id=current_setting('qa.news_id')::uuid;get diagnostics affected=row_count;if affected<>0 then raise exception 'Member changed news visibility';end if;
+ update public.bg3ro_releases set news_is_visible=true where id=current_setting('qa.release_news_id')::uuid;get diagnostics affected=row_count;if affected<>0 then raise exception 'Member changed release news';end if;
+end;$$;
+reset role;
+select set_config('request.jwt.claim.sub',current_setting('qa.news_admin'),true);
+set local role authenticated;
+update public.bg3ro_project_updates set is_visible=true where id=current_setting('qa.news_id')::uuid;
+update public.bg3ro_releases set news_is_visible=true where id=current_setting('qa.release_news_id')::uuid;
+reset role;
+do $$begin
+ if (select (to_jsonb(n)-'is_visible')::text from public.bg3ro_project_updates n where id=current_setting('qa.news_id')::uuid)<>current_setting('qa.news_snapshot') then raise exception 'Visibility changed news content';end if;
+ if (select (to_jsonb(r)-'news_is_visible')::text from public.bg3ro_releases r where id=current_setting('qa.release_news_id')::uuid)<>current_setting('qa.release_news_snapshot') then raise exception 'News visibility changed release metadata';end if;
+end;$$;
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role anon;
+do $$begin if not exists(select 1 from public.bg3ro_project_updates where id=current_setting('qa.news_id')::uuid) then raise exception 'Restored news remains hidden';end if;end;$$;
+reset role;
+rollback;

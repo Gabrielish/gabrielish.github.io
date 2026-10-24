@@ -2,7 +2,7 @@
   "use strict";
   const $ = (s) => document.querySelector(s);
   const fields =
-    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at,news_title,news_body,news_badge,platform,is_visible,is_deleted";
+    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at,news_title,news_body,news_badge,platform,is_visible,is_deleted,news_is_visible";
   const kinds = {
     translation: "Traducerea în limba română",
     search: "Căutare fără diacritice",
@@ -220,7 +220,7 @@
         target.append(placeholder);
       }
     });
-    const localizationUpdates = rows.filter((row) => row.kind === "translation"&&row.is_visible&&!row.is_deleted).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
+    const localizationUpdates = rows.filter((row) => row.kind === "translation"&&row.is_visible&&!row.is_deleted&&(moderator||row.news_is_visible!==false)).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
     localizationUpdates.forEach((row,index) => {
       const article = el("article", "card release-news"),
         layout = el("div", "post"), content = el("div", "post-content"),
@@ -269,6 +269,7 @@
       layout.append(authorAvatar(row), content); article.append(layout);
       news.append(article);
       if(moderator && index>0)window.BG3RO_NEWS.releaseEditor(article,row,client,load);
+      if(moderator)window.BG3RO_NEWS.releaseVisibility(article,row,client,load);
     });
     $("#release-editor").hidden = !moderator;
     window.BG3RO_NEWS.commit("releases",[...news.children]);

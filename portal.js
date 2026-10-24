@@ -286,7 +286,7 @@
     const ticket = ++updatesRequest;
     const target = document.createElement('div');
     if (!client) { window.BG3RO_NEWS.commit('manual', []); return; }
-    const { data, error } = await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label').order('published_at', { ascending: false }).limit(30);
+    const { data, error } = await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label,is_visible').order('published_at', { ascending: false }).limit(30);
     if (ticket !== updatesRequest) return;
     if (error) { target.append(element('p', 'card small', 'Actualizările nu au putut fi încărcate.')); }
     else window.BG3RO_UPDATES.render(client, data, target, moderator, user?.id, loadUpdates);

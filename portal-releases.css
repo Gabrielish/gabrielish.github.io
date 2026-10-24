@@ -244,6 +244,7 @@
 .manual-update-toolbar>.btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .manual-update .post-meta strong{overflow-wrap:anywhere}
 #updates-feed{display:grid;gap:20px}
+.news-is-hidden{border-style:dashed}.news-hidden-label{display:inline-block;font-size:12px;line-height:1.5;color:var(--gold);background:#d7bc8a16;padding:3px 8px;border-radius:5px}
 .update-inline-editor{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
 .update-inline-editor>.form-end,#update-form>.form-end{display:flex;flex-direction:row;justify-content:flex-end;gap:10px;margin:14px 0 0}
 .update-inline-editor .update-cancel{background:none;border:0;box-shadow:none;color:var(--muted)}
