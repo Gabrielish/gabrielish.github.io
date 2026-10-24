@@ -4,7 +4,7 @@
   const $$ = selector => [...document.querySelectorAll(selector)];
   const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori', 'mesaje'];
   let messagesAllowed = false;
-  const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni'];
+  const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni', 'profil', 'conversatii'];
   const routeIds = [...ids, ...informationIds];
   const tabs = $$('.tab-list a');
   const panels = ids.map(id => document.getElementById(id));
@@ -14,7 +14,8 @@
   tabs.forEach(tab => tab.setAttribute('role', 'tab'));
   panels.forEach(panel => panel.setAttribute('role', 'tabpanel'));
   function setTab(id, focus = false) {
-    const selected = routeIds.includes(id) && (id !== 'mesaje' || messagesAllowed) ? id : 'despre';
+    const route=(id||'').split('/')[0];
+    const selected = routeIds.includes(route) && (route !== 'mesaje' || messagesAllowed) ? route : 'despre';
     tabs.forEach((tab, index) => {
       const active = ids[index] === selected;
       tab.setAttribute('aria-selected', String(active));
@@ -55,7 +56,7 @@
     goTab(availableTabs[target].id.replace('tab-', ''), true);
   });
   addEventListener('popstate', () => setTab(location.hash.slice(1)));
-  addEventListener('hashchange', () => { if (routeIds.includes(location.hash.slice(1))) setTab(location.hash.slice(1)); });
+  addEventListener('hashchange', () => { if (routeIds.includes(location.hash.slice(1).split('/')[0])) setTab(location.hash.slice(1)); });
 
   let client = null, user = null, moderator = false, page = 0, reportsLimit = 20, reportsRequest = 0, commentsRequest = 0;
   const discussionsPerPage = 10;
@@ -255,7 +256,7 @@
     event.preventDefault(); if (!client || !authEnabled) return;
     const form = event.currentTarget;
     submit(form, async () => {
-      sessionStorage.setItem('bg3ro-return-tab', routeIds.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'discutii');
+      sessionStorage.setItem('bg3ro-return-tab', routeIds.includes(location.hash.slice(1).split('/')[0]) ? location.hash.slice(1) : 'discutii');
       const { error } = await client.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: config.authRedirectUrl || new URL('./', location.href).href, queryParams: { prompt: !discordConsentRequired && discordWasAuthorized() ? 'none' : 'consent' } } });
       if (error) throw error;
       formStatus(form, 'Se deschide Discord…');
@@ -333,7 +334,7 @@
       avatar.classList.toggle('post-avatar-default', !remote); avatar.alt = ''; avatar.width = 44; avatar.height = 44; avatar.loading = 'lazy'; avatar.referrerPolicy = 'no-referrer';
       if (remote) avatar.addEventListener('error', () => { avatar.classList.add('post-avatar-default'); avatar.src = './assets/discussion-avatar.svg'; }, { once: true });
       const content = element('div', 'post-content');
-      const meta = element('div', 'post-meta'); meta.append(element('strong', '', post.author_name), element('time', '', dateText(post.created_at)));
+      const meta = element('div', 'post-meta'); meta.append(window.BG3RO_PROFILE_LINK(element('strong', '', post.author_name),post.is_guest?null:post.author_id,post.author_name), element('time', '', dateText(post.created_at)));
       meta.querySelector('time').dateTime = post.created_at;
       if (post.is_guest) meta.append(element('span', 'post-status', 'Oaspete'));
       if (post.status !== 'approved') meta.append(element('span', 'post-status', statusLabels[post.status]));
@@ -358,7 +359,7 @@
         if (deletionError) throw deletionError; await loadComments();
       }));
       if (actions.children.length) content.append(actions);
-      article.append(window.BG3RO_AVATAR_BADGE(avatar,post.author_is_admin===true&&!post.is_guest), content); return article;
+      article.append(window.BG3RO_PROFILE_LINK(window.BG3RO_AVATAR_BADGE(avatar,post.author_is_admin===true&&!post.is_guest),post.is_guest?null:post.author_id,post.author_name,true), content); return article;
     }
     data.forEach(post => {
       const thread = element('section', 'post-thread'), replies = element('div', 'post-replies');
@@ -449,7 +450,7 @@
     const request = ++reportsRequest;
     if (!client) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url,author_is_admin'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url,author_is_admin,author_profile_id,reply_profile_id'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     closeReportState();for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
@@ -465,11 +466,11 @@
       if (remote) avatar.addEventListener('error', () => { avatar.classList.add('post-avatar-default'); avatar.src = './assets/discussion-avatar.svg'; }, { once: true });
       const header = element('div', 'report-header'), copy = element('div', 'post-meta');
       const date = element('time', '', dateText(report.created_at)); date.dateTime = report.created_at;
-      copy.append(element('strong', '', report.author_name || 'Jucător'), date);
+      copy.append(window.BG3RO_PROFILE_LINK(element('strong', '', report.author_name || 'Jucător'),report.author_profile_id,report.author_name), date);
       if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete'));
       if (!report.is_public) copy.append(element('span', 'post-status', 'Privată'));
       const stateBadge=element('span', 'post-status report-state-badge', statusLabels[report.status]);stateBadge.dataset.state=report.status;copy.append(stateBadge);
-      header.append(copy); content.append(header); layout.append(window.BG3RO_AVATAR_BADGE(avatar,report.author_is_admin===true&&!report.is_guest), content); article.append(layout);
+      header.append(copy); content.append(header); layout.append(window.BG3RO_PROFILE_LINK(window.BG3RO_AVATAR_BADGE(avatar,report.author_is_admin===true&&!report.is_guest),report.author_profile_id,report.author_name,true), content); article.append(layout);
       const title = element('h3', 'post-title report-title-row');
       title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${window.BG3RO_VERSIONS.version(report.mod_version)}`));
       const reportBody=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.body):element('div','post-body',report.body);reportBody.classList.add('report-body');
@@ -540,9 +541,9 @@
         const replyRemote=/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(report.reply_author_avatar_url||'');
         replyAvatar.src=replyRemote?report.reply_author_avatar_url:'./assets/discussion-avatar.svg';replyAvatar.classList.toggle('post-avatar-default',!replyRemote);
         if(replyRemote)replyAvatar.addEventListener('error',()=>{replyAvatar.src='./assets/discussion-avatar.svg';replyAvatar.classList.add('post-avatar-default');},{once:true});
-        const meta=element('div','post-meta');meta.append(element('strong','',report.reply_author_name||'Administrator'));
+        const meta=element('div','post-meta');meta.append(window.BG3RO_PROFILE_LINK(element('strong','',report.reply_author_name||'Administrator'),report.reply_profile_id,report.reply_author_name));
         if(report.reply_created_at&&Number.isFinite(Date.parse(report.reply_created_at))){const time=element('time','',dateText(report.reply_created_at));time.dateTime=report.reply_created_at;meta.append(time);}
-        const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');replyContent.append(meta,answer);reply.append(window.BG3RO_AVATAR_BADGE(replyAvatar,true),replyContent);content.append(reply);
+        const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');replyContent.append(meta,answer);reply.append(window.BG3RO_PROFILE_LINK(window.BG3RO_AVATAR_BADGE(replyAvatar,true),report.reply_profile_id,report.reply_author_name,true),replyContent);content.append(reply);
       }
       target.append(article);
       window.BG3RO_REPORT_PHOTO.show(client, report, photos).catch(() => {});
@@ -580,7 +581,7 @@
         if (authCode || authError) {
           const returnTab = sessionStorage.getItem('bg3ro-return-tab');
           sessionStorage.removeItem('bg3ro-return-tab');
-          if (routeIds.includes(returnTab)) { history.replaceState(null, '', location.pathname + location.search + '#' + returnTab); setTab(returnTab); $('.tab-list').scrollIntoView({ block: 'start' }); }
+          if (routeIds.includes((returnTab||'').split('/')[0])) { history.replaceState(null, '', location.pathname + location.search + '#' + returnTab); setTab(returnTab); $('.tab-list').scrollIntoView({ block: 'start' }); }
           if (callbackFailed || !data.session) {
             $('#auth-unavailable').hidden = true; $('#discord-login-form').hidden = false;
             discordConsentRequired = true;

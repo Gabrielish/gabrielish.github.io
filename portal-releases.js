@@ -2,7 +2,7 @@
   "use strict";
   const $ = (s) => document.querySelector(s);
   const fields =
-    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at,news_title,news_body,news_badge,platform,is_visible,is_deleted,news_is_visible";
+    "id,author_id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at,news_title,news_body,news_badge,platform,is_visible,is_deleted,news_is_visible";
   const kinds = {
     translation: "Traducerea în limba română",
     search: "Căutare fără diacritice",
@@ -31,7 +31,7 @@
     image.classList.toggle("post-avatar-default", !remote);
     image.alt = ""; image.width = 44; image.height = 44; image.loading = "lazy"; image.referrerPolicy = "no-referrer";
     if (remote) image.addEventListener("error", () => { image.classList.add("post-avatar-default"); image.src = "./assets/discussion-avatar.svg"; }, { once: true });
-    return window.BG3RO_AVATAR_BADGE(image,true);
+    return window.BG3RO_PROFILE_LINK(window.BG3RO_AVATAR_BADGE(image,true),row.author_id,row.author_name,true);
   }
   function date(value) {
     return new Date(value).toLocaleDateString("ro-RO", {
@@ -245,7 +245,7 @@
       uploadIcon.append(uploadPath);
       versionBadge.append(uploadIcon, el("span", "", row.news_badge ?? `Versiunea ${row.version}`));
       meta.append(
-        el("strong", "", row.author_name),
+        window.BG3RO_PROFILE_LINK(el("strong", "", row.author_name),row.author_id,row.author_name),
         time,
         versionBadge,
       );

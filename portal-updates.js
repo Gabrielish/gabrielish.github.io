@@ -40,11 +40,11 @@
    avatar.src=remote?update.author_avatar_url:'./assets/discussion-avatar.svg';avatar.classList.toggle('post-avatar-default',!remote);avatar.alt='';avatar.width=44;avatar.height=44;avatar.loading='lazy';avatar.referrerPolicy='no-referrer';
    if(remote)avatar.addEventListener('error',()=>{avatar.classList.add('post-avatar-default');avatar.src='./assets/discussion-avatar.svg';},{once:true});
    const time=el('time','',new Intl.DateTimeFormat('ro-RO',{dateStyle:'medium'}).format(new Date(update.published_at)));time.dateTime=update.published_at;
-   meta.append(el('strong','',update.author_name||'Gabrielish'),time);
+   meta.append(window.BG3RO_PROFILE_LINK(el('strong','',update.author_name||'Gabrielish'),update.author_id,update.author_name),time);
    if(update.is_visible===false)article.classList.add('news-is-hidden','is-content-hidden');
    const url=safeURL(update.link_url);if(url&&update.link_label){const a=el('a','release-news-link');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon(chain),el('span','',update.link_label));meta.append(a);}
    if(update.badge_label)meta.append(el('span','release-version-badge',update.badge_label));
-   header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(window.BG3RO_AVATAR_BADGE(avatar,true),content);article.append(layout);target.append(article);
+   header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(window.BG3RO_PROFILE_LINK(window.BG3RO_AVATAR_BADGE(avatar,true),update.author_id,update.author_name,true),content);article.append(layout);target.append(article);
    article.dataset.newsDate=update.published_at;article.dataset.newsId=update.id;
    if(!moderator)return;
    const toolbar=el('div','manual-update-toolbar');

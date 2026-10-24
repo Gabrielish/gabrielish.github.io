@@ -11,7 +11,7 @@ const M = '33333333-3333-3333-3333-333333333333';
   const db = new PGlite();
   try {
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls; create schema auth;
-      create table auth.users(id uuid primary key,is_anonymous boolean default false,raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}');
+      create table auth.users(id uuid primary key,is_anonymous boolean default false,raw_user_meta_data jsonb default '{}',raw_app_meta_data jsonb default '{}',created_at timestamptz not null default now());
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{}'::jsonb) $$;
       grant usage on schema auth to anon,authenticated;
@@ -195,6 +195,7 @@ const M = '33333333-3333-3333-3333-333333333333';
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/release-platform-visibility.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/update-visibility.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/admin-avatar-badges.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/profiles-messages.sql'),'utf8'));
     console.log('PASS: portal migrations, role isolation, column privileges, rate limits, contact inbox, screenshots, manual update metadata validation, administrator-only editing/deletion, release isolation and private reaction aggregates/toggle permissions.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
