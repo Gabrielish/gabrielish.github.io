@@ -25,6 +25,7 @@ function syntheticSDK(){
       args.p_ids.forEach((id,index)=>state.about.find(row=>row.id===id).sort_order=(index+1)*10);return{data:true,error:null};
     }return{data:moderator(),error:null};},
     from(table){
+      if(table==='bg3ro_releases'&&state.releases)for(const row of state.releases){row.is_visible??=true;row.is_deleted??=false;row.platform??=/windows/i.test(row.tags||'')&&!/mac\s?os/i.test(row.tags||'')?'windows':/mac\s?os/i.test(row.tags||'')&&!/windows/i.test(row.tags||'')?'macos':'all';}
       const query={operation:'select',filters:[],single:false,payload:null,orders:[],bounds:null,
         select(){return this},eq(key,value){this.filters.push([key,value]);return this},is(key,value){this.filters.push([key,value]);return this},in(key,value){this.filters.push([key,value]);return this},order(key,options){this.orders.push([key,options?.ascending!==false]);return this},limit(){return this},range(a,b){this.bounds=[a,b];return this},maybeSingle(){this.single=true;return this},
         insert(payload){this.operation='insert';this.payload=payload;return this},update(payload){this.operation='update';this.payload=payload;return this},delete(){this.operation='delete';return this},

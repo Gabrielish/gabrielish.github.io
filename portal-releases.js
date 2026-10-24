@@ -2,7 +2,7 @@
   "use strict";
   const $ = (s) => document.querySelector(s);
   const fields =
-    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at,news_title,news_body,news_badge";
+    "id,author_name,author_avatar_url,kind,version,title,file_name,file_bytes,download_url,tags,description,published_at,news_title,news_body,news_badge,platform,is_visible,is_deleted";
   const kinds = {
     translation: "Traducerea în limba română",
     search: "Căutare fără diacritice",
@@ -14,6 +14,10 @@
     rows = [],
     request = 0,
     editorSequence = 0;
+  const richEditors=new Map(),platforms={all:'Windows și macOS',windows:'Windows',macos:'macOS'};
+  let publishAPI=null;
+  const platformOf=row=>row.platform||(/windows/i.test(row.tags||'')&&!/mac\s?os/i.test(row.tags||'')?'windows':/mac\s?os/i.test(row.tags||'')&&!/windows/i.test(row.tags||'')?'macos':'all');
+  function disposeEditors(){for(const [form,api]of richEditors){api.destroy();form.remove();}richEditors.clear();}
   function el(tag, cls, text) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -36,7 +40,7 @@
       year: "numeric",
     });
   }
-  async function uploadArchive(file, status) {
+  async function uploadArchive(file, status, platform, releaseId=null) {
     if (
       !file ||
       !/\.(zip|7z|rar)$/i.test(file.name) ||
@@ -44,6 +48,9 @@
       !file.size
     )
       throw Error("Alege o arhivă ZIP, 7z sau RAR de maximum 20 MB.");
+    const check=await client.from('bg3ro_releases').select('id,platform,file_name,tags').eq('file_name',file.name).eq('is_deleted',false);
+    if(check.error)throw Error('Nu pot verifica arhivele existente. Încearcă din nou.');
+    if((check.data||[]).some(row=>row.id!==releaseId&&platformOf(row)!==platform))throw Error('Acest nume este folosit de altă platformă. Folosește un nume diferit pentru arhiva Windows/macOS.');
     status.textContent = "Se încarcă arhiva în GitHub… Nu închide pagina.";
     const result = await client.functions.invoke("bg3ro-upload", {
       body: file,
@@ -117,122 +124,47 @@
     const group = el("div", "release-tags");
     [
       row.version,
+      platforms[platformOf(row)],
       ...row.tags
         .split(",")
         .map((t) => t.trim())
-        .filter(Boolean),
+        .filter(t=>t&&!/^(windows|mac\s?os)$/i.test(t)),
       date(row.published_at),
     ].forEach((t) => group.append(el("span", "release-tag", t)));
     return group;
   }
-  function editor(row) {
-    const details = el("details", "release-edit");
-    details.append(el("summary", "", "Editează versiunea"));
-    const sequence = ++editorSequence,
-      form = el("form");
-    [
-      ["title", "Titlu", 160],
-      ["tags", "Taguri (separate prin virgulă)", 240],
-      ["description", row.kind === "translation" ? "Ce este nou în această versiune" : "Descriere", 12000],
-    ].forEach(([key, label, max]) => {
-      const wrap = el("div", "field"),
-        id = `release-${sequence}-${row.id}-${key}`,
-        l = el("label", "", label),
-        input = el(key === "description" ? "textarea" : "input");
-      l.htmlFor = id;
-      input.id = id;
-      input.name = key;
-      input.maxLength = max;
-      input.required = key !== "tags";
-      input.value = row[key];
-      wrap.append(l, input);
-      form.append(wrap);
-    });
-    const button = el("button", "btn", "Salvează modificările"),
-      status = el("p", "form-status");
-    button.type = "submit";
-    status.setAttribute("role", "status");
-    form.append(button, status);
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!client || !moderator || button.disabled) return;
-      button.disabled = true;
-      status.textContent = "Se salvează…";
-      try {
-        const values = Object.fromEntries(new FormData(form));
-        const result = await client
-          .from("bg3ro_releases")
-          .update(values)
-          .eq("id", row.id)
-          .select("id");
-        if (result.error || !result.data?.length) throw Error();
-        await load();
-      } catch (_) {
-        status.textContent =
-          "Modificările nu au fost salvate. Verifică drepturile și conexiunea.";
-      } finally {
-        button.disabled = false;
-      }
-    });
-    details.append(form);
-    const replacement = el("div", "release-edit"),
-      label = el("label", "", "Înlocuiește arhiva acestei versiuni"),
-      file = el("input"),
-      replace = el(
-        "button",
-        "btn secondary",
-        "Încarcă și înlocuiește fișierul",
-      ),
-      uploadStatus = el("p", "form-status");
-    file.id = `replace-archive-${sequence}`;
-    file.type = "file";
-    file.accept = ".zip,.7z,.rar";
-    label.htmlFor = file.id;
-    replace.type = "button";
-    uploadStatus.setAttribute("role", "status");
-    replacement.append(
-      label,
-      file,
-      el(
-        "p",
-        "small",
-        "Un fișier cu același nume este înlocuit în folderul GitHub. Celelalte versiuni își păstrează descărcările.",
-      ),
-      replace,
-      uploadStatus,
-    );
-    replace.addEventListener("click", async () => {
-      if (!client || !moderator || replace.disabled) return;
-      replace.disabled = true;
-      try {
-        const data = await uploadArchive(file.files[0], uploadStatus);
-        const result = await client
-          .from("bg3ro_releases")
-          .update({
-            file_name: data.file_name,
-            file_bytes: data.file_bytes,
-            download_url: data.download_url,
-          })
-          .eq("id", row.id)
-          .select("id");
-        if (result.error || !result.data?.length)
-          throw Error(
-            "Arhiva este pe GitHub, dar legătura versiunii nu a fost salvată. Reîncearcă înlocuirea.",
-          );
-        await load();
-      } catch (error) {
-        uploadStatus.textContent = error.message;
-      } finally {
-        replace.disabled = false;
-      }
-    });
-    details.append(replacement);
-    return window.BG3RO_EDITORS.mount(details, "Editează versiunea");
+  function action(label,path,callback){const button=el('button','btn release-admin-action');button.type='button';button.append(outlineIcon([path]),el('span','',label));button.onclick=callback;return button;}
+  function field(parent,name,label,value,max=160,type='text'){
+    const wrap=el('div','field'),caption=el('label','',label),input=el(type==='textarea'?'textarea':'input');input.id='release-field-'+(++editorSequence);input.name=name;input.value=value||'';input.maxLength=max;if(type!=='textarea')input.type=type;input.required=name==='title'||name==='description';caption.htmlFor=input.id;wrap.append(caption,input);parent.append(wrap);return input;
+  }
+  function platformField(parent,value){const wrap=el('div','field'),label=el('label','','Platformă'),select=el('select');select.id='release-platform-'+(++editorSequence);select.name='platform';for(const [key,text]of Object.entries(platforms)){const option=el('option','',text);option.value=key;select.append(option);}select.value=value;label.htmlFor=select.id;wrap.append(label,select);parent.append(wrap);return select;}
+  function filePicker(input){input.classList.add('release-archive-input');input.tabIndex=-1;const choose=el('button','btn secondary small-btn','Alege arhiva'),name=el('span','release-selected-file','Niciun fișier ales'),row=el('div','release-file-picker');choose.type='button';choose.setAttribute('aria-controls',input.id);choose.onclick=()=>input.click();input.addEventListener('change',()=>name.textContent=input.files[0]?.name||'Niciun fișier ales');row.append(choose,name);input.after(row);return choose;}
+  function editor(row,article,trigger){
+    if([...richEditors.keys()].some(form=>form.inert))return;
+    if(article.querySelector('.release-inline-editor')){article.querySelector('.release-inline-editor [name=title]').focus();return;}
+    if([...richEditors.keys()].some(form=>form.dataset.dirty==='true')&&!confirm('Renunți la modificările nesalvate?'))return;disposeEditors();
+    const form=el('form','release-inline-editor'),top=el('div','release-fields-row');form.setAttribute('aria-label','Editează '+row.title);form.append(top);field(top,'title','Titlu',row.title);const platform=platformField(top,platformOf(row));field(form,'tags','Taguri',row.tags,240);const description=field(form,'description',row.kind==='translation'?'Ce este nou în această versiune':'Descriere',row.description,12000,'textarea');
+    const end=el('div','form-end'),save=el('button','btn','Salvează'),cancel=el('button','btn release-cancel','Anulează'),status=el('p','form-status');save.type='submit';cancel.type='button';status.setAttribute('role','status');end.append(cancel,save);form.append(end,status);
+    const replacement=el('div','release-replacement'),file=el('input'),label=el('label','','Înlocuiește arhiva acestei versiuni'),replace=el('button','btn secondary small-btn','Încarcă și înlocuiește fișierul'),uploadStatus=el('p','form-status');file.id='replace-archive-'+(++editorSequence);file.type='file';file.accept='.zip,.7z,.rar';label.htmlFor=file.id;replace.type='button';uploadStatus.setAttribute('role','status');replacement.append(label,file,el('p','small','Folosește nume diferite pentru arhivele Windows și macOS. Înlocuirea actualizează fișierul, fără să publice o versiune nouă.'),replace,uploadStatus);filePicker(file);form.append(replacement);article.append(form);
+    if(!window.BG3RO_MOUNT_CONTENT_EDITOR){form.remove();$('#release-load-status').textContent='Editorul nu s-a încărcat. Reîncarcă pagina.';return;}
+    const api=window.BG3RO_MOUNT_CONTENT_EDITOR(form,description,{minimum:1,label:'Descrierea versiunii',placeholder:'Descrie versiunea…'});richEditors.set(form,api);form.addEventListener('input',()=>form.dataset.dirty='true');api.editor.on('update',()=>form.dataset.dirty='true');
+    cancel.onclick=()=>{if(save.disabled||replace.disabled)return;api.destroy();richEditors.delete(form);form.remove();trigger.focus({preventScroll:true});};
+    form.onsubmit=async event=>{event.preventDefault();if(!client||!moderator||save.disabled)return;const active=client;let values;try{values={title:form.elements.title.value.trim(),tags:form.elements.tags.value.trim(),platform:platform.value,description:api.value()};if(!values.title)throw Error('Completează titlul.');}catch(error){status.classList.add('error');status.textContent=error.message;return;}form.inert=true;save.disabled=cancel.disabled=replace.disabled=true;status.classList.remove('error');status.textContent='Se salvează…';
+      try{const result=await active.from('bg3ro_releases').update(values).eq('id',row.id).select('id');if(result.error||!result.data?.length)throw Error();if(client===active&&moderator)await load();}catch{status.classList.add('error');status.textContent='Modificările nu au fost salvate. Textul a fost păstrat; încearcă din nou.';}finally{form.inert=false;save.disabled=cancel.disabled=replace.disabled=false;}};
+    replace.onclick=async()=>{if(!client||!moderator||replace.disabled)return;const active=client;form.inert=true;save.disabled=cancel.disabled=replace.disabled=true;uploadStatus.classList.remove('error');try{if(platform.value!==platformOf(row))throw Error('Salvează mai întâi schimbarea platformei, apoi înlocuiește arhiva.');const data=await uploadArchive(file.files[0],uploadStatus,platform.value,row.id);if(client!==active||!moderator)throw Error('Sesiunea s-a schimbat. Reconectează-te pentru a salva legătura arhivei.');const result=await active.from('bg3ro_releases').update({file_name:data.file_name,file_bytes:data.file_bytes,download_url:data.download_url}).eq('id',row.id).select('id');if(result.error||!result.data?.length)throw Error('Arhiva este pe GitHub, dar legătura versiunii nu a fost salvată. Reîncearcă înlocuirea.');Object.assign(row,data);article.querySelector('.release-download')?.replaceWith(download(row,true));article.querySelector('.release-file').textContent=`${row.file_name} · ${new Intl.NumberFormat('ro-RO',{maximumFractionDigits:1}).format(row.file_bytes/1048576)} MB`;if($('#github-quick-download').dataset.releaseId===row.id){$('#github-quick-download').href=row.download_url;$('#github-quick-download').download=row.file_name;}uploadStatus.textContent='Arhiva a fost înlocuită. Textul nesalvat a fost păstrat.';}catch(error){uploadStatus.textContent=error.message;uploadStatus.classList.add('error');}finally{form.inert=false;save.disabled=cancel.disabled=replace.disabled=false;}};
+    form.scrollIntoView({block:'nearest',behavior:'instant'});form.elements.title.focus({preventScroll:true});
+  }
+  function adminTools(row,article){
+    const tools=el('div','release-admin-tools'),edit=action('Editează','m16 3 5 5M4 20l4-1L21 6a2.8 2.8 0 0 0-4-4L4 15l-1 6Z',()=>editor(row,article,edit));edit.setAttribute('aria-label','Editează '+row.title);
+    async function change(values,button){if(!client||!moderator||button.disabled||[...richEditors.keys()].some(form=>form.inert))return;if([...richEditors.keys()].some(form=>form.dataset.dirty==='true')&&!confirm('Renunți la modificările nesalvate?'))return;if(values.is_deleted&&!confirm('Ștergi această versiune din site? Arhiva din GitHub și statisticile nu vor fi șterse.'))return;const active=client;for(const b of tools.querySelectorAll('button'))b.disabled=true;try{const result=await active.from('bg3ro_releases').update(values).eq('id',row.id).select('id');if(result.error||!result.data?.length)throw Error();if(client===active&&moderator)await load();}catch{$('#release-load-status').textContent='Modificarea nu a fost salvată. Încearcă din nou.';}finally{for(const b of tools.querySelectorAll('button'))b.disabled=false;}}
+    const visibility=action(row.is_visible?'Ascunde':'Afișează',row.is_visible?'M3 3l18 18M7 7a18 18 0 0 0-6 5c3 5 8 8 13 6M10 5c5-1 9 3 11 7l-4 5':'M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Zm14 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',()=>change({is_visible:!row.is_visible},visibility)),remove=action('Șterge','M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7',()=>change({is_deleted:true},remove));visibility.setAttribute('aria-label',(row.is_visible?'Ascunde ':'Afișează ')+row.title);remove.setAttribute('aria-label','Șterge '+row.title);tools.append(edit,visibility,remove);article.append(tools);
   }
   function card(row) {
     const article = el("article", "card release-card"),
       head = el("div", "release-head"),
       info = el("div");
+    article.dataset.release=row.id;article.dataset.platform=platformOf(row);
+    if(!row.is_visible){article.classList.add('release-is-hidden');info.append(el('span','release-hidden-label','Ascuns — vizibil doar administratorului'));}
     info.append(
       el("h2", "", row.title),
       el(
@@ -244,11 +176,11 @@
     );
     const actions = el("div", "release-actions");
     actions.append(download(row, true));
-    if (moderator) actions.append(editor(row));
     head.append(info, actions);
     if (row.kind !== "translation") {
       article.classList.add("release-card-mod");
-      article.append(head, el("p", "release-description", row.description));
+      const description=el('div','release-description');description.append(window.BG3RO_CONTENT.render(row.description));article.append(head,description);
+      if(moderator)adminTools(row,article);
       return article;
     }
     const notes = el("div", "release-notes"),
@@ -257,12 +189,14 @@
     notes.append(
       notesHeading,
       el("h4", "release-notes-title", row.title),
-      el("p", "", row.description),
+      window.BG3RO_CONTENT.render(row.description),
     );
     article.append(head, notes);
+    if(moderator)adminTools(row,article);
     return article;
   }
   function draw() {
+    disposeEditors();
     const main = $("#translation-releases"),
       extras = $("#extra-releases"),
       news = el("div");
@@ -270,9 +204,8 @@
     extras.replaceChildren();
     news.replaceChildren();
     Object.entries(kinds).forEach(([kind, title]) => {
-      const row = rows.find((r) => r.kind === kind),
-        target = kind === "translation" ? main : extras;
-      if (row) target.append(card(row));
+      const matches=rows.filter(r=>r.kind===kind&&!r.is_deleted&&(moderator||r.is_visible)),seen=new Set(),display=moderator?matches:matches.filter(row=>{const platform=platformOf(row);if(seen.has(platform))return false;seen.add(platform);return true;}),target = kind === "translation" ? main : extras;
+      if (display.length) display.forEach(row=>target.append(card(row)));
       else {
         if (kind === "translation") return;
         const placeholder = el("article", "card release-placeholder");
@@ -287,7 +220,7 @@
         target.append(placeholder);
       }
     });
-    const localizationUpdates = rows.filter((row) => row.kind === "translation").sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
+    const localizationUpdates = rows.filter((row) => row.kind === "translation"&&row.is_visible&&!row.is_deleted).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
     localizationUpdates.forEach((row,index) => {
       const article = el("article", "card release-news"),
         layout = el("div", "post"), content = el("div", "post-content"),
@@ -340,7 +273,7 @@
     $("#release-editor").hidden = !moderator;
     window.BG3RO_NEWS.commit("releases",[...news.children]);
     const latest = rows.find(
-      (r) => r.kind === "translation" && archiveURL(r.download_url),
+      (r) => r.kind === "translation" &&r.is_visible&&!r.is_deleted&&archiveURL(r.download_url),
     );
     $("#github-quick-download").hidden = !latest;
     if (latest) {
@@ -356,19 +289,20 @@
       const result = await client
         .from("bg3ro_releases")
         .select(fields)
+        .eq('is_deleted',false)
         .order("published_at", { ascending: false })
         .limit(100);
       if (ticket !== request) return;
       if (result.error) throw result.error;
       rows = (result.data || []).map(row => {
-        const copy={...row};
+        const copy={...row,platform:platformOf(row),is_visible:row.is_visible!==false,is_deleted:row.is_deleted===true};
         for(const field of ['version','title','description','tags','news_title','news_body','news_badge'])copy[field]=window.BG3RO_VERSIONS.text(copy[field]);
         copy.version=window.BG3RO_VERSIONS.version(copy.version);
         return copy;
       });
       draw();
       $("#release-load-status").textContent = "";
-      window.dispatchEvent(new CustomEvent("bg3ro:releases-updated", { detail: { versions: rows.filter(row => row.kind === "translation").map(row => row.version) } }));
+      window.dispatchEvent(new CustomEvent("bg3ro:releases-updated", { detail: { versions: rows.filter(row => row.kind === "translation"&&row.is_visible&&!row.is_deleted).map(row => row.version) } }));
     } catch (_) {
       if (ticket !== request) return;
       window.dispatchEvent(new CustomEvent("bg3ro:releases-unavailable"));
@@ -384,27 +318,38 @@
     if (rows.length) draw();
     load();
   });
+  const publishing=$('#release-publish-form'),publishingPlatform=platformField($('#release-kind').closest('.form-grid'),'all');publishingPlatform.id='release-platform';publishingPlatform.previousElementSibling.htmlFor=publishingPlatform.id;$('#release-kind').closest('.form-grid').classList.add('release-publish-platform-row');
+  $('#release-kind').closest('.form-grid').insertBefore(publishingPlatform.closest('.field'),$('#release-version').closest('.field'));
+  const archiveChoose=filePicker($('#release-archive'));$('#upload-release-file').classList.add('secondary','small-btn');
+  const publishEnd=el('div','form-end'),publishCancel=el('button','btn release-cancel','Anulează'),publishButton=publishing.querySelector('[type=submit]');publishCancel.type='button';publishButton.textContent='Publică';publishEnd.append(publishCancel,publishButton);publishing.querySelector('.form-status').before(publishEnd);
+  function clearUpload(){for(const selector of ['#release-url','#release-file-name','#release-file-bytes'])$(selector).value='';}
+  publishingPlatform.addEventListener('change',()=>{clearUpload();$('#release-upload-status').textContent='Platforma s-a schimbat. Încarcă arhiva pentru platforma aleasă.';});
+  $('#release-kind').addEventListener('change',()=>{clearUpload();if($('#release-kind').value!=='translation'&&publishingPlatform.value==='all')publishingPlatform.value='windows';});
+  publishCancel.onclick=()=>{if(publishButton.disabled)return;publishing.reset();publishAPI?.reset();$('#release-archive').value='';$('#release-archive').dispatchEvent(new Event('change'));$('#release-upload-status').textContent='';const details=publishing.closest('details');details.open=false;details.querySelector('summary').focus({preventScroll:true});};
+  document.addEventListener('DOMContentLoaded',()=>{if(window.BG3RO_MOUNT_CONTENT_EDITOR)publishAPI=window.BG3RO_MOUNT_CONTENT_EDITOR(publishing,$('#release-description'),{minimum:1,label:'Descrierea versiunii',placeholder:'Descrie versiunea…'});},{once:true});
   $("#upload-release-file").addEventListener("click", async () => {
     if (!client || !moderator) return;
     const button = $("#upload-release-file"),
       status = $("#release-upload-status"),
       publish = $("#release-publish-form button[type=submit]");
     if (button.disabled) return;
-    button.disabled = true;
-    publish.disabled = true;
+    const active=client,controls=[publish,publishCancel,archiveChoose,$('#release-archive'),$('#release-kind'),publishingPlatform];button.disabled = true;
+    controls.forEach(control=>control.disabled=true);status.classList.remove('error');
     try {
-      const data = await uploadArchive($("#release-archive").files[0], status);
+      const data = await uploadArchive($("#release-archive").files[0], status,$('#release-platform').value);
+      if(client!==active||!moderator)throw Error('Sesiunea s-a schimbat. Reconectează-te și încarcă din nou arhiva.');
       $("#release-file-name").value = data.file_name;
       $("#release-file-bytes").value = data.file_bytes;
       $("#release-url").value = data.download_url;
     } catch (error) {
       status.textContent = error.message;
+      status.classList.add('error');
       ["#release-file-name", "#release-file-bytes", "#release-url"].forEach(
         (s) => ($(s).value = ""),
       );
     } finally {
       button.disabled = false;
-      publish.disabled = false;
+      controls.forEach(control=>control.disabled=false);
     }
   });
   $("#release-publish-form").addEventListener("submit", async (e) => {
@@ -414,7 +359,9 @@
       button = form.querySelector("button[type=submit]"),
       status = form.querySelector(".form-status");
     if (button.disabled) return;
+    const active=client;
     const values = Object.fromEntries(new FormData(form));
+    try{if(!publishAPI)throw Error('Editorul nu s-a încărcat. Reîncarcă pagina pentru a păstra formatarea.');values.description=publishAPI.value();}catch(error){status.classList.add('error');status.textContent=error.message;return;}
     if (!archiveURL(values.download_url)) {
       status.textContent =
         "Folosește o arhivă din repository-ul Gabrielish/bg3ro pe GitHub.";
@@ -422,6 +369,7 @@
     }
     values.file_bytes = Number(values.file_bytes);
     button.disabled = true;
+    publishCancel.disabled=true;$('#upload-release-file').disabled=true;form.inert=true;status.classList.remove('error');
     status.textContent = "Se publică…";
     try {
       const result = await client
@@ -429,7 +377,9 @@
         .insert(values)
         .select("id");
       if (result.error || !result.data?.length) throw Error();
+      if(client!==active||!moderator)return;
       form.reset();
+      publishAPI.reset();$('#release-archive').value='';$('#release-archive').dispatchEvent(new Event('change'));
       await load();
       status.textContent = values.kind === "translation"
         ? "Versiunea și anunțul ei au fost publicate."
@@ -439,6 +389,7 @@
         "Publicarea nu a reușit. Verifică drepturile, câmpurile și dacă această versiune există deja.";
     } finally {
       button.disabled = false;
+      publishCancel.disabled=false;$('#upload-release-file').disabled=false;form.inert=false;
     }
   });
 })();

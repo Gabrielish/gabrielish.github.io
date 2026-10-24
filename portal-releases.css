@@ -269,3 +269,33 @@
  .update-field-row{grid-template-columns:minmax(0,1fr)}
  :is(.update-inline-editor,#update-form)>.form-end>.btn{font-size:12px;padding:7px 12px}
 }
+/* Administration only: download button styling above stays unchanged. */
+.release-admin-tools{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px}
+.release-admin-tools>.release-admin-action{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:2px 0;background:none;border:0;border-radius:0;box-shadow:none;color:var(--muted);font-size:12px;font-weight:400}
+.release-admin-tools>.release-admin-action svg{width:15px;height:15px;flex:none}
+.release-admin-tools>.release-admin-action:hover{background:none;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.release-inline-editor{padding:16px;margin-top:14px;border:1px solid var(--line);border-radius:12px;min-width:0;background:var(--panel)}
+:is(.release-inline-editor,#release-publish-form) .field{min-width:0;gap:6px;margin-bottom:12px}
+.release-fields-row{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:12px}
+#release-publish-form>.release-publish-platform-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+:is(.release-inline-editor,#release-publish-form) .field select{min-height:38px;padding:7px 38px 7px 10px;font-size:13px;line-height:22px}
+:is(.release-inline-editor,#release-publish-form)>.form-end{justify-content:flex-end;align-items:center;flex-direction:row;gap:8px;margin-top:10px}
+:is(.release-inline-editor,#release-publish-form)>.form-end>.btn{min-height:36px;padding:7px 14px;font-size:13px;line-height:20px}
+:is(.release-inline-editor,#release-publish-form) .release-cancel{background:none;border:0;box-shadow:none;color:var(--muted);font-weight:400;padding-inline:10px}
+:is(.release-inline-editor,#release-publish-form) .release-cancel:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+.release-inline-editor .form-status:empty,#release-publish-form .form-status:empty,#release-upload-status:empty{display:none}
+.release-inline-editor .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before,#release-publish-form .discussion-editor-content.is-empty .discussion-prosemirror>p:first-child:before{content:'Descrie versiunea…'}
+.release-replacement{border-top:1px solid var(--line);margin-top:18px;padding-top:14px;display:grid;gap:10px;justify-items:start;min-width:0}
+.release-replacement>label{font-size:12px;color:var(--muted)}.release-replacement>.small{margin:0;font-size:12px}
+.release-file-picker{display:flex;align-items:center;flex-wrap:wrap;gap:10px;min-width:0}
+.release-selected-file{font-size:12px;color:var(--muted);overflow-wrap:anywhere;min-width:0}
+.release-file-picker>.btn,.release-replacement>.btn,#upload-release-file{min-height:36px;padding:7px 12px;font-size:12px}
+input.release-archive-input{position:absolute;width:1px;height:1px;min-height:0;padding:0;border:0;overflow:hidden;clip-path:inset(50%)}
+#release-editor>details>summary{font-size:13px;color:var(--gold);cursor:pointer}#release-editor>details>p.small{font-size:12px}
+.release-hidden-label{display:inline-block;font-size:12px;background:#d7bc8a16;color:var(--gold);padding:3px 8px;border-radius:5px;margin-bottom:10px}.release-is-hidden{border-style:dashed}
+:is(.release-notes,.release-description) .rich-content>p{white-space:normal;margin:0 0 10px;font:inherit;color:inherit;line-height:inherit}
+:is(.release-notes,.release-description) .rich-content>ul,:is(.release-notes,.release-description) .rich-content>ol{margin:10px 0;padding-left:24px}
+:is(.release-notes,.release-description) .rich-content>:last-child{margin-bottom:0}
+.release-notes .rich-content h3{display:block;font-size:18px;line-height:1.4;color:inherit;margin:14px 0 10px}
+.release-description:has(.rich-content){white-space:normal}
+@media(max-width:600px){.release-inline-editor{padding:10px}.release-fields-row,#release-publish-form>.release-publish-platform-row{grid-template-columns:minmax(0,1fr)}:is(.release-inline-editor,#release-publish-form) .field select{min-height:40px;font-size:16px}:is(.release-inline-editor,#release-publish-form)>.form-end>.btn{font-size:12px;padding:7px 12px}}

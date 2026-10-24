@@ -27,7 +27,12 @@ const M = '33333333-3333-3333-3333-333333333333';
     const migrations = path.join(__dirname, '../supabase/migrations');
     const baseline = ['20261017_bg3ro_portal.sql','20261017b_bg3ro_public_access.sql'];
     const following = fs.readdirSync(migrations).filter(name=>name.endsWith('.sql')&&!baseline.includes(name)).sort();
-    for (const file of [...baseline,...following]) await db.exec(fs.readFileSync(path.join(migrations,file),'utf8'));
+    for (const file of [...baseline,...following]) {
+      const releaseBackfill=file.endsWith('_release_platform_visibility.sql'),fixture='99999999-1111-4111-8111-999999999999';let snapshot;
+      if(releaseBackfill){await db.exec(`insert into auth.users(id) values('${fixture}');insert into bg3ro_private.moderators(user_id) values('${fixture}');select set_config('request.jwt.claim.sub','${fixture}',false);insert into public.bg3ro_releases(kind,version,title,file_name,file_bytes,download_url,tags,description) values('search','migration-fixture','Păstrează titlul','backfill.rar',128,'https://github.com/Gabrielish/bg3ro/releases/download/qa/backfill.rar','Windows','Păstrează descrierea.');select set_config('request.jwt.claim.sub','',false);`);snapshot=(await db.query("select to_jsonb(r) as snapshot from public.bg3ro_releases r where version='migration-fixture'")).rows[0].snapshot;}
+      await db.exec(fs.readFileSync(path.join(migrations,file),'utf8'));
+      if(releaseBackfill){const migrated=(await db.query("select to_jsonb(r)-array['platform','is_visible','is_deleted'] as snapshot,platform from public.bg3ro_releases r where version='migration-fixture'")).rows[0];assert.deepEqual(migrated.snapshot,snapshot,'Backfill preserves every existing field');assert.equal(migrated.platform,'windows');assert.equal((await db.query("select tgenabled from pg_trigger where tgname='bg3ro_release_avatar'")).rows[0].tgenabled,'O');await db.exec(`delete from public.bg3ro_releases where version='migration-fixture';delete from bg3ro_private.moderators where user_id='${fixture}';delete from auth.users where id='${fixture}';`);}
+    }
     await db.query('insert into bg3ro_private.moderators values($1)', [M]);
     const role = async (id = null) => {
       await db.exec('reset role');
@@ -187,6 +192,7 @@ const M = '33333333-3333-3333-3333-333333333333';
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/report-image-editing.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/project-gallery.sql'),'utf8'));
     await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/about-sections.sql'),'utf8'));
+    await db.exec(fs.readFileSync(path.join(__dirname,'../supabase/tests/release-platform-visibility.sql'),'utf8'));
     console.log('PASS: portal migrations, role isolation, column privileges, rate limits, contact inbox, screenshots, manual update metadata validation, administrator-only editing/deletion, release isolation and private reaction aggregates/toggle permissions.');
   } finally { await db.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

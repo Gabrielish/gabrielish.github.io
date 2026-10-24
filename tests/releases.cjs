@@ -1,141 +1,28 @@
-const {clickNav}=require('./nav-action.cjs');
-// Synthetic UI data only. Actual database permissions are tested in releases-access.sql.
-const {chromium}=require('playwright');
-const fs=require('node:fs');
-const assert=require('node:assert/strict');
-const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
-let sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>'));
-sdk=sdk.replace('comments:[],reports:[],updates:[]','comments:[],reports:[],updates:[],releases:window.__qaReleases||[]')
-  .replace("project_updates:'updates'","project_updates:'updates',releases:'releases'")
-  .replace('state[key].unshift(row);return{data:null,error:null}',"state[key].unshift(row);return{data:key==='releases'?[row]:null,error:null}")
-  .replace('return{data:null,error:null}}',"return{data:key==='releases'?state[key].filter(matches):null,error:null}}")
-  .replace("key==='updates'||","key==='updates'||key==='releases'||");
-sdk=sdk.replace('const client={',`const client={functions:{invoke:async(_name,options)=>{
- if(state.failInsert)return{error:{context:{json:async()=>({message:'Configurează GITHUB_UPLOAD_TOKEN.'})}}};
- return{data:{file_name:options.body.name,file_bytes:options.body.size,download_url:"https://raw.githubusercontent.com/Gabrielish/bg3ro/${'a'.repeat(40)}/Baldur's%20Gate%203%20Romanian%20Translate/"+encodeURIComponent(options.body.name),message:'Arhiva a fost încărcată.'},error:null};
-}},`);
-(async()=>{
-  fs.mkdirSync('.qa',{recursive:true});
-  const browser=await chromium.launch({channel:'msedge',headless:true});
-  try{
-    for(const owner of [false,true]){
-      const p=await browser.newPage({viewport:{width:owner?1440:390,height:1000},reducedMotion:'reduce'});
-      await p.route('https://baldursgate3.game/**',r=>r.abort());
-      await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test-project.supabase.co',supabasePublishableKey:'test-key'};"}));
-      await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
-      await p.addInitScript(isOwner=>{window.__qaOwner=isOwner;window.__qaReleases=['translation','search','item_gender','combat_log'].map((kind,i)=>({id:`test-${i}`,author_name:'Gabrielish',kind,version:'0.1',title:`Versiune de test ${kind}`,file_name:`test-${kind}.zip`,file_bytes:1048576,download_url:`https://github.com/Gabrielish/bg3ro/releases/download/test/test-${kind}.zip`,tags:'Windows, Early Access',description:'Descriere sintetică, nu o versiune reală.',published_at:'2026-10-17T12:00:00Z'}));},owner);
-      const errors=[];p.on('pageerror',e=>errors.push(e.message));
-      await p.goto(process.env.BG3RO_TEST_URL||'http://127.0.0.1:4173/',{waitUntil:'networkidle'});
-      await p.waitForSelector('#updates-feed .release-news',{state:'attached'});
-      assert.equal(await p.locator('#updates-feed .release-news').count(),1,'Only localization appears in Updates');
-      assert((await p.locator('#updates-feed').textContent()).includes('Versiune de test translation'));
-      for(const kind of ['search','item_gender','combat_log'])assert(!(await p.locator('#updates-feed').textContent()).includes(`Versiune de test ${kind}`),'Mod announcements are excluded');
-      assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.1'],'Version dropdown uses published base translations only');
-      const badge=p.locator('#updates-feed .release-version-badge').first();
-      assert.equal(await badge.textContent(),'Versiunea 0.1');
-      assert.equal(await badge.locator('svg[aria-hidden="true"] path').count(),1);
-      assert.deepEqual(await badge.evaluate(el=>{const s=getComputedStyle(el);return [s.borderRadius,s.padding,s.fontSize,s.lineHeight,s.gap,s.color];}),['9999px','2px 8px','12px','16px','4px','oklch(0.723 0.219 149.579)']);
-      assert.equal(await p.locator('#extra-releases .release-card').count(),3);
-      assert.equal(await p.locator('#extra-releases .release-card-mod').count(),3);
-      assert.equal(await p.locator('#extra-releases .release-notes,#extra-releases .release-notes-title').count(),0,'Mods have no nested changelog or duplicate title');
-      assert.equal(await p.locator('#extra-releases .release-description').count(),3,'Each mod keeps its description');
-      assert.equal(await p.locator('#extra-releases .release-download').count(),3,'All downloads remain available');
-      assert.equal(await p.locator('#extra-releases .release-card').first().evaluate(el=>getComputedStyle(el).padding),owner?'20px 22px':'18px');
-      assert.equal(await p.locator('#release-editor:visible').count(),0);
-      assert.equal(await p.locator('.hero-cta').getAttribute('href'),'#descarcari');
-      assert.equal(await p.locator('.hero-cta').getAttribute('download'),null);
-      assert.equal(await p.locator('.hero-cta').getAttribute('data-release-id'),null,'Navigation is not a download event');
-      assert.match(await p.locator('#github-quick-download').getAttribute('href'),/test-translation.zip/);
-      await p.locator('.hero-cta').click();
-      assert.equal(await p.evaluate(()=>location.hash),'#descarcari');
-      assert(await p.locator('#descarcari').isVisible());
-      const latestBox=await p.locator('#translation-releases').boundingBox();
-      assert(latestBox.y>=0 && latestBox.y<950,'Hero scrolls to the latest translation');
-      const downloadButton=p.locator('#translation-releases .release-download');
-      assert.equal(await downloadButton.textContent(),'Descarcă fișier ZIP');
-      assert.equal(await downloadButton.locator('svg[aria-hidden="true"]').count(),1);
-      assert.equal(await downloadButton.getAttribute('download'),'test-translation.zip');
-      assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundImage),'none');
-      assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundColor),await p.locator('#github-quick-download').evaluate(el=>getComputedStyle(el).backgroundColor),'Same cream as sidebar download');
-      assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).color),'rgb(23, 21, 15)');
-      const restingGlow=await downloadButton.evaluate(el=>getComputedStyle(el).boxShadow);
-      await downloadButton.hover();assert.equal(await downloadButton.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
-      assert.notEqual(await downloadButton.evaluate(el=>getComputedStyle(el).boxShadow),restingGlow,'Warm glow increases on hover');
-      await p.mouse.move(0,0);
-      assert.equal(await p.locator('#translation-releases .release-notes h3 svg').count(),1);
-      assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Versiune de test translation');
-      assert.equal(await p.locator('#updates-feed .release-news .post-title').textContent(),'Versiune de test translation');
-      assert.equal(await p.locator('#updates-feed .release-news a[download]').count(),0);
-      assert.equal(await p.locator('#updates-feed .release-news .btn').count(),0);
-      assert.equal(await p.locator('#updates-feed .release-author-avatar').count(),1);
-      const newsLink=p.locator('#updates-feed .release-news-link');
-      assert.equal(await newsLink.textContent(),'Descărcări');
-      assert.equal(await newsLink.getAttribute('href'),'#descarcari');
-      assert.equal(await newsLink.locator('svg[aria-hidden=true] path').count(),1);
-      assert.equal(await newsLink.evaluate(el=>getComputedStyle(el,'::before').content),'none','Separator is not part of the link');
-      assert.equal(await p.locator('#updates-feed .release-news-separator').textContent(),'·');
-      assert.equal(await p.locator('#updates-feed .post-content .post-title').count(),1);
-      assert.equal(await p.locator('#updates-feed .post > .post-avatar').count(),1);
-      assert.equal(await p.locator('#updates-feed .post-meta').evaluate(el=>getComputedStyle(el).marginBottom),'12px');
-      assert.equal(await p.locator('#updates-feed .post').evaluate(el=>getComputedStyle(el).gap),owner?'16px':'10px');
-      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopWidth),'1px');
-      const nexusRestingBackground=await p.locator('.quick-download a[href*="nexusmods"]').evaluate(el=>getComputedStyle(el).backgroundColor);
-      assert.equal(nexusRestingBackground,'rgb(24, 25, 25)');
-      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).backgroundColor),nexusRestingBackground,'Release notes match the non-hovered Nexus button');
-      await p.locator('#translation-releases .release-notes').hover();
-      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).backgroundColor),nexusRestingBackground,'Release notes do not acquire a button hover state');
-      assert.equal(await p.locator('#translation-releases .release-notes').evaluate(el=>getComputedStyle(el).borderTopColor),'rgb(57, 52, 41)','Subtle warm gold border');
-      const earlyAccessBox=await p.locator('.quick-download .small').boundingBox(),nexusBox=await p.locator('.quick-download a[href*="nexusmods"]').boundingBox();
-      assert(earlyAccessBox.y-(nexusBox.y+nexusBox.height)>=11.5,'Early Access label has space above it');
-      assert.equal(await p.locator('#release-load-status').isVisible(),false,'Empty status must not shift the release');
-      assert.equal(await p.locator('#translation-releases a[href*="nexusmods"]').count(),0,'Nexus download belongs only in the sidebar');
-      if(owner){
-        const left=await p.locator('#translation-releases .release-card').first().boundingBox(),right=await p.locator('.quick-download').boundingBox();
-        assert(Math.abs(left.y-right.y)<=1,'Download release and sidebar must have aligned top borders');
-      }
-      assert.match(await p.locator('#translation-releases .release-file').textContent(),/test-translation.zip · 1 MB/);
-      assert.equal(await p.locator('.release-edit:visible').count(),0);
-      await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
-      if(owner){
-        await p.waitForSelector('#release-editor',{state:'visible'});
-        const downloadBox=await p.locator('#translation-releases .release-actions > a').boundingBox();
-        const pencilBox=await p.locator('#translation-releases .release-actions > .edit-control > button').boundingBox();
-        assert(pencilBox.x>=downloadBox.x+downloadBox.width,'Pencil sits to the right of download');
-        assert(Math.abs(pencilBox.y-downloadBox.y)<1,'Download and pencil share top alignment');
-        await p.locator('#translation-releases .edit-control > .edit-pencil').click();
-        await p.locator('#translation-releases .edit-dialog input[name=title]').fill('Titlul ales de administrator');
-        await p.locator('#translation-releases textarea').fill('<img src=x onerror=alert(1)> Notă editată.');
-        await p.locator('#translation-releases .edit-dialog form button').click();
-        await p.waitForFunction(()=>document.querySelector('#updates-feed').textContent.includes('Notă editată.'));
-        assert.equal(await p.locator('#updates-feed .post-body img').count(),0);
-        assert.equal(await p.locator('#updates-feed .release-news .post-title').textContent(),'Titlul ales de administrator');
-        assert.equal(await p.locator('#translation-releases .release-notes-title').textContent(),'Titlul ales de administrator');
-        await p.locator('#release-editor summary').click();
-        await p.locator('#release-version').fill('0.2');await p.locator('#release-title').fill('Versiune nouă de test');
-        await p.locator('#release-archive').setInputFiles({name:'new.zip',mimeType:'application/zip',buffer:Buffer.alloc(2097152)});
-        await p.evaluate(()=>window.__communityTest.failInsert=true);await p.locator('#upload-release-file').click();
-        await p.waitForFunction(()=>document.querySelector('#release-upload-status').textContent.includes('GITHUB_UPLOAD_TOKEN'));
-        assert.equal(await p.locator('#release-url').inputValue(),'');
-        await p.evaluate(()=>window.__communityTest.failInsert=false);await p.locator('#upload-release-file').click();
-        await p.waitForFunction(()=>document.querySelector('#release-file-name').value==='new.zip');
-        assert.equal(await p.locator('#release-file-bytes').inputValue(),'2097152');
-        await p.locator('#release-description').fill('Modificări de test pentru versiunea 0.2.');
-        await p.locator('#release-publish-form button').click();
-        await p.waitForFunction(()=>document.querySelector('#updates-feed').textContent.includes('Versiune nouă de test'));
-        assert.deepEqual(await p.locator('#compatibility-version option').evaluateAll(nodes=>nodes.map(n=>n.value)),['','0.2','0.1'],'New publications update the compatibility dropdown');
-        assert.match(await p.locator('#translation-releases .release-head > div:not(.release-actions) > h2').textContent(),/Versiune nouă de test/);
-        await p.locator('.hero-cta').click();assert.equal(await p.locator('.hero-cta').getAttribute('href'),'#descarcari');
-        assert(await p.locator('#translation-releases .release-head > div:not(.release-actions) > h2').isVisible(),'Hero continues navigating to the latest version after publication');
-        await p.locator('#tab-actualizari').click();
-        await p.locator('#updates-feed').screenshot({path:'.qa/releases-updates-desktop.png'});
-        await p.locator('#updates-feed a').first().click();assert(await p.locator('#descarcari').isVisible());
-      }else assert.equal(await p.locator('#release-editor:visible').count(),0,'Discord profile metadata cannot grant publishing rights');
-      assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-      await p.locator('#descarcari').screenshot({path:`.qa/releases-downloads-${owner?'desktop':'mobile'}.png`});
-      await clickNav(p,'#sign-out');await p.waitForSelector('#sign-out',{state:'hidden'});
-      assert.equal(await p.locator('.release-edit:visible').count(),0);
-      assert.deepEqual(errors,[]);await p.close();
-    }
-    console.log('PASS: linked release/news cards, metadata, publication/edit synchronization, safe text, owner UI, anonymous downloads, mobile layout and logout. Synthetic SDK; no real files uploaded.');
-  }finally{await browser.close();}
-})().catch(e=>{console.error(e);process.exitCode=1});
+// Synthetic SDK only: no real GitHub archives are uploaded or removed.
+const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('node:assert/strict'),{clickNav}=require('./nav-action.cjs');
+const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');let sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>'));
+sdk=sdk.replace('const moderator=()=>',"state.releases=window.__qaReleases;state.uploads=0;const moderator=()=>")
+ .replace("if(name==='project_status'){",`if(name==='releases'){
+  const matches=row=>this.filters.every(([k,v])=>row[k]===v);let data=state.releases.filter(matches).filter(row=>moderator()||(!row.is_deleted&&row.is_visible));
+  if(this.operation!=='select'&&!moderator())return{data:null,error:{message:'Denied'}};
+  if(this.operation==='update'){if(state.failRelease)return{data:null,error:{message:'Network error'}};data.forEach(row=>Object.assign(row,this.payload));}
+  if(this.operation==='insert'){if(state.failRelease)return{data:null,error:{message:'Network error'}};if(state.releases.some(row=>!row.is_deleted&&row.kind===this.payload.kind&&row.version===this.payload.version&&row.platform===this.payload.platform))return{data:null,error:{message:'Duplicate'}};const row={id:crypto.randomUUID(),published_at:new Date().toISOString(),is_visible:true,is_deleted:false,author_name:'Gabrielish',...this.payload};state.releases.unshift(row);data=[row];}
+  data=[...data].sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));return{data:this.single?data[0]||null:JSON.parse(JSON.stringify(data)),error:null};
+ }if(name==='project_status'){`)
+ .replace('const client={',`const client={functions:{invoke:async(name,options)=>{state.uploads++;if(state.failUpload)return{error:{context:{json:async()=>({message:'Încărcare de test eșuată.'})}}};return{data:{file_name:options.body.name,file_bytes:options.body.size,download_url:"https://raw.githubusercontent.com/Gabrielish/bg3ro/${'a'.repeat(40)}/Baldur's%20Gate%203%20Romanian%20Translate/"+encodeURIComponent(options.body.name),message:'Arhivă de test încărcată.'},error:null};}},`);
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{for(const width of [320,390,1440]){
+ const p=await browser.newPage({viewport:{width,height:1100},reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.route('https://baldursgate3.game/**',r=>r.abort());await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test'};"}));await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
+ await p.addInitScript(()=>{window.__qaOwner=true;window.__qaReleases=[['base','translation','all','0.9','Traducere nouă','base.rar','2026-10-20'],['old','translation','all','0.7','Traducere anterioară','old.rar','2026-10-18'],['search-win','search','windows','0.1','Căutare Windows','search-win.rar','2026-10-20'],['search-mac','search','macos','0.1','Căutare macOS','search-mac.rar','2026-10-20'],['item-win','item_gender','windows','0.1','Etichete Windows','item-win.rar','2026-10-20'],['combat-win','combat_log','windows','0.1','Jurnal Windows','combat-win.rar','2026-10-20']].map(([id,kind,platform,version,title,file_name,date])=>({id,kind,platform,version,title,file_name,file_bytes:1048576,download_url:'https://github.com/Gabrielish/bg3ro/releases/download/test/'+file_name,tags:platform==='all'?'Windows, macOS':platform==='windows'?'Windows':'macOS',description:'Descrierea originală a versiunii.\n\n• O modificare de test.',author_name:'Gabrielish',published_at:date+'T12:00:00Z',is_visible:true,is_deleted:false}));});
+ await p.goto('http://127.0.0.1:4173/#descarcari',{waitUntil:'networkidle'});await p.waitForSelector('[data-release=base]');assert.equal(await p.locator('#translation-releases>.release-card').count(),1);assert.equal(await p.locator('#extra-releases>.release-card').count(),4);assert.equal(await p.locator('.release-admin-tools').count(),0);assert.equal(await p.locator('#updates-feed>.release-news').count(),2);
+ const download=p.locator('[data-release=base] .release-download'),style=el=>{const s=getComputedStyle(el);return [s.minHeight,s.padding,s.fontSize,s.lineHeight,s.borderRadius,s.backgroundColor,s.color,s.boxShadow];};const before=await download.evaluate(style);assert.deepEqual(before.slice(0,5),['44px','10px 16px','14px','20px','12px']);assert.equal(await download.textContent(),'Descarcă fișier RAR');assert.equal(await download.getAttribute('download'),'base.rar');await download.hover();assert.equal(await download.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');await p.mouse.move(0,0);
+ await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('.release-admin-tools');assert.equal(await p.locator('#descarcari dialog').count(),0);assert.equal(await p.locator('#translation-releases>.release-card').count(),2);assert.deepEqual(await download.evaluate(style),before,'Download styling is unchanged for administrators');
+ const base=p.locator('[data-release=base]');await base.getByRole('button',{name:'Editează Traducere nouă',exact:true}).click();let form=base.locator('.release-inline-editor');assert.equal(await form.locator('.discussion-toolbar').count(),1);assert.equal(Math.round((await form.locator('[name=title]').boundingBox()).height),width<=600?40:38);assert.equal(Math.round((await form.getByRole('button',{name:'Salvează',exact:true}).boundingBox()).height),36);await form.locator('.discussion-prosemirror').fill('Ciornă nesalvată.');await form.getByRole('button',{name:'Anulează',exact:true}).click();assert.equal(await form.count(),0);assert((await base.locator('.release-notes').textContent()).includes('Descrierea originală'));
+ await base.getByRole('button',{name:'Editează Traducere nouă',exact:true}).click();form=base.locator('.release-inline-editor');await form.locator('[name=title]').fill('Traducere revizuită');await form.locator('.discussion-prosemirror').fill('<img src=x onerror=alert(1)> Text revizuit.');await form.locator('.discussion-prosemirror').press('ControlOrMeta+a');await form.getByRole('button',{name:'Aldin',exact:true}).click();await p.evaluate(()=>window.__communityTest.failRelease=true);await form.getByRole('button',{name:'Salvează',exact:true}).click();await form.locator('.form-status.error').waitFor();assert(await form.locator('.discussion-prosemirror strong').count());await p.evaluate(()=>window.__communityTest.failRelease=false);await form.getByRole('button',{name:'Salvează',exact:true}).click();await form.waitFor({state:'detached'});assert.equal(await base.locator('.release-notes img').count(),0);assert(await base.locator('.release-notes strong').count());assert((await p.locator('#updates-feed').textContent()).includes('Traducere revizuită'));
+ await base.getByRole('button',{name:'Editează Traducere revizuită',exact:true}).click();form=base.locator('.release-inline-editor');await form.locator('.discussion-prosemirror').fill('Ciornă păstrată în timpul înlocuirii.');const archive={name:'base-new.rar',mimeType:'application/octet-stream',buffer:Buffer.alloc(128)};await form.locator('[type=file]').setInputFiles({...archive,name:'search-mac.rar'});const uploadBefore=await p.evaluate(()=>window.__communityTest.uploads);await form.getByRole('button',{name:'Încarcă și înlocuiește fișierul',exact:true}).click();await form.locator('.release-replacement .form-status.error').waitFor();assert.equal(await p.evaluate(()=>window.__communityTest.uploads),uploadBefore,'Cross-platform filename collision is rejected before upload');
+ await form.locator('[type=file]').setInputFiles(archive);await form.getByRole('button',{name:'Încarcă și înlocuiește fișierul',exact:true}).click();await p.waitForFunction(()=>window.__communityTest.releases.find(r=>r.id==='base').file_name==='base-new.rar');assert.equal(await form.locator('.discussion-prosemirror').textContent(),'Ciornă păstrată în timpul înlocuirii.');await form.getByRole('button',{name:'Anulează',exact:true}).click();assert.equal(await base.locator('.release-download').getAttribute('download'),'base-new.rar');assert.deepEqual(await base.locator('.release-download').evaluate(style),before);
+ await base.getByRole('button',{name:'Ascunde Traducere revizuită',exact:true}).click();await base.locator('.release-hidden-label').waitFor();assert.equal(await p.locator('#github-quick-download').getAttribute('download'),'old.rar');assert(!(await p.locator('#updates-feed').textContent()).includes('Traducere revizuită'));await base.getByRole('button',{name:'Afișează Traducere revizuită',exact:true}).click();await p.waitForFunction(()=>!document.querySelector('[data-release=base] .release-hidden-label'));assert.equal(await p.locator('#github-quick-download').getAttribute('download'),'base-new.rar');
+ const win=p.locator('[data-release=search-win]');p.once('dialog',d=>d.dismiss());await win.getByRole('button',{name:'Șterge Căutare Windows',exact:true}).click();assert(await win.isVisible());p.once('dialog',d=>d.accept());await win.getByRole('button',{name:'Șterge Căutare Windows',exact:true}).click();await win.waitFor({state:'detached'});assert.equal(await p.evaluate(()=>window.__communityTest.releases.find(r=>r.id==='search-win').download_url),'https://github.com/Gabrielish/bg3ro/releases/download/test/search-win.rar');assert(await p.locator('[data-release=search-mac]').isVisible());
+ await p.locator('#release-editor summary').click();const publish=p.locator('#release-publish-form');assert.equal(await publish.locator('.discussion-toolbar').count(),1);await publish.locator('[name=kind]').selectOption('item_gender');await publish.locator('[name=platform]').selectOption('macos');await publish.locator('[name=version]').fill('0.1');await publish.locator('[name=title]').fill('Etichete macOS');await publish.locator('.discussion-prosemirror').fill('Pachet macOS de test, nu o arhivă reală.');await publish.locator('.discussion-prosemirror').press('ControlOrMeta+a');await publish.getByRole('button',{name:'Aldin',exact:true}).click();await p.locator('#release-archive').setInputFiles({...archive,name:'item-mac.rar'});await p.evaluate(()=>window.__communityTest.failUpload=true);await p.locator('#upload-release-file').click();await p.locator('#release-upload-status.error').waitFor();assert.equal(await p.locator('#release-url').inputValue(),'');await p.evaluate(()=>window.__communityTest.failUpload=false);await p.locator('#upload-release-file').click();await p.waitForFunction(()=>document.querySelector('#release-url').value.includes('item-mac.rar'));
+ await publish.locator('[name=platform]').selectOption('windows');assert.equal(await p.locator('#release-url').inputValue(),'','Changing the platform invalidates uploaded metadata');await publish.locator('[name=platform]').selectOption('macos');await p.locator('#upload-release-file').click();await p.waitForFunction(()=>document.querySelector('#release-url').value.includes('item-mac.rar'));await publish.screenshot({path:`.qa/release-publish-inline-${width}.png`});const newsBefore=await p.locator('#updates-feed>.release-news').count();await p.evaluate(()=>window.__communityTest.failRelease=true);await publish.getByRole('button',{name:'Publică',exact:true}).click();await p.waitForFunction(()=>document.querySelector('#release-publish-form .form-status').textContent.includes('nu a reușit'));assert(await publish.locator('.discussion-prosemirror strong').count());await p.evaluate(()=>window.__communityTest.failRelease=false);await publish.getByRole('button',{name:'Publică',exact:true}).click();await p.waitForFunction(()=>window.__communityTest.releases.some(r=>r.title==='Etichete macOS'));assert.equal(await p.locator('#updates-feed>.release-news').count(),newsBefore,'Mods never create translation news');const mac=p.locator('.release-card').filter({has:p.getByRole('heading',{name:'Etichete macOS',exact:true})});assert(await mac.isVisible());assert(await p.locator('[data-release=item-win]').isVisible());assert.equal(await mac.locator('.release-description strong').count(),1);await mac.getByRole('button',{name:'Editează Etichete macOS',exact:true}).click();await mac.locator('.release-inline-editor').screenshot({path:`.qa/release-edit-inline-${width}.png`});await mac.getByRole('button',{name:'Anulează',exact:true}).click();await mac.getByRole('button',{name:'Ascunde Etichete macOS',exact:true}).click();await mac.locator('.release-hidden-label').waitFor();
+ await clickNav(p,'#sign-out');await p.waitForFunction(()=>!document.querySelector('.release-admin-tools'));assert.equal(await mac.count(),0);assert.equal(await p.locator('[data-release=search-win]').count(),0);assert(await p.locator('[data-release=search-mac]').isVisible());assert.equal(await p.locator('.release-inline-editor').count(),0);assert.equal(await p.locator('#release-editor').isVisible(),false);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await p.close();
+}console.log('PASS: inline release publishing/editing/replacement, preserved RAR buttons, compact rich forms, Windows/macOS coexistence, upload collisions/errors, draft retention, hide/show/delete and anonymous isolation at 320/390/1440px.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

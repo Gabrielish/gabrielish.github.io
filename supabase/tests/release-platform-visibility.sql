@@ -1,0 +1,45 @@
+begin;
+select set_config('qa.release_admin',gen_random_uuid()::text,true),set_config('qa.release_member',gen_random_uuid()::text,true),set_config('qa.release_version',gen_random_uuid()::text,true);
+insert into auth.users(id) values(current_setting('qa.release_admin')::uuid),(current_setting('qa.release_member')::uuid);
+insert into bg3ro_private.moderators(user_id) values(current_setting('qa.release_admin')::uuid);
+create function pg_temp.release_denied(command text) returns void language plpgsql security invoker as $$begin begin execute command;exception when others then return;end;raise exception 'Unauthorized/invalid release write succeeded';end;$$;
+select set_config('request.jwt.claim.sub',current_setting('qa.release_admin'),true),set_config('request.jwt.claims','{}',true);
+set local role authenticated;
+insert into public.bg3ro_releases(kind,version,platform,title,file_name,file_bytes,download_url,description) values
+ ('search',current_setting('qa.release_version'),'windows','Test Windows','qa-win.rar',128,'https://github.com/Gabrielish/bg3ro/releases/download/qa/qa-win.rar','Descriere Windows.'),
+ ('search',current_setting('qa.release_version'),'macos','Test macOS','qa-mac.rar',128,'https://github.com/Gabrielish/bg3ro/releases/download/qa/qa-mac.rar','Descriere macOS.');
+select set_config('qa.release_win',(select id::text from public.bg3ro_releases where version=current_setting('qa.release_version') and platform='windows'),true),set_config('qa.release_mac',(select id::text from public.bg3ro_releases where version=current_setting('qa.release_version') and platform='macos'),true);
+do $$begin if (select count(*) from public.bg3ro_releases where version=current_setting('qa.release_version'))<>2 then raise exception 'Windows and macOS cannot coexist';end if;end;$$;
+select pg_temp.release_denied(format('insert into public.bg3ro_releases(kind,version,platform,title,file_name,file_bytes,download_url,description) values(''search'',%L,''windows'',''Duplicat'',''qa.rar'',128,''https://github.com/Gabrielish/bg3ro/releases/download/qa/qa.rar'',''Duplicat'')',current_setting('qa.release_version')));
+select pg_temp.release_denied(format('update public.bg3ro_releases set platform=''linux'' where id=%L',current_setting('qa.release_win')));
+update public.bg3ro_releases set is_visible=false where id=current_setting('qa.release_win')::uuid;
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role anon;
+do $$begin if exists(select 1 from public.bg3ro_releases where id=current_setting('qa.release_win')::uuid) then raise exception 'Anonymous can read hidden release';end if;if not exists(select 1 from public.bg3ro_releases where id=current_setting('qa.release_mac')::uuid) then raise exception 'macOS release disappeared with Windows';end if;end;$$;
+select pg_temp.release_denied(format('update public.bg3ro_releases set is_visible=true where id=%L',current_setting('qa.release_win')));
+reset role;
+select set_config('request.jwt.claim.sub',current_setting('qa.release_member'),true),set_config('request.jwt.claims','{"is_anonymous":true}',true);
+set local role authenticated;
+do $$declare affected integer;begin
+ if exists(select 1 from public.bg3ro_releases where id=current_setting('qa.release_win')::uuid) then raise exception 'Guest can read hidden release';end if;
+ update public.bg3ro_releases set is_deleted=true,platform='windows' where id=current_setting('qa.release_mac')::uuid;get diagnostics affected=row_count;if affected<>0 then raise exception 'Guest changed release';end if;
+end;$$;
+reset role;
+select set_config('request.jwt.claims','{}',true);
+set local role authenticated;
+do $$declare affected integer;begin update public.bg3ro_releases set description='Atac' where id=current_setting('qa.release_mac')::uuid;get diagnostics affected=row_count;if affected<>0 then raise exception 'Member changed release';end if;end;$$;
+reset role;
+select set_config('request.jwt.claim.sub',current_setting('qa.release_admin'),true);
+set local role authenticated;
+update public.bg3ro_releases set is_visible=true,description='Text actualizat.' where id=current_setting('qa.release_win')::uuid;
+update public.bg3ro_releases set is_deleted=true where id=current_setting('qa.release_win')::uuid;
+do $$begin if not exists(select 1 from public.bg3ro_releases where id=current_setting('qa.release_win')::uuid and file_name='qa-win.rar' and file_bytes=128 and download_url='https://github.com/Gabrielish/bg3ro/releases/download/qa/qa-win.rar') then raise exception 'Soft deletion changed archive metadata';end if;end;$$;
+select pg_temp.release_denied(format('delete from public.bg3ro_releases where id=%L',current_setting('qa.release_win')));
+insert into public.bg3ro_releases(kind,version,platform,title,file_name,file_bytes,download_url,description) values('search',current_setting('qa.release_version'),'windows','Înlocuitor Windows','qa-win-new.rar',128,'https://github.com/Gabrielish/bg3ro/releases/download/qa/qa-win-new.rar','Pachet nou, după ștergere.');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role anon;
+do $$begin if exists(select 1 from public.bg3ro_releases where id=current_setting('qa.release_win')::uuid) then raise exception 'Deleted release remains public';end if;if (select count(*) from public.bg3ro_releases where version=current_setting('qa.release_version'))<>2 then raise exception 'Republishing affected the other platform';end if;end;$$;
+reset role;
+rollback;
