@@ -56,3 +56,12 @@ input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
 }
 .field :is(input,textarea,select):autofill{background-color:var(--field-bg);color:var(--field-text);box-shadow:0 0 0 1000px var(--field-bg) inset}
 @media(forced-colors:active){.field :is(input,textarea,select):-webkit-autofill{-webkit-text-fill-color:FieldText;box-shadow:none;-webkit-box-shadow:none}}
+/* Dim only published content; management controls and editors stay readable. */
+.card.is-content-hidden{border-color:#393a3b}
+.is-content-hidden[data-about-section]>:is(h2,.card-header,.about-section-content,.project-gallery-empty),
+.is-content-hidden>.project-gallery-header>h2,
+.is-content-hidden .project-gallery-open,
+.is-content-hidden>.post>.post-avatar,
+.is-content-hidden>.post>.post-content>:is(.post-meta,.manual-update-header,.post-title,.rich-content),
+.is-content-hidden>.release-head>div:first-child,
+.is-content-hidden>:is(.release-description,.release-notes){filter:grayscale(1);opacity:.5}

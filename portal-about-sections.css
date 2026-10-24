@@ -5,8 +5,6 @@
 .about-section-tools{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px}
 .about-section-action{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:2px 0;background:none;border:0;border-radius:0;box-shadow:none;color:var(--muted);font-size:12px;font-weight:400}
 .about-section-action svg{flex:none}.about-section-action:hover{background:none;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
-.about-section-hidden{display:inline-block;color:var(--gold);background:#d7bc8a16;border-radius:5px;padding:3px 8px;margin:0 0 14px;font-size:12px}
-.is-section-hidden{border-style:dashed!important}
 .about-section-editor{padding:16px;margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
 .about-section-editor>.field{gap:6px;margin-bottom:12px}.about-section-editor>.form-end{display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px}
 .about-section-editor>.form-end>.btn{min-height:36px;padding:7px 14px;font-size:13px;line-height:20px}

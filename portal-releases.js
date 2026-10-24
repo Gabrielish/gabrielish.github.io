@@ -164,7 +164,7 @@
       head = el("div", "release-head"),
       info = el("div");
     article.dataset.release=row.id;article.dataset.platform=platformOf(row);
-    if(!row.is_visible){article.classList.add('release-is-hidden');info.append(el('span','release-hidden-label','Ascuns — vizibil doar administratorului'));}
+    if(!row.is_visible)article.classList.add('release-is-hidden','is-content-hidden');
     info.append(
       el("h2", "", row.title),
       el(

@@ -244,7 +244,6 @@
 .manual-update-toolbar>.btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .manual-update .post-meta strong{overflow-wrap:anywhere}
 #updates-feed{display:grid;gap:20px}
-.news-is-hidden{border-style:dashed}.news-hidden-label{display:inline-block;font-size:12px;line-height:1.5;color:var(--gold);background:#d7bc8a16;padding:3px 8px;border-radius:5px}
 .update-inline-editor{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
 .update-inline-editor>.form-end,#update-form>.form-end{display:flex;flex-direction:row;justify-content:flex-end;gap:10px;margin:14px 0 0}
 .update-inline-editor .update-cancel{background:none;border:0;box-shadow:none;color:var(--muted)}
@@ -300,7 +299,6 @@ input.release-archive-input{position:absolute;width:1px;height:1px;min-height:0;
 #admin-tools>.inline-update-publish>summary::marker,#release-editor>details>summary::marker{content:''}
 #admin-tools>.inline-update-publish>summary>svg,#release-editor>details>summary>svg{width:16px;height:16px;flex:none}
 #admin-tools>.inline-update-publish>summary:hover,#release-editor>details>summary:hover{background:none;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
-.release-hidden-label{display:inline-block;font-size:12px;background:#d7bc8a16;color:var(--gold);padding:3px 8px;border-radius:5px;margin-bottom:10px}.release-is-hidden{border-style:dashed}
 :is(.release-notes,.release-description) .rich-content>p{white-space:normal;margin:0 0 10px;font:inherit;color:inherit;line-height:inherit}
 :is(.release-notes,.release-description) .rich-content>ul,:is(.release-notes,.release-description) .rich-content>ol{margin:10px 0;padding-left:24px}
 :is(.release-notes,.release-description) .rich-content>:last-child{margin-bottom:0}

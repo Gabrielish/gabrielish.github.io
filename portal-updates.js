@@ -41,7 +41,7 @@
    if(remote)avatar.addEventListener('error',()=>{avatar.classList.add('post-avatar-default');avatar.src='./assets/discussion-avatar.svg';},{once:true});
    const time=el('time','',new Intl.DateTimeFormat('ro-RO',{dateStyle:'medium'}).format(new Date(update.published_at)));time.dateTime=update.published_at;
    meta.append(el('strong','',update.author_name||'Gabrielish'),time);
-   if(update.is_visible===false){article.classList.add('news-is-hidden');meta.append(el('span','news-hidden-label','Ascuns — vizibil doar administratorului'));}
+   if(update.is_visible===false)article.classList.add('news-is-hidden','is-content-hidden');
    const url=safeURL(update.link_url);if(url&&update.link_label){const a=el('a','release-news-link');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon(chain),el('span','',update.link_label));meta.append(a);}
    if(update.badge_label)meta.append(el('span','release-version-badge',update.badge_label));
    header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(avatar,content);article.append(layout);target.append(article);
