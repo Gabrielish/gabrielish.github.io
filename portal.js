@@ -119,7 +119,7 @@
     $('#discussion-list').scrollIntoView({block:'start',behavior:'instant'});
     $('#discussion-pages [aria-current=page]')?.focus({preventScroll:true});
   }
-  let toastTimer, workDirty = false;
+  let toastTimer;
   const config = window.BG3RO_CONFIG || {};
   const authEnabled = config.authEnabled !== false;
   const configured = /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(config.supabaseUrl || '') && !!config.supabasePublishableKey;
@@ -224,8 +224,6 @@
       if (!moderator) history.replaceState(null, '', location.pathname + location.search + '#despre');
       setTab(moderator ? 'mesaje' : 'despre');
     } else if (!moderator) $('#mesaje').hidden = true;
-    $('#work-editor').hidden = !moderator;
-    if (!moderator) { workDirty = false; $('#work-form').reset(); }
     $('#discussion-form button[type="submit"]').textContent = 'Trimite';
     $('#discord-login').disabled = !client || !authEnabled;
     $$('[data-guest-start]').forEach(button => { button.disabled = guestStarting || !client || !authEnabled; });
@@ -281,39 +279,8 @@
       if (!$('#report-name').value) $('#report-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
     }
     if (user && !user.is_anonymous && dialog.open) dialog.close();
-    syncAuth(); await Promise.all([loadComments(), loadReports(), loadProgress(), loadUpdates()]);
+    syncAuth(); await Promise.all([loadComments(), loadReports(), loadUpdates()]);
   }
-  async function loadProgress() {
-    if (!client) return;
-    const { data, error } = await client.from('bg3ro_project_status').select('translation_percent,review_percent,testing_percent,work_title,work_body').eq('id', 1).maybeSingle();
-    if (error || !data) return;
-    for (const [kind, field, input] of [['translation','translation_percent','progress-value'],['review','review_percent','progress-review-value'],['testing','testing_percent','progress-testing-value']]) {
-      const value = Number(data[field]);
-      if (!Number.isFinite(value)) continue;
-      const percent = Math.max(0, Math.min(100, value));
-      $(`#${kind}-percent`).textContent = `${percent}%`;
-      $(`#${kind}-progress .progress-fill`).style.width = `${percent}%`;
-      $(`#${kind}-progress`).setAttribute('aria-valuenow', String(percent));
-      $(`#${input}`).value = percent;
-    }
-    for (const field of ['title','body']) {
-      const output = $(`#current-work-${field}`), value = data[`work_${field}`];
-      if (typeof value === 'string') output.textContent = value;
-      if (!workDirty) $(`#work-${field}`).value = output.textContent;
-    }
-  }
-  $('#work-form').addEventListener('input', () => { workDirty = true; });
-  $('#work-form').addEventListener('submit', event => {
-    event.preventDefault(); if (!client || !moderator) return;
-    submit(event.currentTarget, async () => {
-      const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
-      Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
-      if (!values.work_title || !values.work_body) throw new Error('Empty work content');
-      const { data, error } = await client.from('bg3ro_project_status').update(values).eq('id', 1).select('work_title,work_body').maybeSingle();
-      if (error || !data) throw error || new Error('Work section not saved');
-      workDirty = false; await loadProgress(); formStatus(form, 'Secțiunea a fost salvată.');
-    });
-  });
   let updatesRequest = 0;
   async function loadUpdates() {
     const ticket = ++updatesRequest;
@@ -590,15 +557,6 @@
       if (error) throw error; form.reset(); formStatus(form, ''); await loadUpdates();
     });
   });
-  $('#progress-form').addEventListener('submit', event => {
-    event.preventDefault(); if (!client || !moderator) return;
-    submit(event.currentTarget, async () => {
-      const form = event.currentTarget, values = Object.fromEntries(new FormData(form));
-      for (const field of ['translation_percent','review_percent','testing_percent']) values[field] = Number(values[field]);
-      const { data, error } = await client.from('bg3ro_project_status').update(values).eq('id', 1).select('translation_percent,review_percent,testing_percent').maybeSingle();
-      if (error || !data) throw error || new Error('Progress not saved'); formStatus(form, 'Progres actualizat.'); await loadProgress();
-    });
-  });
   async function initialize() {
     if (configured) {
       try {
@@ -643,7 +601,7 @@
         notice.textContent = 'Autentificarea este temporar dezactivată. Mesajele și raportările vor putea fi trimise după reactivare.';
       });
     }
-    syncAuth(); await Promise.all([loadUpdates(), loadComments(), loadReports(), loadProgress()]);
+    syncAuth(); await Promise.all([loadUpdates(), loadComments(), loadReports()]);
     document.documentElement.classList.add('portal-ready');
   }
   initialize().catch(() => { document.documentElement.classList.add('portal-ready'); toast('Conexiunea la comunitate nu a reușit. Conținutul proiectului rămâne disponibil.'); });

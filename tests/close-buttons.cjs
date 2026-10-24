@@ -5,9 +5,8 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await page.route('https://baldursgate3.game/**',r=>r.abort());
   await page.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:'window.BG3RO_CONFIG={};'}));
   await page.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});
-  for(const selector of ['#auth-dialog','#support-dialog','#about-editor dialog']){
+  for(const selector of ['#auth-dialog','#support-dialog']){
    const dialog=page.locator(selector),button=dialog.locator('.dialog-close');
-   if(selector==='#about-editor dialog')await page.locator('#about-editor').evaluate(el=>el.hidden=false);
    await dialog.evaluate(el=>el.showModal());await button.evaluate(el=>el.blur());await page.mouse.move(0,0);
    const resting=await button.evaluate(el=>{const s=getComputedStyle(el),a=getComputedStyle(el,'::before'),b=getComputedStyle(el,'::after');return {background:s.backgroundColor,width:s.width,height:s.height,padding:s.padding,font:s.fontSize,left:a.left,top:a.top,secondLeft:b.left,secondTop:b.top};});
    assert.equal(resting.width,resting.height);assert.equal(resting.padding,'0px');assert.equal(resting.font,'0px');

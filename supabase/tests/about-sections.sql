@@ -1,0 +1,47 @@
+begin;
+select set_config('bg3ro.sections_admin',gen_random_uuid()::text,true),set_config('bg3ro.sections_member',gen_random_uuid()::text,true);
+insert into auth.users(id) values(current_setting('bg3ro.sections_admin')::uuid),(current_setting('bg3ro.sections_member')::uuid);
+insert into bg3ro_private.moderators(user_id) values(current_setting('bg3ro.sections_admin')::uuid);
+create function pg_temp.section_denied(command text) returns void language plpgsql security invoker as $$begin
+ begin execute command;exception when others then return;end;raise exception 'Unauthorized/invalid section write succeeded';end;$$;
+select set_config('request.jwt.claim.sub',current_setting('bg3ro.sections_admin'),true),set_config('request.jwt.claims','{}',true);
+set local role authenticated;
+with added as(insert into public.bg3ro_about_sections(title,body,is_visible) values('Test ascuns','Text privat al rubricii de test.',false) returning id)
+ select set_config('bg3ro.section_id',id,true) from added;
+do $$begin if not exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Admin cannot read hidden section';end if;end;$$;
+select pg_temp.section_denied('update public.bg3ro_about_sections set translation_percent=101 where id=''progress''');
+select pg_temp.section_denied('insert into public.bg3ro_about_sections(title,body) values(''Gol'','''')');
+select pg_temp.section_denied('update public.bg3ro_about_sections set kind=''gallery'' where id=''work''');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role anon;
+do $$begin if exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Anonymous read hidden section';end if;end;$$;
+select pg_temp.section_denied('insert into public.bg3ro_about_sections(title,body) values(''Neautorizat'',''Neautorizat'')');
+reset role;
+select set_config('request.jwt.claim.sub',current_setting('bg3ro.sections_member'),true),set_config('request.jwt.claims','{"is_anonymous":true}',true);
+set local role authenticated;
+do $$declare affected integer;begin
+ if exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Guest read hidden section';end if;
+ update public.bg3ro_about_sections set title='Atac' where id='work';get diagnostics affected=row_count;if affected<>0 then raise exception 'Guest updated section';end if;
+ delete from public.bg3ro_about_sections where id='work';get diagnostics affected=row_count;if affected<>0 then raise exception 'Guest deleted section';end if;
+end;$$;
+select pg_temp.section_denied('insert into public.bg3ro_about_sections(title,body) values(''Neautorizat'',''Neautorizat'')');
+reset role;
+select set_config('request.jwt.claims','{}',true);
+set local role authenticated;
+do $$begin if exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Member read hidden section';end if;end;$$;
+reset role;
+select set_config('request.jwt.claim.sub',current_setting('bg3ro.sections_admin'),true);
+set local role authenticated;
+update public.bg3ro_about_sections set is_visible=true,title='Test afișat',body='Text editat.' where id=current_setting('bg3ro.section_id');
+reset role;
+select set_config('request.jwt.claim.sub','',true);
+set local role anon;
+do $$begin if not exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id') and title='Test afișat') then raise exception 'Published section not public';end if;end;$$;
+reset role;
+select set_config('request.jwt.claim.sub',current_setting('bg3ro.sections_admin'),true);
+set local role authenticated;
+delete from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id');
+reset role;
+do $$begin if exists(select 1 from public.bg3ro_about_sections where id=current_setting('bg3ro.section_id')) then raise exception 'Admin deletion failed';end if;end;$$;
+rollback;

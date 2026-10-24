@@ -5,6 +5,13 @@ const assert=require('node:assert/strict');
 function syntheticSDK(){
   const state=window.__communityTest={user:null,comments:[],reports:[],updates:[],contacts:[],failInsert:false,status:{translation_percent:80,review_percent:20,testing_percent:20,review_state:'Actul I verificat',testing_state:'Actul II urmează'}};
   const moderator=()=>state.user?.id==='owner';
+  state.about=window.__qaAbout||[
+   {id:'progress',kind:'progress',title:'Progresul traducerii',body:'',legacy_note:'',is_visible:true,sort_order:10,translation_percent:80,review_percent:20,testing_percent:20},
+   {id:'about',kind:'text',title:'Despre proiect',body:'Un proiect de traducere testat în context.',legacy_note:'Notă de test păstrată.',is_visible:true,sort_order:20},
+   {id:'work',kind:'text',title:'La ce lucrez acum',body:'Revizia interfeței și verificarea traducerii.',legacy_note:'',is_visible:true,sort_order:30},
+   {id:'modules',kind:'text',title:'Moduri pentru particularitățile limbii române',body:null,legacy_note:'',is_visible:true,sort_order:40},
+   {id:'gallery',kind:'gallery',title:'Galerie',body:'',legacy_note:'',is_visible:true,sort_order:50}
+  ];
   let authCallback=()=>{};
   const client={
     auth:{getSession:async()=>({data:{session:state.user?{user:state.user}:null},error:null}),onAuthStateChange:cb=>{authCallback=cb;return{data:{subscription:{unsubscribe(){}}}}},
@@ -19,6 +26,15 @@ function syntheticSDK(){
         insert(payload){this.operation='insert';this.payload=payload;return this},update(payload){this.operation='update';this.payload=payload;return this},delete(){this.operation='delete';return this},
         then(resolve,reject){return Promise.resolve().then(()=>{
           const name=table.replace('bg3ro_',''),key={discussion_posts:'comments',bug_reports:'reports',project_updates:'updates',contact_messages:'contacts'}[name];
+          if(name==='about_sections'){
+            if(state.failAbout)return{data:null,error:{message:'Network error'}};
+            const matches=row=>this.filters.every(([k,v])=>row[k]===v);let data=state.about.filter(matches).filter(row=>moderator()||row.is_visible);
+            if(this.operation!=='select'&&!moderator())return{data:null,error:{message:'Denied'}};
+            if(this.operation==='insert'){if(state.failInsert)return{data:null,error:{message:'Network error'}};const row={id:crypto.randomUUID(),kind:'text',is_visible:true,legacy_note:'',...this.payload};state.about.push(row);data=[row];}
+            if(this.operation==='update')data.forEach(row=>Object.assign(row,this.payload));
+            if(this.operation==='delete')state.about=state.about.filter(row=>!data.includes(row));
+            data=[...data].sort((a,b)=>a.sort_order-b.sort_order||a.id.localeCompare(b.id));return{data:this.single?data[0]||null:JSON.parse(JSON.stringify(data)),error:null};
+          }
           if(name==='project_status'){
             if(this.operation==='update')Object.assign(state.status,this.payload);
             return{data:{...state.status},error:null};
@@ -89,8 +105,8 @@ function syntheticSDK(){
       assert.equal(await p.locator('#tab-erori').textContent(),'Raportare erori (1)');
       if(owner){
         await p.locator('.report-toolbar').getByRole('button',{name:'Stare: Nou',exact:true}).click();await p.getByRole('menuitemradio',{name:'Rezolvat',exact:true}).click();await p.waitForFunction(()=>window.__communityTest.reports[0].status==='resolved');
-        await p.locator('#tab-despre').click();await p.locator('#progress-editor > .edit-pencil').click();
-        await p.locator('#progress-value').fill('82');await p.locator('#progress-review-value').fill('25');await p.locator('#progress-testing-value').fill('30');await p.locator('#progress-form button').click();await p.waitForFunction(()=>document.querySelector('#progress-form .form-status').textContent.includes('actualizat'));
+        await p.locator('#tab-despre').click();await p.getByRole('button',{name:'Editează Progresul traducerii',exact:true}).click();
+        const progress=p.locator('[data-about-section=progress] form');await progress.locator('[name=translation_percent]').fill('82');await progress.locator('[name=review_percent]').fill('25');await progress.locator('[name=testing_percent]').fill('30');await progress.getByRole('button',{name:'Salvează',exact:true}).click();await progress.waitFor({state:'detached'});
         await p.keyboard.press('Escape');assert.equal(await p.locator('#translation-percent').textContent(),'82%');assert.equal(await p.locator('#review-percent').textContent(),'25%');assert.equal(await p.locator('#testing-percent').textContent(),'30%');
         await p.locator('#tab-actualizari').click();await p.getByRole('button',{name:'Publică o actualizare',exact:true}).click();await p.locator('#update-title').fill('Actualizare de test');await p.locator('#update-form .discussion-prosemirror').fill('O actualizare sintetică pentru testarea interfeței.');await p.locator('#update-form button[type=submit]').click();await p.waitForFunction(()=>document.querySelector('#updates-feed').textContent.includes('Actualizare de test'));await p.keyboard.press('Escape');
       }else assert.equal(await p.locator('#admin-tools:visible').count(),0);
