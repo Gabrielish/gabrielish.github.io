@@ -1,12 +1,14 @@
 /*! BG3.RO visual editor; Tiptap/ProseMirror MIT notices: ../editor/THIRD_PARTY_LICENSES.txt */
-import {Editor} from '@tiptap/core';
+import {Editor,Node} from '@tiptap/core';
 import {EditorState} from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import {TextStyle,FontFamily,FontSize,Color} from '@tiptap/extension-text-style';
 
 const prefix='BG3RO-RICH-1:';
-const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']}),TextStyle,FontFamily,FontSize,Color];
+function imageURL(value){try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;}catch{return null;}}
+const InlineImage=Node.create({name:'image',group:'block',atom:true,draggable:true,addAttributes(){return{src:{default:null},alt:{default:'Imagine atașată'}};},parseHTML(){return[{tag:'img[src]',getAttrs:el=>{const src=imageURL(el.getAttribute('src'));return src?{src,alt:(el.getAttribute('alt')||'Imagine atașată').slice(0,160)}:false;}}];},renderHTML({HTMLAttributes}){return['img',{src:imageURL(HTMLAttributes.src)||'',alt:String(HTMLAttributes.alt||'Imagine atașată').slice(0,160),class:'discussion-inline-image',loading:'lazy',referrerpolicy:'no-referrer'}];}});
+const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']}),TextStyle,FontFamily,FontSize,Color,InlineImage];
 const fonts=['Arial','Georgia','Verdana','monospace'],sizes=['12px','14px','16px','18px','20px','24px'];
 let colorMenuSequence=0;
 function textStyle(attrs={}){const clean={};if(fonts.includes(attrs.fontFamily))clean.fontFamily=attrs.fontFamily;if(sizes.includes(attrs.fontSize))clean.fontSize=attrs.fontSize;if(/^#[\da-f]{6}$/i.test(attrs.color||''))clean.color=attrs.color;return clean;}
@@ -16,6 +18,7 @@ function cleanDoc(value){
  let budget=2000;
  function clean(n,depth=0){
   if(!n||typeof n!=='object'||depth>16||--budget<0)return null;
+  if(n.type==='image'){const src=imageURL(n.attrs?.src);return src?{type:'image',attrs:{src,alt:String(n.attrs?.alt||'Imagine atașată').slice(0,160)}}:null;}
   if(n.type==='text'){
    const result={type:'text',text:String(n.text||'')};
    result.marks=(Array.isArray(n.marks)?n.marks:[]).flatMap(m=>{
@@ -42,6 +45,7 @@ function render(body){
  const tags={paragraph:'p',heading:'h2',bulletList:'ul',orderedList:'ol',listItem:'li',blockquote:'blockquote',codeBlock:'pre',hardBreak:'br',horizontalRule:'hr'};
  function append(parent,n){
   if(n.type==='doc'){(n.content||[]).forEach(child=>append(parent,child));return;}
+  if(n.type==='image'){const src=imageURL(n.attrs?.src);if(!src)return;const image=node('img');image.src=src;image.alt=n.attrs.alt;image.className='discussion-inline-image';image.loading='lazy';image.decoding='async';image.referrerPolicy='no-referrer';image.tabIndex=0;image.setAttribute('role','button');image.setAttribute('aria-label','Deschide imaginea: '+n.attrs.alt);const open=()=>{const images=[...output.querySelectorAll('.discussion-inline-image')];window.BG3RO_IMAGE_VIEWER?.open(images.map(item=>({src:item.src,alt:item.alt})),images.indexOf(image),'Imagini atașate');};image.onclick=open;image.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}};parent.append(image);return;}
   if(n.type==='text'){
    let text=document.createTextNode(n.text);
    for(const mark of n.marks||[]){const tag={bold:'strong',italic:'em',underline:'u',strike:'s',code:'code',link:'a',textStyle:'span'}[mark.type];if(!tag)continue;const wrap=node(tag);
@@ -57,7 +61,7 @@ function render(body){
  append(output,documentFor(body));return output;
 }
 function mount(form,isReply=false,isReport=false,idPrefix='',settings={}){
-let editor=null,cleanupResize=()=>{},cleanupListeners=()=>{};
+let editor=null,cleanupResize=()=>{},cleanupListeners=()=>{},uploadFiles=null,uploading=false,destroyed=false,imageEpoch=0,closeImage=()=>{};
 const q=selector=>form.querySelector(idPrefix?selector.replaceAll('#discussion-','#'+idPrefix+'discussion-'):isReport?selector.replaceAll('#discussion-','#report-'):isReply?selector.replaceAll('#discussion-','#reply-discussion-'):selector);
 const minimum=settings.minimum??(isReport?20:10),maximum=settings.maximum??(isReport?6000:4000);
 const textarea=q('#discussion-body');
@@ -66,19 +70,23 @@ function plainDoc(doc){return doc.content.every(n=>n.type==='paragraph'&&!n.attr
 function serialize(doc){return plainDoc(doc)?doc.content.map(p=>(p.content||[]).map(t=>t.text).join('')).join('\n'):prefix+JSON.stringify(doc);}
 const api={render,documentFor,hasMention:body=>{
  const first=documentFor(body).content?.[0];return first?.type==='paragraph'&&first.content?.[0]?.text?.startsWith('@');
-},get editor(){return editor;},clear(){editor?.commands.clearContent();textarea.value='';},reset(){
+},get editor(){return editor;},clear(){imageEpoch++;editor?.commands.clearContent();textarea.value='';},reset(){
+ imageEpoch++;
+ closeImage();
  for(const menu of form.querySelectorAll('.discussion-editor-menu:popover-open'))menu.hidePopover();
  if(editor){editor.commands.clearContent();editor.view.updateState(EditorState.create({schema:editor.schema,plugins:editor.state.plugins,doc:editor.state.doc}));editor.emit('selectionUpdate',{editor,transaction:editor.state.tr});}
  textarea.value='';q('#discussion-character-count').textContent='';q('#discussion-editor-error').textContent='';
  q('#discussion-link-panel').hidden=true;const url=q('#discussion-link-url');url.disabled=true;url.value='';url.setCustomValidity('');
  const status=form.querySelector('.form-status');status.textContent='';status.classList.remove('error');
-},focus(){editor?.view.focus();},destroy(){cleanupResize();cleanupListeners();editor?.destroy();},
+},focus(){editor?.view.focus();},destroy(){destroyed=true;imageEpoch++;cleanupResize();cleanupListeners();editor?.destroy();},
  value(name=''){
   if(!editor)return textarea.value;
+  if(uploading)throw Error('Așteaptă încărcarea imaginilor înainte de a trimite.');
   const doc=cleanDoc(editor.getJSON());
   if(name&&doc.content?.[0]?.content?.[0]?.text!=='@'+name)doc.content.unshift({type:'paragraph',content:[{type:'text',text:'@'+name}]});
   const body=serialize(doc);
-  if(editor.getText().trim().length<minimum)throw Error(`Scrie ${isReport?'o descriere':'un mesaj'} de cel puțin ${minimum} caractere.`);
+  let hasImage=false;editor.state.doc.descendants(n=>{if(n.type.name==='image')hasImage=true;});
+  if(editor.getText().trim().length<minimum&&!(hasImage&&!isReport))throw Error(`Scrie ${isReport?'o descriere':'un mesaj'} de cel puțin ${minimum} caractere.`);
   if(body.length>maximum)throw Error('Textul este prea lung. Scurtează textul sau elimină o parte din formatare.');
   return body;
  },quote(body,name){
@@ -86,9 +94,8 @@ const api={render,documentFor,hasMention:body=>{
  }};
 if(textarea&&host){
  editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':settings.label||(isReport?'Descrie eroarea de traducere':isReply?'Răspuns':'Mesaj'),'aria-multiline':'true','data-placeholder':settings.placeholder||(isReport?'Descrie eroarea de traducere…':'Scrie un comentariu…'),class:'discussion-prosemirror'},handlePaste(view,event){
-  // Let ProseMirror parse only its schema; scripts/images/styles are not in the schema.
-  if(event.clipboardData?.files.length){event.preventDefault();return true;}return false;
- }},onUpdate(){
+  if(event.clipboardData?.files.length){event.preventDefault();uploadFiles?.([...event.clipboardData.files]);return true;}return false;
+ },handleDrop(view,event,moved){if(!moved&&event.dataTransfer?.files.length){event.preventDefault();uploadFiles?.([...event.dataTransfer.files]);return true;}return false;}},onUpdate(){
   const body=serialize(cleanDoc(editor.getJSON()));textarea.value=body;
   q('#discussion-character-count').textContent=`${editor.getText().length} caractere`;
   q('#discussion-editor-error').textContent=body.length>maximum?'Textul depășește limita. Scurtează textul sau formatarea.':'';
@@ -103,6 +110,7 @@ if(textarea&&host){
  const icons={bold:'M6 4h7a4 4 0 0 1 0 8H6m0-8v16h8a4 4 0 0 0 0-8H6',italic:'M16 4H9m6 0L9 20m-5 0h7',underline:'M6 3v7a6 6 0 0 0 12 0V3M4 21h16',strike:'M17 5c-1-2-3-2-5-2-6 0-7 7-2 8m-6 1h16m-5 2c5 3 1 8-4 7-2 0-4-1-5-3',bullet:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',ordered:'M9 6h12M9 12h12M9 18h12M3 4v5M2 9h3M2 14c3-3 4 0 1 2l-1 2h3',quote:'M10 11H4V7h6v6c0 3-2 5-5 5m15-7h-6V7h6v6c0 3-2 5-5 5',code:'m8 5-7 7 7 7m8-14 7 7-7 7',left:'M3 5h18M3 10h12M3 15h18M3 20h12',center:'M3 5h18M6 10h12M3 15h18M6 20h12',right:'M3 5h18M9 10h12M3 15h18M9 20h12',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2m3 6a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',undo:'M3 4v6h6M3 10a9 9 0 1 1 1 9',redo:'M21 4v6h-6m6 0a9 9 0 1 0-1 9'};
  icons.justify='M3 5h18M3 10h18M3 15h18M3 20h18';
  icons.separator='M4 12h16';
+ icons.image='M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm-1 13 5-5 4 4 4-6 5 7M8 7h.01';
  const controls=[],selects=[];
  let group=toolbar;
  function section(label){group=node('div');group.className='discussion-tool-group';group.setAttribute('role','group');group.setAttribute('aria-label',label);toolbar.append(group);}
@@ -173,6 +181,30 @@ if(textarea&&host){
  url.oninput=()=>url.setCustomValidity('');
  q('#discussion-link-remove').onclick=()=>{editor.view.focus();editor.chain().focus().extendMarkRange('link').unsetLink().run();closeLink();};
  q('#discussion-link-cancel').onclick=()=>{closeLink();link.focus();};
+ // Inline controls: files for public posts, HTTPS image links everywhere.
+ for(const old of form.querySelectorAll('.discussion-image-panel'))old.remove();
+ const imagePanel=node('div');imagePanel.className='discussion-image-panel';imagePanel.hidden=true;
+ const imageFile=node('input');imageFile.type='file';imageFile.accept='image/jpeg,image/png,image/webp';imageFile.multiple=true;imageFile.hidden=true;imageFile.setAttribute('aria-label','Alege imagini de maximum 5 MB fiecare');
+ const chooseImage=node('button','Încarcă imagine'),imageAddress=node('input'),insertImage=node('button','Inserează'),cancelImage=node('button','Anulează'),imageStatus=node('p');
+ chooseImage.type=insertImage.type=cancelImage.type='button';chooseImage.className='btn secondary small-btn';insertImage.className='btn small-btn';cancelImage.className='btn secondary small-btn';imageAddress.type='text';imageAddress.inputMode='url';imageAddress.placeholder='https://…';imageAddress.setAttribute('aria-label','Adresa imaginii');imageAddress.className='discussion-image-url';imageStatus.className='discussion-image-status';imageStatus.setAttribute('role','status');imagePanel.append(chooseImage,imageFile,imageAddress,insertImage,cancelImage,imageStatus);toolbar.after(imagePanel);
+ closeImage=()=>{imagePanel.hidden=true;imageAddress.value='';imageStatus.textContent='';};
+ const imageButton=button('Adaugă imagine','image',()=>{imagePanel.hidden=!imagePanel.hidden;chooseImage.hidden=!!form.closest('#conversatii')||(isReport&&form.id!=='report-form');chooseImage.disabled=!(form.id==='report-form'||window.BG3RO_EDITOR_IMAGES?.canUpload(form));if(!imagePanel.hidden)imageAddress.focus();},()=>editor.isActive('image'));
+ const putImage=attrs=>{editor.view.focus();const nodes=[{type:'image',attrs},{type:'paragraph'}],selection=editor.state.selection;if(selection.node?.type.name==='image')editor.commands.insertContentAt(selection.to,nodes);else editor.commands.insertContent(nodes);};
+ insertImage.onclick=()=>{const src=imageURL(imageAddress.value.trim());if(!src){imageStatus.textContent='Introdu adresa https:// a unei imagini.';return;}putImage({src,alt:'Imagine atașată'});closeImage();};
+ cancelImage.onclick=()=>{closeImage();imageButton.focus();};chooseImage.onclick=()=>imageFile.click();
+ uploadFiles=async files=>{
+  if(uploading||destroyed||form.querySelector('[type=submit]')?.disabled)return;
+  if(form.id==='report-form'){const attachments=document.querySelector('#report-photo'),transfer=new DataTransfer();files.forEach(file=>transfer.items.add(file));attachments.files=transfer.files;attachments.dispatchEvent(new Event('change'));imageFile.value='';closeImage();return;}
+  if(isReport){imagePanel.hidden=false;imageStatus.textContent='Adaugă o imagine prin adresa ei https://.';return;}
+  if(!window.BG3RO_EDITOR_IMAGES?.canUpload(form)){imagePanel.hidden=false;imageStatus.textContent=form.closest('#conversatii')?'Adaugă o imagine prin adresa ei https://.':'Conectează-te prin Discord pentru a încărca imagini.';return;}
+  const ticket=imageEpoch,save=form.querySelector('[type=submit]');uploading=true;imagePanel.hidden=false;imageStatus.textContent='Se încarcă imaginile…';if(save)save.disabled=true;chooseImage.disabled=true;
+  try{for(const file of files){const attrs=await window.BG3RO_EDITOR_IMAGES.upload(file,form);if(destroyed||ticket!==imageEpoch)return;putImage(attrs);}closeImage();}
+  catch(error){if(!destroyed&&ticket===imageEpoch)imageStatus.textContent=error.message||'Imaginea nu a putut fi încărcată.';}
+  finally{uploading=false;imageFile.value='';if(!destroyed){if(save)save.disabled=false;chooseImage.disabled=!window.BG3RO_EDITOR_IMAGES?.canUpload(form);}}
+ };
+ imageFile.onchange=()=>uploadFiles([...imageFile.files]);
+ const guardImages=event=>{if(uploading){event.preventDefault();event.stopImmediatePropagation();}};form.addEventListener('submit',guardImages,true);
+ const previousCleanup=cleanupListeners;cleanupListeners=()=>{previousCleanup();form.removeEventListener('submit',guardImages,true);};
  section('Istoric');
  button('Anulează ultima modificare','undo',()=>editor.chain().focus().undo().run());
  button('Refă modificarea','redo',()=>editor.chain().focus().redo().run());

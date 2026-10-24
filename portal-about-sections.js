@@ -2,7 +2,7 @@
  'use strict';
  const root=document.querySelector('#despre');if(!root)return;
  const builtins=new Map([['progress',root.querySelector('.progress-card')],['about',root.querySelector('.about-copy')],['work',root.querySelector('#current-work')],['modules',root.querySelector(':scope>article:not(.about-copy)')],['gallery',root.querySelector('#project-gallery')]]);
- const cards=new Map(),originals=new Map();let client=null,admin=false,epoch=0,busy=false,rows=[],editing=null,sequence=0;
+ const cards=new Map(),originals=new Map();let client=null,admin=false,epoch=0,busy=false,rows=[],editing=null,sequence=0,ready=false;
  const node=(tag,cls,text)=>{const n=document.createElement(tag);n.className=cls||'';if(text!==undefined)n.textContent=text;return n;};
  const paths={edit:'m16 3 5 5M4 20l4-1L21 6a2.8 2.8 0 0 0-4-4L4 15l-1 6Z',hide:'M3 3l18 18M10 5c5-1 9 3 11 7a18 18 0 0 1-4 5M7 7a20 20 0 0 0-6 5c3 5 8 8 13 6',show:'M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Zm14 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',delete:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7',add:'M12 5v14M5 12h14',up:'M12 20V4m-6 6 6-6 6 6',down:'M12 4v16m-6-6 6 6 6-6'};
  function button(text,kind,action){const b=node('button','btn about-section-action');b.type='button';const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const [key,value]of Object.entries({viewBox:'0 0 24 24',width:16,height:16,fill:'none',stroke:'currentColor','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':true}))svg.setAttribute(key,value);const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',paths[kind]);svg.append(path);b.append(svg,node('span','',text));b.onclick=action;return b;}
@@ -12,22 +12,25 @@
   originals.set(id,[...content.childNodes].map(n=>n.cloneNode(true)));card.dataset.aboutSection=id;card.hidden=true;cards.set(id,{card,heading,content});return cards.get(id);
  }
  for(const [id,card]of builtins)setup(id,card);
+ const loading=node('div','card about-loading');loading.setAttribute('role','status');loading.append(node('p','','Se încarcă informațiile proiectului…'));for(let i=0;i<3;i++)loading.append(node('span','about-loading-line'));root.insertBefore(loading,management);root.setAttribute('aria-busy','true');
+ function loaded(){ready=true;loading.hidden=true;root.setAttribute('aria-busy','false');}
+ if(window.BG3RO_PUBLIC_ABOUT)window.BG3RO_PUBLIC_ABOUT.then(data=>{if(!ready&&data){rows=data;draw(false);loaded();message('');}});
  function message(text,error=false){status.textContent=text;status.classList.toggle('error',error);management.hidden=!admin&&!text;}
  function closeEditor(focus=true){if(!editing)return;const {form,api,trigger}=editing;api?.destroy();form.remove();editing=null;add.hidden=!admin;for(const tools of root.querySelectorAll('.about-section-tools'))tools.hidden=!admin;if(focus&&admin&&trigger?.isConnected)trigger.focus({preventScroll:true});}
  function discard(){if(!editing)return true;if(editing.dirty&&!confirm('Renunți la modificările nesalvate?'))return false;closeEditor(false);return true;}
- function draw(){
+ function draw(manage=admin){
   const present=new Set(rows.map(r=>r.id));for(const [id,view]of cards){view.card.hidden=!present.has(id);view.card.querySelector('.about-section-tools')?.remove();if(!present.has(id)&&!builtins.has(id)){view.card.remove();cards.delete(id);originals.delete(id);}}
   for(const [position,row]of rows.entries()){let view=cards.get(row.id);if(!view){const card=node('article','card'),heading=node('h2');card.append(heading);root.insertBefore(card,management);view=setup(row.id,card);}const {card,heading,content}=view;card.hidden=!row.is_visible&&!admin;card.classList.toggle('is-section-hidden',!row.is_visible);card.classList.toggle('is-content-hidden',!row.is_visible);heading.textContent=row.title;
    if(row.body===null)content.replaceChildren(...originals.get(row.id).map(n=>n.cloneNode(true)));else content.replaceChildren(window.BG3RO_CONTENT.render(row.body));
    if(row.legacy_note?.trim()){const quote=node('blockquote');quote.append(node('p','',row.legacy_note));content.append(quote);}
    if(row.kind==='progress')for(const kind of ['translation','review','testing']){const value=Math.max(0,Math.min(100,Number(row[kind+'_percent']))),bar=card.querySelector('#'+kind+'-progress');card.querySelector('#'+kind+'-percent').textContent=value+'%';bar.setAttribute('aria-valuenow',String(value));bar.querySelector('.progress-fill').style.width=value+'%';}
-   if(admin){const tools=node('div','about-section-tools'),edit=button('Editează','edit',()=>openEditor(row)),visibility=button(row.is_visible?'Ascunde':'Afișează',row.is_visible?'hide':'show',()=>change(row,{is_visible:!row.is_visible})),remove=button('Șterge','delete',()=>removeSection(row));edit.setAttribute('aria-label','Editează '+row.title);visibility.setAttribute('aria-label',(row.is_visible?'Ascunde ':'Afișează ')+row.title);remove.setAttribute('aria-label','Șterge '+row.title);tools.append(edit,visibility,remove);card.append(tools);}
-   if(admin){const tools=card.querySelector('.about-section-tools');for(const [delta,label,kind,edge]of [[-1,'Mai sus','up',position===0],[1,'Mai jos','down',position===rows.length-1]]){const move=button(label,kind,()=>moveSection(row,delta));move.dataset.move=delta;move.dataset.atEdge=String(edge);move.disabled=edge;move.setAttribute('aria-label','Mută '+row.title+' '+label.toLowerCase());tools.append(move);}}
+   if(manage){const tools=node('div','about-section-tools'),edit=button('Editează','edit',()=>openEditor(row)),visibility=button(row.is_visible?'Ascunde':'Afișează',row.is_visible?'hide':'show',()=>change(row,{is_visible:!row.is_visible})),remove=button('Șterge','delete',()=>removeSection(row));edit.setAttribute('aria-label','Editează '+row.title);visibility.setAttribute('aria-label',(row.is_visible?'Ascunde ':'Afișează ')+row.title);remove.setAttribute('aria-label','Șterge '+row.title);tools.append(edit,visibility,remove);card.append(tools);}
+   if(manage){const tools=card.querySelector('.about-section-tools');for(const [delta,label,kind,edge]of [[-1,'Mai sus','up',position===0],[1,'Mai jos','down',position===rows.length-1]]){const move=button(label,kind,()=>moveSection(row,delta));move.dataset.move=delta;move.dataset.atEdge=String(edge);move.disabled=edge;move.setAttribute('aria-label','Mută '+row.title+' '+label.toLowerCase());tools.append(move);}}
    root.insertBefore(card,management);
   }
-  add.hidden=!admin;retry.hidden=true;
+  add.hidden=!manage;retry.hidden=true;
  }
- async function load(){if(!client)return;const ticket=++epoch,active=client;try{const {data,error}=await active.from('bg3ro_about_sections').select('*').order('sort_order').order('id');if(ticket!==epoch)return;if(error)throw error;rows=data||[];draw();message('');}catch{if(ticket===epoch){message('Rubricile nu au putut fi încărcate. Încearcă din nou.',true);retry.hidden=false;}}}
+ async function load(){if(!client)return;const ticket=++epoch,active=client;try{const {data,error}=await active.from('bg3ro_about_sections').select('*').order('sort_order').order('id');if(ticket!==epoch)return;if(error)throw error;rows=data||[];draw();loaded();message('');}catch{if(ticket===epoch){loading.hidden=true;root.setAttribute('aria-busy','false');message('Rubricile nu au putut fi încărcate. Încearcă din nou.',true);retry.hidden=false;}}}
  async function change(row,values){if(busy||!admin||!discard())return;const ticket=epoch,active=client;busy=true;message('Se salvează…');try{const {data,error}=await active.from('bg3ro_about_sections').update(values).eq('id',row.id).select('id').maybeSingle();if(error||!data)throw error||Error('Not saved');if(ticket===epoch)await load();}catch{if(ticket===epoch)message('Modificarea nu a fost salvată. Încearcă din nou.',true);}finally{busy=false;}}
  async function moveSection(row,delta){
   if(busy||!admin||!discard())return;const position=rows.findIndex(item=>item.id===row.id),target=position+delta;if(position<0||target<0||target>=rows.length)return;
@@ -55,5 +58,5 @@
    finally{busy=false;form.inert=false;save.disabled=cancel.disabled=false;}
   };
  }
- addEventListener('bg3ro:auth',event=>{epoch++;closeEditor(false);client=event.detail.client;admin=event.detail.moderator===true;add.hidden=true;for(const {card}of cards.values())card.hidden=true;if(client)load();else message('Rubricile nu sunt disponibile momentan.',true);});
+ addEventListener('bg3ro:auth',event=>{const wasAdmin=admin;epoch++;closeEditor(false);client=event.detail.client;admin=event.detail.moderator===true;add.hidden=true;for(const {card}of cards.values()){card.querySelector('.about-section-tools')?.remove();if(card.classList.contains('is-section-hidden'))card.hidden=true;}if(!admin&&wasAdmin){rows=rows.filter(row=>row.is_visible);draw();}if(client){if(admin||wasAdmin||!ready)load();}else if(!ready){loading.hidden=true;root.setAttribute('aria-busy','false');message('Rubricile nu sunt disponibile momentan.',true);}});
 })();

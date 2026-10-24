@@ -5,6 +5,10 @@
 #discussion-own-name{display:block;margin:0 0 12px;font-size:14px}
 /* Shared component sizing, independent of the tab or form using it. */
 :root{--rich-editor-height:132px}
+.discussion-image-panel{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:var(--panel)}
+.discussion-image-panel .btn{min-height:32px;padding:5px 10px;font-size:12px}.discussion-image-url{min-width:100px;flex:1;background:#0b0c0e;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:13px}.discussion-image-status{width:100%;font-size:12px!important;margin:0!important;color:var(--muted)}.discussion-image-status:empty{display:none}
+.discussion-inline-image{display:block;max-width:100%;height:auto;max-height:420px;object-fit:contain;border-radius:8px;margin:12px 0;cursor:zoom-in}
+.discussion-prosemirror .discussion-inline-image{max-height:240px;cursor:default}.discussion-prosemirror .ProseMirror-selectednode{outline:2px solid var(--gold)}
 .discussion-editor-shell{border:1px solid var(--field-border);border-radius:9px;overflow:hidden;background:#0d0f11}
 .discussion-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;padding:5px;border-bottom:1px solid var(--line);background:#101215}
 .discussion-tool-group{display:flex;align-items:center;gap:1px;border-right:1px solid var(--line);padding:0 4px;max-width:100%}

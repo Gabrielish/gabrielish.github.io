@@ -1,10 +1,10 @@
 .avatar-with-role{position:relative;display:inline-grid;align-self:start;justify-self:start;width:max-content;height:max-content;flex:none}
 .avatar-with-role>.post-avatar{display:block;box-shadow:0 0 0 2px #d7bc8a80}
-.avatar-admin-badge{position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);padding:1px 5px;border-radius:10px;background:linear-gradient(135deg,#f4d68a,#d8a64c);color:#241a08;font-size:9px;font-weight:750;line-height:13px;white-space:nowrap;box-shadow:0 2px 8px #d4a44535;pointer-events:none}
+.avatar-admin-badge{position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);padding:0 3px;border-radius:6px;background:linear-gradient(135deg,#f1c15d,#d99a32);color:#fff;font-size:7px;font-weight:750;line-height:11px;white-space:nowrap;box-shadow:0 2px 6px #d4a44530;pointer-events:none}
 #discutii .discussion-composer>.avatar-with-role{grid-column:1;grid-row:1;margin-top:4px}
 #discutii .discussion-composer>.avatar-with-role>.post-avatar{width:36px;height:36px}
 .is-inline-reply>.avatar-with-role{display:none}
 #reports-list .report-answer>.avatar-with-role>.post-avatar{width:36px;height:36px}
 .is-content-hidden>.post>.avatar-with-role{filter:grayscale(1);opacity:.5}
-@media(max-width:600px){#discutii .discussion-composer>.avatar-with-role>.post-avatar,#reports-list .report-answer>.avatar-with-role>.post-avatar{width:32px;height:32px}.avatar-admin-badge{font-size:8px;line-height:12px;padding:1px 4px}}
+@media(max-width:600px){#discutii .discussion-composer>.avatar-with-role>.post-avatar,#reports-list .report-answer>.avatar-with-role>.post-avatar{width:32px;height:32px}}
 @media(forced-colors:active){.avatar-admin-badge{background:Canvas;color:CanvasText;border:1px solid CanvasText;box-shadow:none}.avatar-with-role>.post-avatar{outline:1px solid CanvasText}}

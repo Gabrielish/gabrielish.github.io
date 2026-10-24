@@ -72,7 +72,7 @@
   try{const {data,error}=await client.rpc('bg3ro_start_conversation',{p_recipient:id});if(!current(ticket))return;if(error||!uuid.test(data||''))throw error;await client.rpc('bg3ro_mark_conversation',{p_conversation:data,p_hide:false});if(current(ticket))location.hash='conversatii/'+data;}
   catch{if(current(ticket)){if(location.hash.startsWith('#profil/'))profilePanel.append(node('p','form-status error','Conversația nu a putut fi deschisă. Încearcă din nou.'));else note(inboxStatus,'Conversația nu a putut fi deschisă. Încearcă din nou.',true);}}finally{starting=false;}
  }
- function preview(text){try{return window.BG3RO_CONTENT.render(text||'').textContent.replace(/\s+/g,' ').slice(0,90);}catch{return '';}}
+ function preview(text){try{const content=window.BG3RO_CONTENT.render(text||'');return content.textContent.replace(/\s+/g,' ').slice(0,90)||(content.querySelector('img')?'Imagine':'');}catch{return '';}}
  async function loadInbox(){
   if(!client||!userId)return;const ticket=epoch,request=++inboxRequest;
   try{const {data,error}=await client.rpc('bg3ro_dm_inbox');if(!current(ticket)||request!==inboxRequest)return;if(error)throw error;inbox=Array.isArray(data)?data:[];list.replaceChildren();
