@@ -1,12 +1,13 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {clickNav}=require('./nav-action.cjs');
 const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
-const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('reports:[]','reports:window.__imageReports').replace('rpc:async()=>({data:moderator(),error:null}),',`rpc:async(name,args)=>{
- if(name!=='bg3ro_edit_report_images')return{data:moderator(),error:null};
+const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('reports:[]','reports:window.__imageReports').replace("rpc:async(name,args)=>{if(name==='bg3ro_reorder_about_sections'){",`rpc:async(name,args)=>{
+ if(name==='bg3ro_edit_report_images'){
  state.imageSaves=(state.imageSaves||0)+1;if(state.failImages)return{error:{message:'Network error'}};
  const report=state.reports.find(r=>r.id===args.p_report_id);const removed=args.p_expected_paths.filter(path=>!args.p_keep_paths.includes(path));
  Object.assign(report,{title:args.p_title,body:args.p_body,screenshot_paths:args.p_keep_paths,screenshot_path:args.p_keep_paths[0]||null});return{data:removed,error:null};
- },storage:{from(){return{createSignedUrl:async path=>({data:{signedUrl:'https://test.supabase.co/storage/v1/object/sign/bg3ro-report-images/'+path},error:null}),remove:async paths=>{(state.imageDeletes||=[]).push(paths);return{data:paths,error:state.failDelete?{message:'Offline'}:null};}};}},`);
+ }if(name==='bg3ro_reorder_about_sections'){`).replace('    from(table){',`    storage:{from(){return{createSignedUrl:async path=>({data:{signedUrl:'https://test.supabase.co/storage/v1/object/sign/bg3ro-report-images/'+path},error:null}),remove:async paths=>{(state.imageDeletes||=[]).push(paths);return{data:paths,error:state.failDelete?{message:'Offline'}:null};}};}},
+    from(table){`);
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{for(const width of [320,390,1440])for(const actor of ['guest','member','admin']){
  const p=await browser.newPage({viewport:{width,height:1000},hasTouch:width<600,isMobile:width<600,reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.addInitScript(actor=>{
@@ -19,7 +20,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
  if(actor!=='guest'){await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});}
  const card=p.locator('.report-item'),edit=card.getByRole('button',{name:'Editează raportarea',exact:true}),form=p.locator('.report-inline-edit');
  await p.waitForFunction(()=>document.querySelectorAll('.report-attachments .report-photo-link').length===3);
- assert.equal(await card.locator('.report-answer .post-meta strong').textContent(),'gabrielish');assert.equal(await card.locator('.report-answer>.post-avatar').getAttribute('src'),'https://cdn.discordapp.com/embed/avatars/0.png');
+ assert.equal(await card.locator('.report-answer .post-meta strong').textContent(),'gabrielish');assert.equal(await card.locator('.report-answer img.post-avatar').getAttribute('src'),'https://cdn.discordapp.com/embed/avatars/0.png');
  await edit.click();const buttons=form.locator('.report-edit-photos .report-photo-remove');await buttons.first().waitFor();assert.equal(await buttons.count(),3);
  assert.equal(await buttons.first().evaluate(el=>getComputedStyle(el).opacity),'1','Removal is visible without hovering');
  await buttons.first().click();assert.equal(await buttons.count(),2);await form.getByRole('button',{name:'Anulează',exact:true}).click();assert.equal(await p.evaluate(()=>__communityTest.imageSaves||0),0);assert.equal(await p.evaluate(()=>__communityTest.reports[0].screenshot_paths.length),3);

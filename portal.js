@@ -202,7 +202,7 @@
     const ownAvatar=$('#discussion-avatar');
     const avatarURL=user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
     ownAvatar.src=member && /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(avatarURL) ? avatarURL : './assets/discussion-avatar.svg';
-    ownAvatar.classList.toggle('post-avatar-default',ownAvatar.src.endsWith('discussion-avatar.svg'));
+    ownAvatar.classList.toggle('post-avatar-default',ownAvatar.src.endsWith('discussion-avatar.svg'));window.BG3RO_AVATAR_BADGE(ownAvatar,moderator);
     $('#discussion-name').closest('.field').hidden=member;
     if($('#reply-discussion-form')){
       $('#reply-discussion-form').hidden=!user || !replyContext;
@@ -314,7 +314,7 @@
     // Never discard the live ProseMirror instance when refreshing its parent thread.
     if($('#reply-discussion-form')?.closest('#discussion-list'))parkComposer();
     if (!client) { target.replaceChildren(element('p', 'small', 'Discuțiile vor apărea aici după conectarea comunității.')); return; }
-    const fields = 'id,author_id,author_name,title,body,status,parent_id,created_at,is_guest,author_avatar_url';
+    const fields = 'id,author_id,author_name,title,body,status,parent_id,created_at,is_guest,author_avatar_url,author_is_admin';
     const { data, count, error } = await client.from('bg3ro_discussion_posts').select(fields, { count: 'exact' }).is('parent_id', null).order('created_at', { ascending: false }).order('id', { ascending: false }).range(page * discussionsPerPage, page * discussionsPerPage + discussionsPerPage - 1);
     if (ticket !== commentsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Discuțiile nu au putut fi încărcate. Încearcă din nou mai târziu.')); return; }
@@ -358,7 +358,7 @@
         if (deletionError) throw deletionError; await loadComments();
       }));
       if (actions.children.length) content.append(actions);
-      article.append(avatar, content); return article;
+      article.append(window.BG3RO_AVATAR_BADGE(avatar,post.author_is_admin===true&&!post.is_guest), content); return article;
     }
     data.forEach(post => {
       const thread = element('section', 'post-thread'), replies = element('div', 'post-replies');
@@ -449,7 +449,7 @@
     const request = ++reportsRequest;
     if (!client) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url,author_is_admin'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
     if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
     closeReportState();for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
@@ -469,7 +469,7 @@
       if (report.is_guest) copy.append(element('span', 'post-status', 'Oaspete'));
       if (!report.is_public) copy.append(element('span', 'post-status', 'Privată'));
       const stateBadge=element('span', 'post-status report-state-badge', statusLabels[report.status]);stateBadge.dataset.state=report.status;copy.append(stateBadge);
-      header.append(copy); content.append(header); layout.append(avatar, content); article.append(layout);
+      header.append(copy); content.append(header); layout.append(window.BG3RO_AVATAR_BADGE(avatar,report.author_is_admin===true&&!report.is_guest), content); article.append(layout);
       const title = element('h3', 'post-title report-title-row');
       title.append(element('span', '', report.title), element('span', 'report-platform-version', ` · ${report.platform} · ${window.BG3RO_VERSIONS.version(report.mod_version)}`));
       const reportBody=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.body):element('div','post-body',report.body);reportBody.classList.add('report-body');
@@ -542,7 +542,7 @@
         if(replyRemote)replyAvatar.addEventListener('error',()=>{replyAvatar.src='./assets/discussion-avatar.svg';replyAvatar.classList.add('post-avatar-default');},{once:true});
         const meta=element('div','post-meta');meta.append(element('strong','',report.reply_author_name||'Administrator'));
         if(report.reply_created_at&&Number.isFinite(Date.parse(report.reply_created_at))){const time=element('time','',dateText(report.reply_created_at));time.dateTime=report.reply_created_at;meta.append(time);}
-        const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');replyContent.append(meta,answer);reply.append(replyAvatar,replyContent);content.append(reply);
+        const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');replyContent.append(meta,answer);reply.append(window.BG3RO_AVATAR_BADGE(replyAvatar,true),replyContent);content.append(reply);
       }
       target.append(article);
       window.BG3RO_REPORT_PHOTO.show(client, report, photos).catch(() => {});

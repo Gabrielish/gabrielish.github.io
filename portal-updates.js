@@ -44,7 +44,7 @@
    if(update.is_visible===false)article.classList.add('news-is-hidden','is-content-hidden');
    const url=safeURL(update.link_url);if(url&&update.link_label){const a=el('a','release-news-link');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.append(icon(chain),el('span','',update.link_label));meta.append(a);}
    if(update.badge_label)meta.append(el('span','release-version-badge',update.badge_label));
-   header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(avatar,content);article.append(layout);target.append(article);
+   header.append(meta);content.append(header,el('h3','post-title',update.title),window.BG3RO_CONTENT.render(update.body));layout.append(window.BG3RO_AVATAR_BADGE(avatar,true),content);article.append(layout);target.append(article);
    article.dataset.newsDate=update.published_at;article.dataset.newsId=update.id;
    if(!moderator)return;
    const toolbar=el('div','manual-update-toolbar');

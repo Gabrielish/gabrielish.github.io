@@ -1,7 +1,7 @@
 const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('node:assert/strict');
 const {clickNav}=require('./nav-action.cjs');
 const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
-const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('reports:[]',"reports:[{id:'qa-report',title:'Raport de test',body:'Un mesaj sintetic pentru verificarea formularului.',status:'new',platform:'windows',mod_version:'test',is_public:true,author_name:'Jucător',created_at:'2026-10-19T10:00:00Z'}]").replace('forEach(row=>Object.assign(row,this.payload))',"forEach(row=>{Object.assign(row,this.payload);if(key==='reports'&&this.payload.moderator_reply&&!row.reply_created_at)Object.assign(row,{reply_author_name:'Administrator QA',reply_author_avatar_url:'https://cdn.discordapp.com/embed/avatars/0.png',reply_created_at:'2026-10-23T17:00:00Z'});})");
+const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('reports:[]',"reports:[{id:'qa-report',title:'Raport de test',body:'Un mesaj sintetic pentru verificarea formularului.',status:'new',platform:'windows',mod_version:'test',is_public:true,author_name:'Jucător',created_at:'2026-10-19T10:00:00Z'}]").replace('state[key].filter(matches).forEach(row=>Object.assign(row,this.payload))',"state[key].filter(matches).forEach(row=>{Object.assign(row,this.payload);if(key==='reports'&&this.payload.moderator_reply&&!row.reply_created_at)Object.assign(row,{reply_author_name:'Administrator QA',reply_author_avatar_url:'https://cdn.discordapp.com/embed/avatars/0.png',reply_created_at:'2026-10-23T17:00:00Z'});})");
 (async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
  for(const width of [320,390,1440]){
   const page=await browser.newPage({viewport:{width,height:1000},reducedMotion:'reduce'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -69,7 +69,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await inline.getByRole('button',{name:'Răspunde',exact:true}).click();await page.waitForSelector('.report-project-reply strong');
   assert.equal(await page.locator('.report-project-reply strong').textContent(),'Răspuns de test cu formatare.');
   assert.equal(await page.locator('.report-answer-label').count(),0);
-  assert.equal(await page.locator('.report-answer>.post-avatar').count(),1);
+  assert.equal(await page.locator('.report-answer img.post-avatar').count(),1);
   assert.equal(await page.locator('.report-answer .post-meta strong').textContent(),'Administrator QA');
   assert.equal(await page.locator('.report-answer time').getAttribute('datetime'),'2026-10-23T17:00:00Z');
   assert(!(await page.locator('.report-answer').textContent()).includes('@Jucător'),'No automatic mention');
@@ -84,7 +84,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.evaluate(()=>document.querySelector('#more-reports').click());
   await page.waitForFunction(()=>document.querySelector('.report-answer .post-meta strong')?.textContent==='Administrator');
   assert.equal(await page.locator('.report-answer time').count(),0,'Legacy replies do not invent a timestamp');
-  assert((await page.locator('.report-answer>.post-avatar').getAttribute('src')).endsWith('/assets/discussion-avatar.svg'),'Unsafe avatar URLs fall back to the local icon');
+  assert((await page.locator('.report-answer img.post-avatar').getAttribute('src')).endsWith('/assets/discussion-avatar.svg'),'Unsafe avatar URLs fall back to the local icon');
   page.once('dialog',d=>d.dismiss());await remove.click();assert.equal(await page.locator('.report-item').count(),1);
   page.once('dialog',d=>d.accept());await remove.click();await page.waitForFunction(()=>window.__communityTest.reports.length===0);
   await page.waitForFunction(()=>document.querySelector('#reports-list .report-empty p')?.textContent==='Nu a fost raportată încă nicio eroare.');

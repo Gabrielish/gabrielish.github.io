@@ -31,7 +31,7 @@
     image.classList.toggle("post-avatar-default", !remote);
     image.alt = ""; image.width = 44; image.height = 44; image.loading = "lazy"; image.referrerPolicy = "no-referrer";
     if (remote) image.addEventListener("error", () => { image.classList.add("post-avatar-default"); image.src = "./assets/discussion-avatar.svg"; }, { once: true });
-    return image;
+    return window.BG3RO_AVATAR_BADGE(image,true);
   }
   function date(value) {
     return new Date(value).toLocaleDateString("ro-RO", {
