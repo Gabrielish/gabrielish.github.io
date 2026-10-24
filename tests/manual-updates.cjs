@@ -24,9 +24,12 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   await page.getByRole('button',{name:'Publică o actualizare',exact:true}).click();const form=page.locator('#update-form');
   assert.equal(await page.locator('#actualizari dialog').count(),0,'No publication modal');
   const compact=async locator=>{
-   for(const input of await locator.locator(':scope > .field > input').all())assert.equal(Math.round((await input.boundingBox()).height),width<=600?40:38,'Compact input height');
+   const rows=locator.locator(':scope > .update-field-row');assert.equal(await rows.count(),2);assert.deepEqual(await rows.nth(0).locator('input').evaluateAll(nodes=>nodes.map(n=>n.name)),['title','badge_label']);assert.deepEqual(await rows.nth(1).locator('input').evaluateAll(nodes=>nodes.map(n=>n.name)),['link_url','link_label']);assert.deepEqual(await rows.locator('label').allTextContents(),['Titlu','Etichetă','Adresă link','Nume link']);
+   for(const input of await rows.locator('input').all())assert.equal(Math.round((await input.boundingBox()).height),width<=600?40:38,'Compact input height');
+   for(const row of await rows.all()){const [a,b]=await row.locator('input').all(),x=await a.boundingBox(),y=await b.boundingBox();if(width>600){assert(Math.abs(x.width/y.width-3)<.03,'Desktop rows use 75/25 widths');assert(Math.abs(x.y-y.y)<1);}else{assert(y.y>x.y+x.height);assert(Math.abs(x.width-y.width)<1);}}
+   const top=await rows.nth(0).boundingBox(),editor=await locator.locator('.discussion-editor-shell').boundingBox(),bottom=await rows.nth(1).boundingBox();assert(top.y+top.height<=editor.y);assert(bottom.y>=editor.y+editor.height);
    for(const button of await locator.locator(':scope > .form-end > .btn').all())assert.equal(Math.round((await button.boundingBox()).height),36,'Discussion-sized action buttons');
-  };await compact(form);
+  };await compact(form);assert.equal(await form.locator('[type=submit]').textContent(),'Publică');assert.equal(await form.locator('[name=badge_label]').getAttribute('required'),null);assert.equal(await form.locator('[name=link_url]').getAttribute('required'),null);
   await form.locator('[name=title]').fill('Anunț manual');
   const body=form.locator('.discussion-prosemirror');
   await body.fill('Scurt');await form.locator('[type=submit]').click();await form.locator('.form-status.error').waitFor();assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),0);

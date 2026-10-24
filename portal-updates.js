@@ -16,9 +16,10 @@
   wrap.append(l,input);form.append(wrap);return input;
  }
  function extras(form,data={}){
-  field(form,'link_label','Numele linkului (opțional)','text',80,data.link_label);
-  field(form,'link_url','Adresa linkului (opțional)','url',2000,data.link_url).placeholder='https://…';
-  field(form,'badge_label','Eticheta verde (opțional)','text',80,data.badge_label);
+  const title=form.querySelector('[name=title]').closest('.field'),badge=field(form,'badge_label','Etichetă','text',80,data.badge_label).closest('.field'),top=el('div','update-field-row');
+  title.before(top);top.append(title,badge);
+  const url=field(form,'link_url','Adresă link','url',2000,data.link_url);url.placeholder='https://…';
+  const name=field(form,'link_label','Nume link','text',80,data.link_label),links=el('div','update-field-row');url.closest('.field').before(links);links.append(url.closest('.field'),name.closest('.field'));
  }
  function safeURL(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
  function values(form){
