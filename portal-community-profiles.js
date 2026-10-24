@@ -39,7 +39,7 @@
   if(part==='profil'){profileId=arg;loadProfile();}
   if(part==='conversatii'){
    const contact=arg==='contact'&&admin;sources.hidden=!admin;contactPanel.hidden=!contact;gate.hidden=!!userId;layout.hidden=!userId||contact;inboxStatus.hidden=contact;for(const a of sources.querySelectorAll('a')){if(a.id===(contact?'message-contact-tab':'message-conversations-tab'))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
-   const next=uuid.test(arg||'')?arg:null;if(next!==selected){saveDraft();selected=next;peer=null;messages=[];limit=100;threadRequest++;editor?.editor.commands.clearContent();if(drafts.has(next))editor?.editor.commands.setContent(drafts.get(next));note(status,'');}
+   const next=uuid.test(arg||'')||isDemo(arg)?arg:null;if(next!==selected){saveDraft();selected=next;peer=null;messages=[];limit=100;threadRequest++;editor?.editor.commands.clearContent();if(drafts.has(next))editor?.editor.commands.setContent(drafts.get(next));note(status,'');}
    layout.classList.toggle('has-conversation',!!selected);gate.hidden=!!userId;layout.hidden=!userId||contact;heading.lastElementChild.hidden=!userId||contact;
    if(userId){loadInbox();if(selected)loadThread(true);else paintThread();}
   }
@@ -73,14 +73,23 @@
   try{const {data,error}=await client.rpc('bg3ro_start_conversation',{p_recipient:id});if(!current(ticket))return;if(error||!uuid.test(data||''))throw error;await client.rpc('bg3ro_mark_conversation',{p_conversation:data,p_hide:false});if(current(ticket))location.hash='conversatii/'+data;}
   catch{if(current(ticket)){if(location.hash.startsWith('#profil/'))profilePanel.append(node('p','form-status error','Conversația nu a putut fi deschisă. Încearcă din nou.'));else note(inboxStatus,'Conversația nu a putut fi deschisă. Încearcă din nou.',true);}}finally{starting=false;}
  }
+ const createDemos=()=>new Map([
+ ['demo-1','Andrei · Demo',['Salut! Unde găsesc instrucțiunile pentru instalare?','În secțiunea Descărcări, sub lista versiunilor.','Mulțumesc! Verific ghidul înainte de instalare.']],
+ ['demo-2','Ioana · Demo',['Bună! Pot atașa o captură la o raportare?','Da, poți adăuga mai multe capturi, în limita totală de 5 MB.']],
+ ['demo-3','Mihai · Demo',['Salut! Aș vrea să ajut la testarea traducerii.','Poți descrie ce ai testat și eventualele probleme în Raportare erori.','Am înțeles. Voi include și versiunea instalată.']],
+ ['demo-4','Elena · Demo',['Bună! Unde văd noutățile proiectului?','În tabul Actualizări găsești anunțurile publicate.']]
+ ].map(([id,name,texts])=>[id,{id,display_name:name,avatar_url:null,hidden:false,messages:texts.map((body,i)=>({body,sender_id:i%2?'demo-self':id,created_at:null}))}]));
+ let demos=createDemos();
+ const isDemo=id=>admin&&demos.has(id);
  function preview(text){try{const content=window.BG3RO_CONTENT.render(text||'');return content.textContent.replace(/\s+/g,' ').slice(0,90)||(content.querySelector('img')?'Imagine':'');}catch{return '';}}
  async function loadInbox(){
   if(!client||!userId)return;const ticket=epoch,request=++inboxRequest;
   try{const {data,error}=await client.rpc('bg3ro_dm_inbox');if(!current(ticket)||request!==inboxRequest)return;if(error)throw error;inbox=Array.isArray(data)?data:[];list.replaceChildren();
    const unread=inbox.reduce((sum,row)=>sum+Number(row.unread||0),0);if(window.BG3RO_ACCOUNT_NAV)window.BG3RO_ACCOUNT_NAV.messages(unread);else dmLink.textContent=unread?'Mesaje private ('+unread+')':'Mesaje';
-   if(!inbox.length)list.append(node('p','dm-empty','Nu ai încă nicio conversație.'));
-   for(const row of inbox){const link=node('a','dm-conversation');link.href='#conversatii/'+row.id;link.classList.toggle('is-unread',Number(row.unread)>0);if(row.id===selected)link.setAttribute('aria-current','true');const text=node('span','dm-conversation-copy');text.append(node('strong','',row.display_name),node('span','',row.last_body?preview(row.last_body):'Niciun mesaj'));link.append(avatar(row),text);if(Number(row.unread)>0)link.append(node('span','dm-unread',String(row.unread)));list.append(link);}
-   note(inboxStatus,'');
+   const demoRows=admin?[...demos.values()].filter(r=>!r.hidden).map(r=>({...r,last_body:r.messages.at(-1)?.body})):[];
+   if(!inbox.length&&!demoRows.length)list.append(node('p','dm-empty','Nu ai încă nicio conversație.'));
+   for(const row of [...inbox,...demoRows]){const link=node('a','dm-conversation');link.href='#conversatii/'+row.id;link.classList.toggle('is-unread',Number(row.unread)>0);if(row.id===selected)link.setAttribute('aria-current','true');const text=node('span','dm-conversation-copy');text.append(node('strong','',row.display_name),node('span','',row.last_body?preview(row.last_body):'Niciun mesaj'));link.append(avatar(row),text);if(Number(row.unread)>0)link.append(node('span','dm-unread',String(row.unread)));list.append(link);}
+   note(inboxStatus,isDemo(selected)?'Conversație demo — răspunsurile de test rămân doar în această pagină.':'');
   }catch{if(current(ticket)&&request===inboxRequest)note(inboxStatus,'Conversațiile nu au putut fi încărcate. Folosește Reîncarcă.',true);}
  }
  function paintThread(scroll=false){
@@ -90,15 +99,16 @@
   if(!peer){threadEmpty.hidden=false;threadEmpty.textContent='Conversația nu este disponibilă.';form.hidden=true;return;}
   threadEmpty.hidden=true;form.hidden=false;
   const back=button('Înapoi','back',()=>location.hash='conversatii','btn dm-back'),identity=node('div','dm-peer');identity.append(profileLink(avatar(peer),peer.id,peer.display_name,true),profileLink(node('strong','',peer.display_name),peer.id,peer.display_name));
-  const hide=button('Ascunde conversația','hide',async()=>{if(sending||!confirm('Ascunzi conversația din lista ta? Celălalt participant își păstrează mesajele.'))return;const ticket=epoch,id=selected;hide.disabled=true;try{const {error}=await client.rpc('bg3ro_mark_conversation',{p_conversation:id,p_hide:true});if(error)throw error;if(current(ticket)&&selected===id)location.hash='conversatii';}catch{if(current(ticket))note(status,'Conversația nu a fost ascunsă.',true);}finally{hide.disabled=false;}},'btn dm-hide');
+  const hide=button('Ascunde conversația','hide',async()=>{if(isDemo(selected)){demos.get(selected).hidden=true;location.hash='conversatii';return;}if(sending||!confirm('Ascunzi conversația din lista ta? Celălalt participant își păstrează mesajele.'))return;const ticket=epoch,id=selected;hide.disabled=true;try{const {error}=await client.rpc('bg3ro_mark_conversation',{p_conversation:id,p_hide:true});if(error)throw error;if(current(ticket)&&selected===id)location.hash='conversatii';}catch{if(current(ticket))note(status,'Conversația nu a fost ascunsă.',true);}finally{hide.disabled=false;}},'btn dm-hide');
   threadHead.append(back,identity,hide);
   if(!messages.length)history.append(node('p','dm-empty','Încă nu există mesaje. Scrie ceva!'));
-  for(const message of messages){const item=node('article','dm-message'+(message.sender_id===userId?' is-own':'')),meta=node('div','dm-message-meta'),time=node('time','',date(message.created_at));time.dateTime=message.created_at;meta.append(node('strong','',message.sender_id===userId?'Tu':peer.display_name),time);item.append(meta,window.BG3RO_CONTENT.render(message.body));history.append(item);}
+  for(const message of messages){const item=node('article','dm-message'+(message.sender_id===userId?' is-own':'')),meta=node('div','dm-message-meta'),time=node('time','',isDemo(selected)?'Demo':date(message.created_at));if(message.created_at)time.dateTime=message.created_at;meta.append(node('strong','',message.sender_id===userId?'Tu':peer.display_name),time);item.append(meta,window.BG3RO_CONTENT.render(message.body));history.append(item);}
   if(scroll)history.scrollTop=history.scrollHeight;
  }
  async function loadThread(scroll=false,olderPage=false){
   if(!client||!userId||!selected)return;const ticket=epoch,request=++threadRequest,id=selected,active=client;
   try{
+   if(isDemo(id)){const demo=demos.get(id);peer=demo;more=false;messages=demo.messages.map(m=>({...m,sender_id:m.sender_id==='demo-self'?userId:m.sender_id}));paintThread(scroll);note(inboxStatus,'Conversații demo: mesajele de test rămân doar în această pagină și dispar la reîncărcare.');return;}
    const conv=await active.from('bg3ro_conversations').select('id,user_a,user_b').eq('id',id).maybeSingle();if(!current(ticket)||request!==threadRequest||id!==selected)return;if(conv.error||!conv.data)throw conv.error;
    const other=conv.data.user_a===userId?conv.data.user_b:conv.data.user_a;
    const [person,rows]=await Promise.all([active.from('bg3ro_profiles').select('id,display_name,avatar_url,is_admin').eq('id',other).maybeSingle(),active.from('bg3ro_direct_messages').select('id,sender_id,body,created_at').eq('conversation_id',id).order('created_at',{ascending:false}).order('id',{ascending:false}).range(0,limit)]);
@@ -111,6 +121,7 @@
  search.addEventListener('input',()=>{clearTimeout(searchTimer);const request=++searchRequest;searchResults.replaceChildren();const text=search.value.trim().replace(/[\\%_]/g,'');if(text.length<2)return;searchTimer=setTimeout(async()=>{const ticket=epoch;try{const {data,error}=await client.from('bg3ro_profiles').select('id,display_name,avatar_url,is_admin').ilike('display_name','%'+text+'%').order('display_name').limit(20);if(!current(ticket)||request!==searchRequest)return;if(error)throw error;const choices=(data||[]).filter(p=>p.id!==userId);if(!choices.length)searchResults.append(node('p','small','Niciun utilizator găsit.'));for(const profile of choices){const b=button(profile.display_name,null,()=>startConversation(profile.id),'dm-search-result');b.prepend(avatar(profile));searchResults.append(b);}}catch{if(current(ticket)&&request===searchRequest)searchResults.append(node('p','small','Căutarea nu este disponibilă.'));}},250);});
  form.addEventListener('submit',async event=>{
   event.preventDefault();if(sending||!userId||!selected||!peer)return;let value;try{value=editor.value();}catch(error){note(status,error.message,true);return;}
+  if(isDemo(selected)){demos.get(selected).messages.push({sender_id:'demo-self',body:value,created_at:null});drafts.delete(selected);editor.reset();loadThread(true);loadInbox();return;}
   const ticket=epoch,id=selected,active=client,author=userId;sending=true;submit.disabled=true;editor.editor.setEditable(false,false);note(status,'Se trimite…');
   try{const {error}=await active.from('bg3ro_direct_messages').insert({conversation_id:id,sender_id:author,body:value});if(error)throw error;if(!current(ticket))return;drafts.delete(id);if(selected===id){editor.reset();note(status,'');await loadThread(true);}await loadInbox();}
   catch(error){if(current(ticket))note(status,error?.code==='P0001'?'Așteaptă câteva secunde și încearcă din nou.':'Mesajul nu a fost trimis. Textul a fost păstrat; încearcă din nou.',true);}
@@ -120,7 +131,7 @@
  document.addEventListener('DOMContentLoaded',()=>{editor=window.BG3RO_MOUNT_CONTENT_EDITOR(form,body,{minimum:1,label:'Mesaj privat',placeholder:'Scrie un mesaj…'});submit.disabled=false;},{once:true});
  addEventListener('bg3ro:auth',event=>{
   const previous=userId;epoch++;profileRequest++;inboxRequest++;threadRequest++;client=event.detail.client;userId=event.detail.userId;admin=event.detail.moderator===true;ownLink.hidden=dmLink.hidden=!userId;if(userId)ownLink.href='#profil/'+userId;
-  if(previous!==userId){drafts.clear();messages=[];inbox=[];peer=null;list.replaceChildren();history.replaceChildren();editor?.editor.commands.clearContent();editor?.editor.setEditable(true);body.value='';searchResults.replaceChildren();search.value='';searchRequest++;clearTimeout(searchTimer);note(status,'');note(inboxStatus,'');sending=false;submit.disabled=false;}
+  if(previous!==userId){demos=createDemos();drafts.clear();messages=[];inbox=[];peer=null;list.replaceChildren();history.replaceChildren();editor?.editor.commands.clearContent();editor?.editor.setEditable(true);body.value='';searchResults.replaceChildren();search.value='';searchRequest++;clearTimeout(searchTimer);note(status,'');note(inboxStatus,'');sending=false;submit.disabled=false;}
   clearInterval(timer);route();if(userId){loadInbox();timer=setInterval(()=>{if(document.hidden)return;loadInbox();if(location.hash.startsWith('#conversatii/')&&selected)loadThread(false);},20000);}
  });
  addEventListener('hashchange',route);addEventListener('popstate',route);
