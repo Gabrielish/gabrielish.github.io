@@ -113,7 +113,10 @@
     const a = el("a", featured ? "btn release-download" : "btn");
     if (featured) {
       const format = /\.(zip|rar|7z)$/i.exec(row.file_name)?.[1].toUpperCase();
-      a.append(outlineIcon(["M12 3v12m-5-5 5 5 5-5", "M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4"]), el("span", "", format ? `Descarcă fișier ${format}` : "Descarcă fișier"));
+      const icon=document.createElementNS("http://www.w3.org/2000/svg","svg"),use=document.createElementNS("http://www.w3.org/2000/svg","use");
+      for(const [key,value]of Object.entries({class:"download-symbol",viewBox:"0 0 26 26",width:18,height:18,"aria-hidden":"true",focusable:"false"}))icon.setAttribute(key,value);
+      use.setAttribute("href","./assets/download-icons.svg#download");icon.append(use);
+      a.append(icon, el("span", "", format ? `Descarcă fișier ${format}` : "Descarcă fișier"));
     } else a.textContent = "Descarcă arhiva";
     a.href = row.download_url;
     a.download = row.file_name;

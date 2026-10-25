@@ -1,0 +1,3 @@
+.download-symbol{display:inline-block;width:18px;height:18px;flex:none;vertical-align:middle;fill:currentColor;stroke:none;pointer-events:none}
+.main-navigation>.nexus-link{display:inline-flex;align-items:center;justify-content:center;gap:9px}
+.nexus-link .download-symbol,.quick-download .nexus-symbol{color:var(--gold);width:20px;height:20px}
