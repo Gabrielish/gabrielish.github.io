@@ -24,7 +24,7 @@
   transform: translateX(-50%);
   /* One vector canvas gives the center and side lines the same baseline,
      without separately rasterized CSS layers or fractional-pixel seams. */
-  background-image: url('./assets/nav-underline.svg');
+  background-image: url('./assets/nav-underline.svg?v=20261025-continuous');
   background-position: center;
   background-size: 100% 10px;
   background-repeat: no-repeat;

@@ -8,7 +8,7 @@
 .main-navigation{display:flex;align-items:center;justify-content:center;gap:28px;margin-left:auto}
 .main-navigation>a,.nav-login{position:relative;font:600 clamp(15px,1.05vw,20px)/1.4 var(--serif);text-transform:uppercase;color:#fbcea0;white-space:nowrap;text-decoration:none;transition:color .4s}
 .main-navigation>a{padding-block:12px}
-.main-navigation>a:after,.nav-login:after{content:'';position:absolute;top:calc(100% - 5px);left:0;width:100%;height:10px;background:url('./assets/nav-underline.svg') center/100% 10px no-repeat;opacity:0;transition:opacity .4s}
+.main-navigation>a:after,.nav-login:after{content:'';position:absolute;top:calc(100% - 5px);left:0;width:100%;height:10px;background:url('./assets/nav-underline.svg?v=20261025-continuous') center/100% 10px no-repeat;opacity:0;transition:opacity .4s}
 .main-navigation>a:is(:hover,:focus-visible),.nav-login:is(:hover,:focus-visible){color:#fff;text-decoration:none}
 .main-navigation>a:is(:hover,:focus-visible):after,.nav-login:is(:hover,:focus-visible):after{opacity:1}
 .navbar-actions{display:flex;align-items:center;gap:25px;flex-shrink:0}
