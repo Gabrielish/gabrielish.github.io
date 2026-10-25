@@ -1,3 +1,10 @@
 .download-symbol{display:inline-block;width:18px;height:18px;flex:none;vertical-align:middle;fill:currentColor;stroke:none;pointer-events:none}
 .main-navigation>.nexus-link{display:inline-flex;align-items:center;justify-content:center;gap:9px}
 .nexus-link .download-symbol,.quick-download .nexus-symbol{color:var(--gold);width:20px;height:20px}
+.sidebar .btn.updater-download{min-height:48px;padding:12px 16px;border:1px solid #4ade8055;border-radius:14px;background:linear-gradient(110deg,#268b42,#247c58);color:#fff;box-shadow:0 4px 16px #22c55e20;transition:background .18s,border-color .18s,box-shadow .18s}
+.sidebar .btn.updater-download:hover{background:linear-gradient(110deg,#30a34d,#2a9065);border-color:#86efac99;box-shadow:0 5px 20px #22c55e38}
+.sidebar .btn.updater-download:focus-visible{outline:2px solid #86efac;outline-offset:4px}
+.updater-download svg{flex:none}
+.updater-download span{min-width:0;overflow-wrap:anywhere}
+.sidebar .updater-platform{margin:7px 0 16px;text-align:center;font-size:11px;line-height:1.5;color:var(--muted)}
+@media(prefers-reduced-motion:reduce){.sidebar .btn.updater-download{transition:none}}
