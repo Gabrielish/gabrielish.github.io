@@ -24,11 +24,47 @@
    if(row.body===null)content.replaceChildren(...originals.get(row.id).map(n=>n.cloneNode(true)));else content.replaceChildren(window.BG3RO_CONTENT.render(row.body));
    if(row.legacy_note?.trim()){const quote=node('blockquote');quote.append(node('p','',row.legacy_note));content.append(quote);}
    if(row.kind==='progress')for(const kind of ['translation','review','testing']){const value=Math.max(0,Math.min(100,Number(row[kind+'_percent']))),bar=card.querySelector('#'+kind+'-progress');card.querySelector('#'+kind+'-percent').textContent=value+'%';bar.setAttribute('aria-valuenow',String(value));bar.querySelector('.progress-fill').style.width=value+'%';}
+   if(row.kind==='gallery')galleryImages(view,row,manage);
    if(manage){const tools=node('div','about-section-tools'),edit=button('Editează','edit',()=>openEditor(row)),visibility=button(row.is_visible?'Ascunde':'Afișează',row.is_visible?'hide':'show',()=>change(row,{is_visible:!row.is_visible})),remove=button('Șterge','delete',()=>removeSection(row));edit.setAttribute('aria-label','Editează '+row.title);visibility.setAttribute('aria-label',(row.is_visible?'Ascunde ':'Afișează ')+row.title);remove.setAttribute('aria-label','Șterge '+row.title);tools.append(edit,visibility,remove);card.append(tools);}
    if(manage){const tools=card.querySelector('.about-section-tools');for(const [delta,label,kind,edge]of [[-1,'Mai sus','up',position===0],[1,'Mai jos','down',position===rows.length-1]]){const move=button(label,kind,()=>moveSection(row,delta));move.dataset.move=delta;move.dataset.atEdge=String(edge);move.disabled=edge;move.setAttribute('aria-label','Mută '+row.title+' '+label.toLowerCase());tools.append(move);}}
    root.insertBefore(card,management);
   }
   add.hidden=!manage;retry.hidden=true;
+ }
+ function galleryImages(view,row,manage){
+  const prefix='BG3RO-RICH-1:';if(!row.body?.startsWith(prefix))return;
+  let doc;try{doc=JSON.parse(row.body.slice(prefix.length));}catch{return;}
+  const slots=[];function walk(parent){for(const [index,item]of (parent.content||[]).entries()){if(item.type==='image')slots.push({parent,index,item});else walk(item);}}walk(doc);
+  view.content.classList.add('project-gallery-rich');let dragIndex=null;
+  async function save(from,to,remove=false){
+   if(busy||!admin||editing||!slots[from]||(!remove&&!slots[to]))return;
+   if(remove&&!confirm('Elimini această imagine din galerie?'))return;
+   const next=JSON.parse(JSON.stringify(doc)),nextSlots=[];function collect(parent){for(const [index,item]of (parent.content||[]).entries()){if(item.type==='image')nextSlots.push({parent,index,item});else collect(item);}}collect(next);
+   if(remove){const slot=nextSlots[from];slot.parent.content.splice(slot.index,1);}else{const ordered=nextSlots.map(slot=>slot.item);ordered.splice(to,0,ordered.splice(from,1)[0]);nextSlots.forEach((slot,index)=>{slot.parent.content[slot.index]=ordered[index];});}
+   const body=prefix+JSON.stringify(next),ticket=epoch,active=client;busy=true;view.card.setAttribute('aria-busy','true');message('Se salvează galeria…');
+   try{const {data,error}=await active.rpc('bg3ro_update_gallery_body',{p_expected:row.body,p_body:body});if(error||data!==true)throw error||Error('Gallery changed');if(ticket===epoch){await load();message(remove?'Imaginea a fost eliminată din galerie.':'Ordinea imaginilor a fost salvată.');}}
+   catch{if(ticket===epoch){message('Modificarea nu a fost salvată. Reîncarcă rubricile și încearcă din nou.',true);retry.hidden=false;}}
+   finally{busy=false;view.card.removeAttribute('aria-busy');}
+  }
+  const used=new Set();for(const image of view.content.querySelectorAll('.discussion-inline-image')){
+   const index=slots.findIndex((slot,i)=>!used.has(i)&&slot.item.attrs?.src===image.getAttribute('src'));if(index<0)continue;used.add(index);
+   const tile=node('div','project-gallery-tile project-gallery-rich-tile');tile.dataset.galleryIndex=index;image.before(tile);tile.append(image);image.draggable=manage;
+   if(!manage)continue;
+   tile.draggable=true;tile.title='Trage imaginea pentru a schimba ordinea. Prima imagine este principală.';
+   const remove=button('','delete',()=>save(index,index,true));remove.className='project-gallery-remove';remove.setAttribute('aria-label','Șterge imaginea '+(index+1)+' din galerie');remove.title='Șterge imaginea';remove.querySelector('path').setAttribute('d','m6 6 12 12M18 6 6 18');remove.querySelector('svg').setAttribute('width','14');remove.querySelector('svg').setAttribute('height','14');tile.append(remove);
+   if(index===0)tile.append(node('span','gallery-primary','Principală'));
+   const handle=button('','up',()=>{});handle.className='gallery-drag-handle';handle.setAttribute('aria-label','Reordonează imaginea '+(index+1)+'; Alt și săgeți pentru mutare');handle.setAttribute('aria-keyshortcuts','Alt+ArrowLeft Alt+ArrowRight');handle.title='Trage pentru reordonare';handle.querySelector('path').setAttribute('d','M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01');tile.append(handle);
+   handle.onkeydown=event=>{if(event.altKey&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();event.stopPropagation();save(index,index+(event.key==='ArrowRight'?1:-1));}};
+   tile.ondragstart=event=>{if(busy||editing||!admin){event.preventDefault();return;}dragIndex=index;event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',String(index));tile.classList.add('is-dragging');};
+   tile.ondragover=event=>{if(dragIndex!==null&&!busy&&admin){event.preventDefault();event.dataTransfer.dropEffect='move';tile.classList.add('is-drop-target');}};
+   tile.ondragleave=()=>tile.classList.remove('is-drop-target');
+   tile.ondrop=event=>{event.preventDefault();tile.classList.remove('is-drop-target');if(dragIndex!==null&&dragIndex!==index)save(dragIndex,index);dragIndex=null;};
+   tile.ondragend=()=>{dragIndex=null;view.content.querySelectorAll('.is-dragging,.is-drop-target').forEach(el=>el.classList.remove('is-dragging','is-drop-target'));};
+   let pointer=null,target=index;
+   handle.onpointerdown=event=>{if(event.button!==0||busy||editing||!admin)return;event.preventDefault();pointer=event.pointerId;target=index;handle.setPointerCapture(pointer);tile.classList.add('is-dragging');};
+   handle.onpointermove=event=>{if(pointer!==event.pointerId)return;const over=document.elementFromPoint(event.clientX,event.clientY)?.closest('.project-gallery-rich-tile');view.content.querySelectorAll('.is-drop-target').forEach(el=>el.classList.remove('is-drop-target'));if(over&&view.content.contains(over)){target=Number(over.dataset.galleryIndex);over.classList.add('is-drop-target');}};
+   const end=event=>{if(pointer!==event.pointerId)return;const cancelled=event.type==='pointercancel';pointer=null;tile.classList.remove('is-dragging');view.content.querySelectorAll('.is-drop-target').forEach(el=>el.classList.remove('is-drop-target'));if(!cancelled&&target!==index)save(index,target);};handle.onpointerup=end;handle.onpointercancel=end;
+  }
  }
  async function load(){if(!client)return;const ticket=++epoch,active=client;try{const {data,error}=await active.from('bg3ro_about_sections').select('*').order('sort_order').order('id');if(ticket!==epoch)return;if(error)throw error;rows=data||[];draw();loaded();message('');}catch{if(ticket===epoch){loading.hidden=true;root.setAttribute('aria-busy','false');message('Rubricile nu au putut fi încărcate. Încearcă din nou.',true);retry.hidden=false;}}}
  async function change(row,values){if(busy||!admin||!discard())return;const ticket=epoch,active=client;busy=true;message('Se salvează…');try{const {data,error}=await active.from('bg3ro_about_sections').update(values).eq('id',row.id).select('id').maybeSingle();if(error||!data)throw error||Error('Not saved');if(ticket===epoch)await load();}catch{if(ticket===epoch)message('Modificarea nu a fost salvată. Încearcă din nou.',true);}finally{busy=false;}}

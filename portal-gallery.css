@@ -1,6 +1,19 @@
 .project-gallery-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}.project-gallery-header h2{margin:0}
 .project-gallery-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .project-gallery-tile{position:relative;min-width:0}
+.project-gallery-rich>.rich-content{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.project-gallery-rich>.rich-content>:not(.project-gallery-rich-tile){grid-column:1/-1}
+.project-gallery-rich-tile>.discussion-inline-image{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;margin:0;border-radius:10px;cursor:zoom-in}
+.project-gallery-rich-tile[draggable=true]{cursor:grab}
+.project-gallery-rich-tile.is-dragging{opacity:.45}
+.project-gallery-rich-tile.is-drop-target{outline:2px solid var(--gold);outline-offset:4px;border-radius:10px}
+.gallery-primary{position:absolute;left:8px;bottom:8px;padding:2px 7px;border-radius:6px;background:#111215dc;color:var(--gold);font-size:10px;pointer-events:none}
+.gallery-drag-handle{position:absolute;right:7px;bottom:7px;display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid var(--line);border-radius:7px;background:#111215dc;color:var(--gold);cursor:grab;touch-action:none}
+.gallery-drag-handle:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.project-gallery:has(.about-section-editor) .project-gallery-rich-tile>:is(.project-gallery-remove,.gallery-drag-handle){display:none}
+@media(hover:hover) and (pointer:fine){.project-gallery-rich-tile:not(:hover):not(:focus-within) .gallery-drag-handle{opacity:0;pointer-events:none}}
+@media(max-width:950px){.project-gallery-rich>.rich-content{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.project-gallery-rich>.rich-content{grid-template-columns:1fr}}
 .project-gallery-open{display:block;width:100%;aspect-ratio:16/9;padding:0;overflow:hidden;background:var(--field-bg);border:1px solid var(--line);border-radius:10px;cursor:zoom-in}
 .project-gallery-open img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .18s}
 .project-gallery-open:hover img{transform:scale(1.025)}
