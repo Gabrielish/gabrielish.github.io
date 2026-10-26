@@ -11,6 +11,10 @@ enum CoreSelfTest {
         if try !condition() { throw UpdaterFailure.message(message) }
     }
     static func run() throws {
+        let decimal = try JSONDecoder().decode(ProjectProgress.self, from: Data(#"{"translation_percent":79.61}"#.utf8))
+        try require(decimal.translation_percent == 79.61, "Decimal progress rounded")
+        try require(UpdaterCore.formatPercent(79.61) == "79.61", "Decimal progress format")
+        try require(UpdaterCore.formatPercent(80) == "80", "Integer progress format")
         let work = try UpdaterCore.temporaryWork()
         defer { UpdaterCore.removeWork(work) }
         var release = Release(id:"fixture",version:"v1",title:"Test",download_url:UpdaterCore.knownURL,file_name:"Baldurs_Gate_3_RO_20.10.2026_7933.rar",file_bytes:123,published_at:"2026-10-20T00:00:00Z",platform:"all")

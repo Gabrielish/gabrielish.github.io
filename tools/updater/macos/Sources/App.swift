@@ -34,7 +34,7 @@ enum Assets {
     @Published var status = "Se caută versiunea disponibilă…"
     @Published var progress: Double = 0
     @Published var showProgress = false
-    @Published var translationPercent: Int?
+    @Published var translationPercent: Double?
     private var downloading = false
     private var settings = UpdaterCore.loadSettings()
     var current: Bool { latest != nil && installed?.url == latest?.download_url }
@@ -264,7 +264,7 @@ struct ContentView: View {
             at(header,0,8,680,40)
             at(OrnamentDivider(),24,51,632,10)
             at(Text("Traducerea în română").font(Assets.display(32)).foregroundColor(Assets.text),24,68,500,40)
-            at(Text("Baldur’s Gate 3 · Early Access · Progres traducere: " + (model.translationPercent.map { "\($0)%" } ?? (model.busy ? "…" : "—"))).font(.system(size:12.67)).foregroundColor(Assets.muted),24,110,500,22)
+            at(Text("Baldur’s Gate 3 · Early Access · Progres traducere: " + (model.translationPercent.map { UpdaterCore.formatPercent($0)+"%" } ?? (model.busy ? "…" : "—"))).font(.system(size:12.67)).foregroundColor(Assets.muted),24,110,500,22)
             at(VStack(alignment:.trailing,spacing:12) {
                 HoverLink(title:"Website ↗",destination:URL(string:"https://gabrielish.github.io/")!,normal:Assets.gold,highlighted:Assets.text)
                 HoverLink(title:"Nexus Mods ↗",destination:URL(string:"https://www.nexusmods.com/baldursgate3/mods/24379")!,normal:Assets.gold,highlighted:Assets.text)

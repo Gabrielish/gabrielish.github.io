@@ -24,7 +24,7 @@ struct Receipt: Codable {
     var url: String?
 }
 
-struct ProjectProgress: Decodable { let translation_percent: Int? }
+struct ProjectProgress: Decodable { let translation_percent: Double? }
 
 struct Settings: Codable {
     var gamePath: String?
@@ -149,7 +149,7 @@ enum UpdaterCore {
         return release
     }
 
-    static func translationProgress() async throws -> Int? {
+    static func translationProgress() async throws -> Double? {
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 8; config.timeoutIntervalForResource = 8
         let session = URLSession(configuration: config, delegate: NoRedirect(), delegateQueue: nil)
@@ -160,8 +160,12 @@ enum UpdaterCore {
         let (data, response) = try await session.data(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200, data.count <= 10_000 else { return nil }
         let rows = try JSONDecoder().decode([ProjectProgress].self, from: data)
-        guard rows.count == 1, let value = rows.first?.translation_percent, (0...100).contains(value) else { return nil }
+        guard rows.count == 1, let value = rows.first?.translation_percent, value.isFinite, (0...100).contains(value) else { return nil }
         return value
+    }
+
+    static func formatPercent(_ value: Double) -> String {
+        String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), value).replacingOccurrences(of: #"\.?0+$"#, with: "", options: .regularExpression)
     }
 
     static func hash(_ file: URL) throws -> String {

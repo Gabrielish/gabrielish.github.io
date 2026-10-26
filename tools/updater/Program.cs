@@ -31,7 +31,7 @@ namespace BG3RO {
  public class Receipt {
   public string Version, Hash, Url, Published;
  }
- public class ProjectProgress { public int? translation_percent; }
+ public class ProjectProgress { public decimal? translation_percent; }
  public class Settings {
   public string Folder;
   public Dictionary<string,Receipt> Installs = new Dictionary<string,Receipt>(StringComparer.OrdinalIgnoreCase);
@@ -40,7 +40,7 @@ namespace BG3RO {
   public const string Feed="https://gatkiwcyjgbgjwfgvplm.supabase.co/rest/v1/bg3ro_releases?select=id,version,title,download_url,file_name,file_bytes,published_at,platform&kind=eq.translation&is_visible=eq.true&is_deleted=eq.false&platform=in.(windows,all)&order=published_at.desc,id.desc&limit=1";
   const string Key="sb_publishable_8wgqYScl0lmXs3-x0feaIw_4z7kr4bd";
   public const string ProgressFeed="https://gatkiwcyjgbgjwfgvplm.supabase.co/rest/v1/bg3ro_about_sections?select=translation_percent&id=eq.progress&kind=eq.progress&is_visible=eq.true&limit=1";
-  public static async Task<int?> TranslationProgress(CancellationToken token) {
+  public static async Task<decimal?> TranslationProgress(CancellationToken token) {
    using(var c=Http()) {c.Timeout=TimeSpan.FromSeconds(8);c.DefaultRequestHeaders.Add("apikey",Key);
     using(var response=await c.GetAsync(ProgressFeed,token)){response.EnsureSuccessStatusCode();var text=await response.Content.ReadAsStringAsync();if(text.Length>10000)throw new InvalidDataException("Răspuns prea mare.");
      var rows=new JavaScriptSerializer().Deserialize<ProjectProgress[]>(text);var value=rows!=null&&rows.Length==1?rows[0].translation_percent:null;return value.HasValue&&value.Value>=0&&value.Value<=100?value:null;}
@@ -260,7 +260,7 @@ Shown+=async(s,e)=>{await Check();if(TestReport!=null){await ApplyUpdate();bool 
   void ShowPath(){pathLabel.Text=root==null?"Selectează folderul Baldurs Gate 3":Engine.DisplayPath(root);choose.Text=root==null?"Alege folderul":"Schimbă";update.Cursor=root==null?Cursors.No:Cursors.Hand;}
   void SetBusy(bool value){busy=value;choose.Enabled=check.Enabled=!value;update.Enabled=!value&&root!=null&&latest!=null;update.Cursor=root==null?Cursors.No:Cursors.Hand;if(!value){applying=false;cancellation.Dispose();cancellation=null;}}
   async void Choose(object sender,EventArgs args){using(var dialog=new FolderBrowserDialog{Description="Alege folderul Baldurs Gate 3 (conține bin și Data).",ShowNewFolderButton=false,SelectedPath=root??""}){if(dialog.ShowDialog(this)!=DialogResult.OK)return;try{root=Engine.ResolveRoot(dialog.SelectedPath);settings.Folder=root;Engine.SaveSettings(settings);ShowPath();await Check();}catch(Exception ex){MessageBox.Show(this,ex.Message,"Folderul jocului",MessageBoxButtons.OK,MessageBoxIcon.Information);}}}
-  async Task RefreshProjectProgress(CancellationToken token){subtitle.Text="Baldur’s Gate 3 · Early Access · Progres traducere: …";int? value=null;try{value=await Engine.TranslationProgress(token);}catch{}subtitle.Text="Baldur’s Gate 3 · Early Access · Progres traducere: "+(value.HasValue?value.Value+"%":"—");}
+  async Task RefreshProjectProgress(CancellationToken token){subtitle.Text="Baldur’s Gate 3 · Early Access · Progres traducere: …";decimal? value=null;try{value=await Engine.TranslationProgress(token);}catch{}subtitle.Text="Baldur’s Gate 3 · Early Access · Progres traducere: "+(value.HasValue?value.Value.ToString("0.##",System.Globalization.CultureInfo.InvariantCulture)+"%":"—");}
   async Task Check(){if(busy)return;cancellation=new CancellationTokenSource();SetBusy(true);var projectTask=RefreshProjectProgress(cancellation.Token);latest=null;progress.ShowPercentage=false;progress.Value=0;remoteVersion.Text="Se verifică…";remoteDetail.Links.Clear();remoteDetail.Text="Verific versiunea publicată…";status.Text="Verific versiunea publicată pe BG3.RO…";
    try{installed=await Task.Run(()=>Engine.Local(root,settings));localVersion.Text=root==null?"Alege folderul jocului":installed!=null&&!string.IsNullOrEmpty(installed.Version)?installed.Version:"Necunoscută";latest=await Engine.Latest(cancellation.Token);remoteVersion.Text=latest.version;DateTimeOffset when;remoteDetail.Text=(DateTimeOffset.TryParse(latest.published_at,out when)?TimeZoneInfo.ConvertTime(when,TimeZoneInfo.FindSystemTimeZoneById("GTB Standard Time")).ToString("dd.MM.yyyy")+" · ":"")+(latest.file_bytes/1048576.0).ToString("0.0")+" MB · Ce este nou?";remoteDetail.Links.Add(remoteDetail.Text.IndexOf("Ce este nou?",StringComparison.Ordinal),"Ce este nou?".Length);
     status.Text=root==null?"Am găsit ultima versiune. Alege folderul jocului pentru actualizare.":Engine.Current(installed,latest)?"Ești la zi. Ai instalată ultima versiune a traducerii.":installed!=null&&string.IsNullOrEmpty(installed.Version)?"Versiunea existentă nu poate fi identificată. Poți instala versiunea disponibilă; fișierul actual va fi păstrat în backup.":"Este disponibilă o actualizare a traducerii.";
