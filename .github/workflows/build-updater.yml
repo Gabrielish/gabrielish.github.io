@@ -22,7 +22,9 @@ jobs:
           if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'UI update test failed' }
           $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--test-rendering', 'render-test.txt' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'Rendering tests failed' }
-          Get-Content core-test.txt, render-test.txt, ui-test.txt
+          $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--test-corners', 'corners-test.txt', 'windows-corners.png' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'Desktop corner test failed' }
+          Get-Content core-test.txt, render-test.txt, ui-test.txt, corners-test.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -31,6 +33,7 @@ jobs:
             tools/updater/dist/BG3RO-Updater.exe
             tools/updater/*test.txt
             tools/updater/windows-preview.png
+            tools/updater/windows-corners.png
             tools/updater/dist/test-error.txt
   macos:
     runs-on: macos-14
