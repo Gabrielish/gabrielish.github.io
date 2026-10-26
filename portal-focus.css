@@ -1,0 +1,3 @@
+/* Owner preference: no keyboard/touch focus rings; retain component borders. */
+html body :focus,html body :focus-visible{outline:none!important;outline-offset:0!important}
+html body *{-webkit-tap-highlight-color:transparent}
