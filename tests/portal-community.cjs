@@ -5,6 +5,7 @@ const assert=require('node:assert/strict');
 function syntheticSDK(){
   const state=window.__communityTest={user:null,comments:[],reports:[],updates:[],contacts:[],failInsert:false,status:{translation_percent:80,review_percent:20,testing_percent:20,review_state:'Actul I verificat',testing_state:'Actul II urmează'}};
   const moderator=()=>state.user?.id==='owner';
+  state.reportReplies=window.__qaReportReplies||[];
   state.about=window.__qaAbout||[
    {id:'progress',kind:'progress',title:'Progresul traducerii',body:'',legacy_note:'',is_visible:true,sort_order:10,translation_percent:80,review_percent:20,testing_percent:20},
    {id:'about',kind:'text',title:'Despre proiect',body:'Un proiect de traducere testat în context.',legacy_note:'Notă de test păstrată.',is_visible:true,sort_order:20},
@@ -31,6 +32,21 @@ function syntheticSDK(){
         insert(payload){this.operation='insert';this.payload=payload;return this},update(payload){this.operation='update';this.payload=payload;return this},delete(){this.operation='delete';return this},
         then(resolve,reject){return Promise.resolve().then(()=>{
           const name=table.replace('bg3ro_',''),key={discussion_posts:'comments',bug_reports:'reports',project_updates:'updates',contact_messages:'contacts'}[name];
+          if(name==='report_replies'){
+            if(state.failReplies)return{data:null,error:{message:'Network error'}};
+            const matches=row=>this.filters.every(([k,v])=>row[k]===v),allowed=row=>state.reports.some(r=>r.id===row.report_id&&(r.is_public||r.author_id===state.user?.id||moderator()));
+            let data=state.reportReplies.filter(matches).filter(allowed);
+            if(this.operation==='insert'){
+              if(state.failInsert||!state.user||this.payload.author_id!==state.user.id||!allowed(this.payload))return{data:null,error:{message:'Denied'}};
+              const guest=!!state.user.is_anonymous,row={id:crypto.randomUUID(),created_at:new Date().toISOString(),...this.payload,is_guest:guest,author_is_admin:moderator()&&!guest,author_profile_id:guest?null:state.user.id,author_avatar_url:guest?null:'https://cdn.discordapp.com/embed/avatars/0.png',author_name:guest?this.payload.author_name:moderator()?'Administrator QA':'Jucător Discord'};
+              state.reportReplies.push(row);data=[row];
+            }
+            if(this.operation==='update'||this.operation==='delete'){
+              data=data.filter(row=>moderator()||row.author_id===state.user?.id);
+              if(this.operation==='update')data.forEach(row=>Object.assign(row,this.payload));else state.reportReplies=state.reportReplies.filter(row=>!data.includes(row));
+            }
+            data.sort((a,b)=>a.created_at.localeCompare(b.created_at)||a.id.localeCompare(b.id));return{data:JSON.parse(JSON.stringify(data)),count:data.length,error:null};
+          }
           if(name==='about_sections'){
             if(state.failAbout)return{data:null,error:{message:'Network error'}};
             const matches=row=>this.filters.every(([k,v])=>row[k]===v);let data=state.about.filter(matches).filter(row=>moderator()||row.is_visible);

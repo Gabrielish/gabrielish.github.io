@@ -66,7 +66,7 @@ export function mountBadgeTools(editor,toolbar,form){
  const color=create('input');color.type='color';color.setAttribute('aria-label','Culoarea etichetei');const hex=create('input');hex.type='text';hex.maxLength=7;hex.setAttribute('aria-label','Codul culorii etichetei');hex.placeholder='#22c55e';fields.append(label,color,hex);panel.append(fields);
  const palette=create('div');palette.className='badge-palette';const paletteColors=[['#ef4444','Roșu'],['#f97316','Portocaliu'],['#eab308','Galben'],['#22c55e','Verde'],['#3b82f6','Albastru'],['#a855f7','Mov'],['#ec4899','Roz'],['#6b7280','Gri'],['#d7bc8a','Auriu']];
  const choices=create('div');choices.className='badge-icons';choices.setAttribute('aria-label','Iconițe pentru etichetă');let selected='download',custom='',bookmark=null,editing=false;
- const preview=create('div');preview.className='badge-preview';const status=create('p');status.className='form-status';status.setAttribute('role','status');
+ const preview=create('div');preview.className='badge-preview';const status=create('p');status.className='discussion-badge-status';status.setAttribute('role','status');
  const current=()=>cleanBadge({label:label.value,color:hex.value,icon:selected,svg:custom});
  function refresh(){preview.replaceChildren(badgeElement(current()));for(const b of choices.children)b.setAttribute('aria-pressed',String(b.dataset.icon===selected&&!custom));}
  for(const [value,title]of paletteColors){const b=create('button');b.type='button';b.className='badge-swatch';b.style.backgroundColor=value;b.setAttribute('aria-label','Etichetă '+title);b.onclick=()=>{hex.value=color.value=value;refresh();};palette.append(b);}panel.append(palette);

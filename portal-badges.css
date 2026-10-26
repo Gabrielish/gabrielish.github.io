@@ -7,4 +7,4 @@
 .badge-fields input[type=text]:first-child{flex:1;min-width:150px}.badge-fields input[type=color]{width:40px;padding:3px}.badge-fields input[type=text]:last-child{width:100px}
 .badge-palette,.badge-icons{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}.badge-swatch{width:22px;height:22px;border:1px solid #ffffff30;border-radius:6px;padding:0}
 .badge-icons .discussion-tool{border:1px solid var(--line)}.badge-extra input{flex:1;min-width:130px}.badge-preview{display:flex;align-items:center;min-height:38px;margin:8px 0;font-size:15px}
-.discussion-badge-panel .form-end{gap:8px;margin-top:8px}.discussion-badge-panel .btn{min-height:32px;padding:5px 10px;font-size:12px}.discussion-badge-panel .form-status:empty{display:none}
+.discussion-badge-panel .form-end{gap:8px;margin-top:8px}.discussion-badge-panel .btn{min-height:32px;padding:5px 10px;font-size:12px}.discussion-badge-status{font-size:13px;color:var(--gold)}.discussion-badge-status:empty{display:none}

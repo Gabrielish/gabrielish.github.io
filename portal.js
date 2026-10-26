@@ -455,6 +455,7 @@
     if (!data.length) {const empty=element('div','report-empty');empty.append(bugIcon(),element('p','','Nu a fost raportată încă nicio eroare.'));target.append(empty);}
     data.forEach(report => {
       const article = element('article', 'report-item post-thread');
+      article.dataset.reportId=report.id;
       const layout = element('div', 'post'), content = element('div', 'post-content');
       const avatar = element('img', 'post-avatar');
       const remote = !report.is_guest && /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(report.author_avatar_url || '');
@@ -528,12 +529,12 @@
         });menu.append(option);}
         menu.addEventListener('toggle',()=>{const open=menu.matches(':popover-open');stateButton.setAttribute('aria-expanded',String(open));if(!open&&openedReportState?.menu===menu)openedReportState=null;});
         menu.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)){event.preventDefault();options[event.key==='Home'?0:event.key==='End'?3:(i+(['ArrowLeft','ArrowUp'].includes(event.key)?3:1))%4].focus();}else if(event.key==='Escape'||event.key==='Tab'){if(event.key==='Escape')event.preventDefault();menu.hidePopover();stateButton.focus({preventScroll:true});}});
-        toolbar.append(reply,stateButton,menu,status);
+        if(report.moderator_reply)toolbar.append(reply);toolbar.append(stateButton,menu,status);
         }
         toolbar.append(edit,remove);content.append(toolbar);
       }
       if(report.moderator_reply){
-        const reply=element('div','report-answer post'),replyContent=element('div','post-content');
+        const reply=element('div','report-answer report-admin-answer post'),replyContent=element('div','post-content');
         const replyAvatar=avatar.cloneNode();
         const replyRemote=/^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/(avatars\/[0-9]+\/[A-Za-z0-9_]+\.(png|jpg|jpeg|webp|gif)|embed\/avatars\/[0-9]+\.png)(\?size=[0-9]+)?$/.test(report.reply_author_avatar_url||'');
         replyAvatar.src=replyRemote?report.reply_author_avatar_url:'./assets/discussion-avatar.svg';replyAvatar.classList.toggle('post-avatar-default',!replyRemote);
@@ -545,6 +546,7 @@
       target.append(article);
       window.BG3RO_REPORT_PHOTO.show(client, report, photos).catch(() => {});
     });
+    window.dispatchEvent(new CustomEvent('bg3ro:reports-rendered',{detail:{reports:data}}));
   }
   $('#more-reports').addEventListener('click', async () => { reportsLimit += 20; await loadReports(); });
   $('#update-form').addEventListener('submit', event => {
