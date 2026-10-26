@@ -4,20 +4,22 @@ import {EditorState} from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import {TextStyle,FontFamily,FontSize,Color} from '@tiptap/extension-text-style';
+import {Badge,cleanBadge,badgeElement,canUseBadges,mountBadgeTools} from './badges.js';
 
 const prefix='BG3RO-RICH-1:';
 function imageURL(value){try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;}catch{return null;}}
 const InlineImage=Node.create({name:'image',group:'block',atom:true,draggable:true,addAttributes(){return{src:{default:null},alt:{default:'Imagine atașată'}};},parseHTML(){return[{tag:'img[src]',getAttrs:el=>{const src=imageURL(el.getAttribute('src'));return src?{src,alt:(el.getAttribute('alt')||'Imagine atașată').slice(0,160)}:false;}}];},renderHTML({HTMLAttributes}){return['img',{src:imageURL(HTMLAttributes.src)||'',alt:String(HTMLAttributes.alt||'Imagine atașată').slice(0,160),class:'discussion-inline-image',loading:'lazy',referrerpolicy:'no-referrer'}];}});
-const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']}),TextStyle,FontFamily,FontSize,Color,InlineImage];
+const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']}),TextStyle,FontFamily,FontSize,Color,InlineImage,Badge];
 const fonts=['Arial','Georgia','Verdana','monospace'],sizes=['12px','14px','16px','18px','20px','24px'];
 let colorMenuSequence=0;
 function textStyle(attrs={}){const clean={};if(fonts.includes(attrs.fontFamily))clean.fontFamily=attrs.fontFamily;if(sizes.includes(attrs.fontSize))clean.fontSize=attrs.fontSize;if(/^#[\da-f]{6}$/i.test(attrs.color||''))clean.color=attrs.color;return clean;}
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 function safeURL(value){if(['#despre','#actualizari','#descarcari','#discutii','#erori','#contact','#intrebari-frecvente'].includes(value))return value;try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
-function cleanDoc(value){
+function cleanDoc(value,allowBadges=true){
  let budget=2000;
  function clean(n,depth=0){
   if(!n||typeof n!=='object'||depth>16||--budget<0)return null;
+  if(n.type==='badge'){const attrs=cleanBadge(n.attrs);return allowBadges?{type:'badge',attrs}:{type:'text',text:attrs.label};}
   if(n.type==='image'){const src=imageURL(n.attrs?.src);return src?{type:'image',attrs:{src,alt:String(n.attrs?.alt||'Imagine atașată').slice(0,160)}}:null;}
   if(n.type==='text'){
    const result={type:'text',text:String(n.text||'')};
@@ -45,6 +47,7 @@ function render(body){
  const tags={paragraph:'p',heading:'h2',bulletList:'ul',orderedList:'ol',listItem:'li',blockquote:'blockquote',codeBlock:'pre',hardBreak:'br',horizontalRule:'hr'};
  function append(parent,n){
   if(n.type==='doc'){(n.content||[]).forEach(child=>append(parent,child));return;}
+  if(n.type==='badge'){parent.append(badgeElement(n.attrs));return;}
   if(n.type==='image'){const src=imageURL(n.attrs?.src);if(!src)return;const image=node('img');image.src=src;image.alt=n.attrs.alt;image.className='discussion-inline-image';image.loading='lazy';image.decoding='async';image.referrerPolicy='no-referrer';image.tabIndex=0;image.setAttribute('role','button');image.setAttribute('aria-label','Deschide imaginea: '+n.attrs.alt);const open=()=>{const images=[...output.querySelectorAll('.discussion-inline-image')];window.BG3RO_IMAGE_VIEWER?.open(images.map(item=>({src:item.src,alt:item.alt})),images.indexOf(image),'Imagini atașate');};image.onclick=open;image.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}};parent.append(image);return;}
   if(n.type==='text'){
    let text=document.createTextNode(n.text);
@@ -73,6 +76,7 @@ const api={render,documentFor,hasMention:body=>{
 },get editor(){return editor;},clear(){imageEpoch++;editor?.commands.clearContent();textarea.value='';},reset(){
  imageEpoch++;
  closeImage();
+ form.querySelectorAll('.discussion-badge-panel').forEach(panel=>panel.hidden=true);form.querySelectorAll('.discussion-badge-trigger').forEach(button=>button.setAttribute('aria-expanded','false'));
  for(const menu of form.querySelectorAll('.discussion-editor-menu:popover-open'))menu.hidePopover();
  if(editor){editor.commands.clearContent();editor.view.updateState(EditorState.create({schema:editor.schema,plugins:editor.state.plugins,doc:editor.state.doc}));editor.emit('selectionUpdate',{editor,transaction:editor.state.tr});}
  textarea.value='';q('#discussion-character-count').textContent='';q('#discussion-editor-error').textContent='';
@@ -82,7 +86,7 @@ const api={render,documentFor,hasMention:body=>{
  value(name=''){
   if(!editor)return textarea.value;
   if(uploading)throw Error('Așteaptă încărcarea imaginilor înainte de a trimite.');
-  const doc=cleanDoc(editor.getJSON());
+  const doc=cleanDoc(editor.getJSON(),canUseBadges());
   if(name&&doc.content?.[0]?.content?.[0]?.text!=='@'+name)doc.content.unshift({type:'paragraph',content:[{type:'text',text:'@'+name}]});
   const body=serialize(doc);
   let hasImage=false;editor.state.doc.descendants(n=>{if(n.type.name==='image')hasImage=true;});
@@ -96,7 +100,7 @@ if(textarea&&host){
  editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':settings.label||(isReport?'Descrie eroarea de traducere':isReply?'Răspuns':'Mesaj'),'aria-multiline':'true','data-placeholder':settings.placeholder||(isReport?'Descrie eroarea de traducere…':'Scrie un comentariu…'),class:'discussion-prosemirror'},handlePaste(view,event){
   if(event.clipboardData?.files.length){event.preventDefault();uploadFiles?.([...event.clipboardData.files]);return true;}return false;
  },handleDrop(view,event,moved){if(!moved&&event.dataTransfer?.files.length){event.preventDefault();uploadFiles?.([...event.dataTransfer.files]);return true;}return false;}},onUpdate(){
-  const body=serialize(cleanDoc(editor.getJSON()));textarea.value=body;
+  const body=serialize(cleanDoc(editor.getJSON(),canUseBadges()));textarea.value=body;
   q('#discussion-character-count').textContent=`${editor.getText().length} caractere`;
   q('#discussion-editor-error').textContent=body.length>maximum?'Textul depășește limita. Scurtează textul sau formatarea.':'';
   const status=form.querySelector('.form-status.error');if(status){status.textContent='';status.classList.remove('error');}
@@ -104,7 +108,7 @@ if(textarea&&host){
  },onSelectionUpdate(){refresh();}});
  textarea.hidden=true;textarea.required=false;
  // Retain the original plain textarea as a functional no-bundle fallback.
- const syncTextarea=()=>{if(textarea.value!==serialize(cleanDoc(editor.getJSON())))editor.commands.setContent(documentFor(textarea.value));},resetEditor=()=>editor.commands.clearContent();
+ const syncTextarea=()=>{if(textarea.value!==serialize(cleanDoc(editor.getJSON(),canUseBadges())))editor.commands.setContent(documentFor(textarea.value));},resetEditor=()=>editor.commands.clearContent();
  textarea.addEventListener('input',syncTextarea);form.addEventListener('reset',resetEditor);
  cleanupListeners=()=>{textarea.removeEventListener('input',syncTextarea);form.removeEventListener('reset',resetEditor);};
  const icons={bold:'M6 4h7a4 4 0 0 1 0 8H6m0-8v16h8a4 4 0 0 0 0-8H6',italic:'M16 4H9m6 0L9 20m-5 0h7',underline:'M6 3v7a6 6 0 0 0 12 0V3M4 21h16',strike:'M17 5c-1-2-3-2-5-2-6 0-7 7-2 8m-6 1h16m-5 2c5 3 1 8-4 7-2 0-4-1-5-3',bullet:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',ordered:'M9 6h12M9 12h12M9 18h12M3 4v5M2 9h3M2 14c3-3 4 0 1 2l-1 2h3',quote:'M10 11H4V7h6v6c0 3-2 5-5 5m15-7h-6V7h6v6c0 3-2 5-5 5',code:'m8 5-7 7 7 7m8-14 7 7-7 7',left:'M3 5h18M3 10h12M3 15h18M3 20h12',center:'M3 5h18M6 10h12M3 15h18M6 20h12',right:'M3 5h18M9 10h12M3 15h18M9 20h12',link:'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2m3 6a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2',undo:'M3 4v6h6M3 10a9 9 0 1 1 1 9',redo:'M21 4v6h-6m6 0a9 9 0 1 0-1 9'};
@@ -205,6 +209,8 @@ if(textarea&&host){
  imageFile.onchange=()=>uploadFiles([...imageFile.files]);
  const guardImages=event=>{if(uploading){event.preventDefault();event.stopImmediatePropagation();}};form.addEventListener('submit',guardImages,true);
  const previousCleanup=cleanupListeners;cleanupListeners=()=>{previousCleanup();form.removeEventListener('submit',guardImages,true);};
+ const disposeBadges=mountBadgeTools(editor,toolbar,form),previousBadgeCleanup=cleanupListeners;
+ cleanupListeners=()=>{previousBadgeCleanup();disposeBadges();};
  section('Istoric');
  button('Anulează ultima modificare','undo',()=>editor.chain().focus().undo().run());
  button('Refă modificarea','redo',()=>editor.chain().focus().redo().run());
