@@ -12,6 +12,7 @@
   let client = null,
     moderator = false,
     rows = [],
+    newsRows = [],
     request = 0,
     editorSequence = 0;
   const richEditors=new Map(),platforms={all:'Windows și macOS',windows:'Windows',macos:'macOS'};
@@ -223,7 +224,7 @@
         target.append(placeholder);
       }
     });
-    const localizationUpdates = rows.filter((row) => row.kind === "translation"&&row.is_visible&&!row.is_deleted&&(moderator||row.news_is_visible!==false)).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
+    const localizationUpdates = newsRows.filter(row=>moderator||row.news_is_visible!==false).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
     localizationUpdates.forEach((row,index) => {
       const article = el("article", "card release-news"),
         layout = el("div", "post"), content = el("div", "post-content"),
@@ -290,20 +291,22 @@
     const ticket = ++request;
     if (!client) return;
     try {
-      const result = await client
+      const [result,announcements] = await Promise.all([client
         .from("bg3ro_releases")
         .select(fields)
         .eq('is_deleted',false)
         .order("published_at", { ascending: false })
-        .limit(100);
+        .limit(100),client.rpc('bg3ro_release_news')]);
       if (ticket !== request) return;
-      if (result.error) throw result.error;
-      rows = (result.data || []).map(row => {
+      if (result.error||announcements.error) throw result.error||announcements.error;
+      const normalize=row => {
         const copy={...row,platform:platformOf(row),is_visible:row.is_visible!==false,is_deleted:row.is_deleted===true};
         for(const field of ['version','title','description','tags','news_title','news_body','news_badge'])copy[field]=window.BG3RO_VERSIONS.text(copy[field]);
         copy.version=window.BG3RO_VERSIONS.version(copy.version);
         return copy;
-      });
+      };
+      rows = (result.data || []).map(normalize);
+      newsRows = (announcements.data || []).map(normalize);
       draw();
       $("#release-load-status").textContent = "";
       window.dispatchEvent(new CustomEvent("bg3ro:releases-updated", { detail: { versions: rows.filter(row => row.kind === "translation"&&row.is_visible&&!row.is_deleted).map(row => row.version) } }));

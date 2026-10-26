@@ -35,7 +35,7 @@ sdk=sdk.replace('updates:[]','updates:window.__qaUpdates,releases:window.__qaRel
   assert.deepEqual(await order(),['latest','manual','old']);
   assert.equal(await old.locator('.release-version-badge').textContent(),'Revizie');
   assert.equal(await old.locator('.rich-content li').count(),2);
-  assert.equal(await page.locator('#translation-releases .release-head > div > h2').textContent(),'Versiunea 20.10.2026','Current download unchanged');
+  assert.equal(await page.locator('#translation-releases .release-head > div > h2').first().textContent(),'Versiunea 20.10.2026','Current download unchanged');
   const result=await page.evaluate(()=>{const r={...window.__communityTest.releases.find(r=>r.id==='old')};delete r.news_title;delete r.news_body;delete r.news_badge;return JSON.stringify(r);});
   assert.equal(result,snapshot,'Archive name, URL, version, original text and date remain unchanged');
   const boxes=await page.locator('#updates-feed > article').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().y));assert(boxes[0]<boxes[1]&&boxes[1]<boxes[2]);
