@@ -371,7 +371,12 @@ final class UpdaterWindow: NSWindow {
     }
 }
 
-@main @MainActor struct BG3ROUpdaterApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    var body: some Scene { SwiftUI.Settings { EmptyView() } }
+// AppKit owns the lifecycle: no placeholder SwiftUI Settings scene or extra window.
+@main @MainActor enum BG3ROUpdaterApp {
+    static func main() {
+        let application = NSApplication.shared
+        let delegate = AppDelegate()
+        application.delegate = delegate
+        withExtendedLifetime(delegate) { application.run() }
+    }
 }
