@@ -180,6 +180,9 @@ struct GoldButton: View {
     var enabled = true
     let action: () -> Void
     private var hoverState = SwiftUI.State<Bool>(initialValue: false)
+    init(title:String,primary:Bool = false,enabled:Bool = true,action:@escaping () -> Void) {
+        self.title=title; self.primary=primary; self.enabled=enabled; self.action=action
+    }
     private var hover: Bool {
         get { hoverState.wrappedValue }
         nonmutating set { hoverState.wrappedValue = newValue }
@@ -220,6 +223,9 @@ struct HoverLink: View {
     let destination: URL
     let normal: Color
     let highlighted: Color
+    init(title:String,destination:URL,normal:Color,highlighted:Color) {
+        self.title=title;self.destination=destination;self.normal=normal;self.highlighted=highlighted
+    }
     private var hoverState = SwiftUI.State<Bool>(initialValue: false)
     var body: some View {
         Link(title,destination:destination)
