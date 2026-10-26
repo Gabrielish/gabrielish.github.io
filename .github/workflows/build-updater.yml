@@ -1,0 +1,44 @@
+name: Build and verify BG3RO Updater
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: tools/updater
+        shell: powershell
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./build.ps1
+      - name: Core fixtures and DPI rendering
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--self-test', 'core-test.txt' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'Core tests failed' }
+          $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--test-rendering', 'render-test.txt' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'Rendering tests failed' }
+          $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--test-ui', 'ui-test.txt', 'windows-preview.png' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'UI update test failed' }
+          Get-Content core-test.txt, render-test.txt, ui-test.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: updater-windows
+          path: |
+            tools/updater/dist/BG3RO-Updater.exe
+            tools/updater/*test.txt
+            tools/updater/windows-preview.png
+            tools/updater/dist/test-error.txt
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash macos/build.sh
+        working-directory: tools/updater
+      - uses: actions/upload-artifact@v4
+        with:
+          name: updater-macos-universal
+          path: tools/updater/macos/dist/BG3RO-Updater-macOS.zip
