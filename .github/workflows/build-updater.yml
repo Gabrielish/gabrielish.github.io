@@ -18,10 +18,10 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--self-test', 'core-test.txt' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'Core tests failed' }
-          $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--test-rendering', 'render-test.txt' -Wait -PassThru
-          if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'Rendering tests failed' }
           $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--test-ui', 'ui-test.txt', 'windows-preview.png' -Wait -PassThru
           if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'UI update test failed' }
+          $p = Start-Process ./dist/BG3RO-Updater.exe -ArgumentList '--test-rendering', 'render-test.txt' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content dist/test-error.txt; throw 'Rendering tests failed' }
           Get-Content core-test.txt, render-test.txt, ui-test.txt
       - uses: actions/upload-artifact@v4
         if: always()

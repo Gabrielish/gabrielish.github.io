@@ -28,7 +28,7 @@ for ARCH in "${ARCHES[@]}"; do
 done
 if [[ "${#BINARIES[@]}" -eq 2 ]]; then
   xcrun lipo -create "${BINARIES[@]}" -output "$WORK/BG3ROUpdater"
-  xcrun lipo -verify_arch arm64 x86_64 "$WORK/BG3ROUpdater"
+  xcrun lipo "$WORK/BG3ROUpdater" -verify_arch arm64 x86_64
 else
   cp "${BINARIES[0]}" "$WORK/BG3ROUpdater"
 fi
