@@ -100,7 +100,7 @@ function syntheticSDK(){
         assert.deepEqual(await p.locator(selector).evaluate(el=>{const s=getComputedStyle(el);return [s.textAlign,s.padding]}),['center','30px 0px']);
         assert.equal(await p.locator(selector+' > p.small').count(),1);
       }
-      await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-dialog a[data-go-tab="confidentialitate"]').click();
+      await clickNav(p,'.topbar [data-auth-open]');assert.equal(await p.locator('#auth-dialog input[type=checkbox]').count(),0);await p.locator('#auth-dialog .dialog-close').click();await p.locator('footer a[data-go-tab="confidentialitate"]').click();
       assert(!await p.locator('#auth-dialog').isVisible());assert(await p.locator('#confidentialitate.information-panel').isVisible());assert.equal(await p.locator('#date-personale').count(),0);await p.locator('#tab-despre').click();
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
       assert.equal(await p.evaluate(()=>window.__communityTest.oauth.provider),'discord');
