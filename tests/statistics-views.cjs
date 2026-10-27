@@ -10,7 +10,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
   });
   await page.goto('https://gabrielish.github.io/');
   await page.evaluate(()=>window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test'});
-  await page.addScriptTag({path:path.resolve('portal-statistics.js')});
+  await page.evaluate(()=>window.BG3RO_COOKIES={allowsAnalytics:()=>true});await page.addScriptTag({path:path.resolve('portal-statistics.js')});
   await page.waitForFunction(()=>document.getElementById('statistics-views').textContent==='906');
   assert.equal(views,0,'Wait for restored auth before counting');
   await page.evaluate(mode=>{

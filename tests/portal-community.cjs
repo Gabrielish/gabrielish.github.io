@@ -3,6 +3,8 @@ const {clickNav}=require('./nav-action.cjs');
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 function syntheticSDK(){
+  // Component tests explicitly keep only necessary storage; consent is tested separately.
+  window.BG3RO_COOKIES?.save(false);
   const state=window.__communityTest={user:null,comments:[],reports:[],updates:[],contacts:[],failInsert:false,status:{translation_percent:80,review_percent:20,testing_percent:20,review_state:'Actul I verificat',testing_state:'Actul II urmează'}};
   const moderator=()=>state.user?.id==='owner';
   state.reportReplies=window.__qaReportReplies||[];

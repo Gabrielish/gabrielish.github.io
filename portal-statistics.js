@@ -17,15 +17,22 @@
   }
   let viewSent=false;
   let authReady=false, statisticsClient=null, statisticsUserId=null, isModerator=false;
+  const analyticsAllowed=()=>window.BG3RO_COOKIES?.allowsAnalytics()===true;
   // Wait for restored Auth/moderator state; never count a signed-in admin as a guest.
-  window.addEventListener('bg3ro:auth',async event=>{
+  window.addEventListener('bg3ro:auth',event=>{
     const {client,moderator,userId}=event.detail || {};
     authReady=!!client;
     statisticsClient=client;
     statisticsUserId=userId;
     isModerator=!!moderator;
-    if(viewSent || !client || moderator || location.hostname!=='gabrielish.github.io') return;
+    recordView();
+  });
+  window.addEventListener('bg3ro:cookie-preferences',recordView);
+  async function recordView(){
+    const client=statisticsClient,userId=statisticsUserId;
+    if(viewSent || !authReady || !client || isModerator || !analyticsAllowed() || location.hostname!=='gabrielish.github.io') return;
     viewSent=true;
+    let attempted=false;
     try {
       const viewHeaders={...headers};
       if(userId){
@@ -33,15 +40,17 @@
         if(error || !data.session?.access_token) return;
         viewHeaders.Authorization=`Bearer ${data.session.access_token}`;
       }
-      const response=await fetch(url,{method:'POST',headers:viewHeaders,body:JSON.stringify({action:'view'}),keepalive:true});
+      if(!analyticsAllowed() || client!==statisticsClient || userId!==statisticsUserId || isModerator || !authReady)return;
+      attempted=true;const response=await fetch(url,{method:'POST',headers:viewHeaders,body:JSON.stringify({action:'view'}),keepalive:true});
       if(response.ok) await load();
     } catch (_) { /* Page rendering does not depend on statistics. */ }
-  });
+    finally{if(!attempted)viewSent=false;}
+  }
   const pending = new Set();
   document.addEventListener('click',async event=>{
     const anchor=event.target.closest?.('a[data-release-id]');
     if(!anchor || event.defaultPrevented || event.button!==0 || !event.isTrusted) return;
-    if(!authReady || isModerator) return;
+    if(!authReady || isModerator || !analyticsAllowed()) return;
     const id=anchor.dataset.releaseId;
     if(pending.has(id)) return;
     pending.add(id);
@@ -53,7 +62,7 @@
         if(error || !data.session?.access_token) return;
         downloadHeaders.Authorization=`Bearer ${data.session.access_token}`;
       }
-      if(isModerator || !authReady) return;
+      if(isModerator || !authReady || !analyticsAllowed()) return;
       const response=await fetch(url,{method:'POST',headers:downloadHeaders,keepalive:true,body:JSON.stringify({action:'download',release_id:id})});
       if(response.ok) await load();
     } catch (_) { /* The file download does not depend on statistics. */ }

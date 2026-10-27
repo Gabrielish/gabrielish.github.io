@@ -13,7 +13,7 @@ const path=require('node:path');
       });
       await page.goto('http://127.0.0.1:4173/');
       await page.evaluate(()=>window.BG3RO_CONFIG={supabaseUrl:'https://stats.test',supabasePublishableKey:'test'});
-      await page.addScriptTag({path:path.resolve('portal-statistics.js')});
+      await page.evaluate(()=>window.BG3RO_COOKIES={allowsAnalytics:()=>true});await page.addScriptTag({path:path.resolve('portal-statistics.js')});
       await page.locator('a').click();assert.equal(events.length,0,'Wait for restored identity');
       assert(page.url().endsWith('#file'),'Native navigation remains available');
       await page.evaluate(mode=>window.dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{
