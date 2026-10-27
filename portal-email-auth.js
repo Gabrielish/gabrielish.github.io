@@ -68,7 +68,7 @@
     form.hidden = registered || resetSent; body.querySelector('.auth-registration-success').hidden = !registered;
     body.querySelector('.auth-reset-success').hidden = !resetSent;
     document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Parolă uitată',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!','reset-sent':'Parolă uitată'})[mode];
-    document.querySelector('#auth-dialog .dialog-copy').textContent = resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit în comunitate!';
+    document.querySelector('#auth-dialog .dialog-copy').textContent = resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit!';
     discord.hidden = !['login','register'].includes(mode) || !client;
     body.querySelector('.auth-divider').hidden = !['login','register'].includes(mode);
     form.querySelectorAll('[data-signup]').forEach(el => { el.hidden = !signup; });

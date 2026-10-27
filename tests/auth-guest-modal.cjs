@@ -19,7 +19,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await clickNav(page,'.topbar [data-auth-open]');
   assert(await page.locator('#auth-dialog').isVisible());
   assert.equal(await page.locator('#auth-heading').textContent(),'Conectare');
-  assert.equal(await page.locator('#auth-dialog .dialog-copy').textContent(),'Bine ai venit în comunitate!');
+  assert.equal(await page.locator('#auth-dialog .dialog-copy').textContent(),'Bine ai venit!');
   assert(await page.locator('#email-auth-form').isVisible(),'Email login is available next to Discord');
   assert.equal((await page.locator('#discord-login').textContent()).trim(),'Conectează-te prin Discord');
   assert.equal(await page.locator('#auth-dialog input[type=checkbox]').count(),0,'No privacy checkbox in account login');
