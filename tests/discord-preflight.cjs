@@ -12,7 +12,7 @@ const {chromium}=require('playwright');const assert=require('node:assert/strict'
  await clickNav(page,'.topbar [data-auth-open]');
  assert(await page.locator('#discord-login').isEnabled());assert(!await page.locator('#auth-unavailable').isVisible());
  await page.screenshot({path:'.qa/discord-login-mobile.png'});
- await page.locator('#auth-consent').check();await page.locator('#discord-login').click();
+ await page.locator('#discord-login').click();
  await page.waitForURL(url=>url.hostname==='discord.com');const target=new URL(page.url());
  assert.equal(authorizeURL.searchParams.get('code_challenge_method'),'s256');
  assert(authorizeURL.searchParams.get('code_challenge').length>=43);

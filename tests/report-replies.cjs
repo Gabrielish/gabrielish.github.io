@@ -10,7 +10,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
   await p.addInitScript(isAdmin=>{window.__qaOwner=isAdmin;window.__qaReportReplies=[{id:'old-reply',report_id:'qa-report',author_id:'another',author_name:'Alt jucător',body:'Un răspuns obișnuit de la alt utilizator.',created_at:'2026-10-21T10:00:00Z',author_is_admin:false,is_guest:false}];},persona==='admin');
   await p.goto('http://127.0.0.1:4173/#erori',{waitUntil:'networkidle'});
-  if(persona!=='guest'){await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});}
+  if(persona!=='guest'){await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});}
   await p.locator('[data-reply-id=old-reply]').waitFor();
   assert.equal(await p.locator('.report-state-trigger').count(),persona==='admin'?1:0);
   assert.equal(await p.locator('.report-admin-answer').count(),1,'Legacy administrator reply kept in the gold card');

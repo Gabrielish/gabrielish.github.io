@@ -23,7 +23,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
  await p.locator('#tab-erori').click();await p.locator('#report-name').fill('Vizitator');await p.locator('#report-editor .discussion-prosemirror').fill('Un context de test suficient de lung pentru această raportare.');
  assert.equal(await p.locator('[name=public_consent]').count(),0);await p.locator('#report-form button[type=submit]').click();await p.waitForFunction(()=>window.__communityTest.reports.length===3);assert.equal(await p.evaluate(()=>window.__communityTest.reports[0].is_public),true);
  await p.locator('#tab-erori').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
- await p.evaluate(()=>window.__qaOwner=true);await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===3);
+ await p.evaluate(()=>window.__qaOwner=true);await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===3);
  await p.locator('.report-item').first().getByRole('button',{name:'Șterge raportarea',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('.report-item').length===2);
  await p.locator('#tab-discutii').click();await p.locator('.post').first().getByRole('button',{name:'Șterge',exact:true}).click();await p.waitForFunction(()=>document.querySelectorAll('#discussion-list .post').length===0);
  assert.equal(await p.locator('#tab-discutii').textContent(),'Discuții','Zero counter disappears after deletion');

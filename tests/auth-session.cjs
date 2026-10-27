@@ -20,16 +20,16 @@ const mock=`export const createClient=(_url,_key,options)=>{
   window.__loginFlashes=[];let signed=false;try{const u=JSON.parse(localStorage.getItem('bg3ro-auth'))?.user;signed=!!u&&!u.is_anonymous;}catch{}
   if(signed){const watch=()=>{const login=document.querySelector('.topbar [data-auth-open]');if(login?.checkVisibility({visibilityProperty:true}))window.__loginFlashes.push(login.textContent);if(!document.documentElement.classList.contains('portal-ready'))requestAnimationFrame(watch);};requestAnimationFrame(watch);}
  });await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');assert.deepEqual(await p.evaluate(()=>window.__loginFlashes),[],'A restored member must never see a provisional login button');return p;};
- let p=await open();await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
+ let p=await open();await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
  assert.equal(await p.evaluate(()=>window.__communityTest.oauth.options.queryParams.prompt),'consent');
  assert(await p.evaluate(()=>{const stored=JSON.parse(localStorage.getItem('bg3ro-auth'));return stored.user.id==='alice'&&!stored.provider_token&&!stored.provider_refresh_token&&!sessionStorage.getItem('bg3ro-auth');}));
  await p.close();p=await open();assert(await p.locator('#sign-out').evaluate(el=>!el.hidden),'Reopening a tab restores session without OAuth');assert.equal(await p.evaluate(()=>window.__communityTest.oauth),undefined);
  await clickNav(p,'#sign-out');await p.waitForFunction(()=>JSON.parse(localStorage.getItem('bg3ro-auth'))?.user?.is_anonymous);assert(await p.evaluate(()=>!sessionStorage.getItem('bg3ro-auth')));
- await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
+ await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
  assert.equal(await p.evaluate(()=>window.__communityTest.oauth.options.queryParams.prompt),'none');
  await clickNav(p,'#sign-out');await p.close();
  p=await context.newPage();await p.goto('http://127.0.0.1:4173/?error=access_denied&error_description=ignored',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
- await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});assert.equal(await p.evaluate(()=>window.__communityTest.oauth.options.queryParams.prompt),'consent','Failed silent login falls back to approval');
+ await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});assert.equal(await p.evaluate(()=>window.__communityTest.oauth.options.queryParams.prompt),'consent','Failed silent login falls back to approval');
  await clickNav(p,'#sign-out');
  await p.evaluate(()=>{localStorage.removeItem('bg3ro-auth');sessionStorage.setItem('bg3ro-auth',JSON.stringify({user:{id:'legacy',user_metadata:{}},provider_token:'old-provider'}));sessionStorage.setItem('bg3ro-auth-code-verifier','synthetic-verifier');});
  await p.reload({waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');assert(await p.locator('#sign-out').evaluate(el=>!el.hidden));

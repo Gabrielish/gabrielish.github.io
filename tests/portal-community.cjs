@@ -102,7 +102,7 @@ function syntheticSDK(){
       }
       await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-dialog a[data-go-tab="confidentialitate"]').click();
       assert(!await p.locator('#auth-dialog').isVisible());assert(await p.locator('#confidentialitate.information-panel').isVisible());assert.equal(await p.locator('#date-personale').count(),0);await p.locator('#tab-despre').click();
-      await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
+      await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
       assert.equal(await p.evaluate(()=>window.__communityTest.oauth.provider),'discord');
       assert.equal(await p.locator('#discussion-name').inputValue(),'Jucător Discord');
       assert.equal(await p.locator('#discussion-name').evaluate(el=>el.readOnly),true,'Discord name cannot be edited');

@@ -22,7 +22,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await page.locator('#auth-dialog .dialog-copy').textContent(),'Bine ai venit în comunitate!');
   assert(await page.locator('#email-auth-form').isVisible(),'Email login is available next to Discord');
   assert.equal((await page.locator('#discord-login').textContent()).trim(),'Conectează-te prin Discord');
-  assert.equal(await page.locator('#auth-consent').isChecked(),false,'Privacy checkbox is unchanged');
+  assert.equal(await page.locator('#auth-dialog input[type=checkbox]').count(),0,'No privacy checkbox in account login');
   await page.locator('#auth-dialog').screenshot({path:`.qa/auth-guest-modal-${width}.png`});
   await page.keyboard.press('Escape');
   await page.locator('#tab-discutii').click();
@@ -30,7 +30,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await page.locator('#discussion-name').isEditable(),true);
   await page.locator('[data-rating="4"]').click();assert(await page.locator('#auth-dialog').isVisible());
   await page.keyboard.press('Escape');
-  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();
+  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#discord-login').click();
   await page.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
   assert.equal(await page.locator('#discussion-name').isEditable(),false);
   assert.equal(await page.evaluate(()=>window.__communityTest.guestCalls),1,'Discord sign-in does not start another guest');

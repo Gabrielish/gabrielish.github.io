@@ -39,7 +39,7 @@ const moduleSource=`export const createClient=()=>{const client=(${sdk})(),from=
  assert.equal(await page.locator('.discussion-poll input').nth(1).isChecked(),false,'Failed change restores confirmed choices');
  await page.evaluate(()=>window.__communityTest.failVote=false);await page.locator('.poll-remove').click();await page.waitForFunction(()=>document.querySelector('.poll-meta').textContent.includes('0 participanți'));
  await page.locator('.discussion-poll').screenshot({path:`.qa/poll-results-${width}.png`});
- await page.locator('.topbar [data-auth-open]').evaluate(button=>button.click());await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await page.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
+ await page.locator('.topbar [data-auth-open]').evaluate(button=>button.click());await page.locator('#discord-login').click();await page.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
  const reject=page.locator('.post-actions').getByRole('button',{name:'Nu publica',exact:true});assert.equal(await reject.locator('svg').count(),1);await reject.click();
  const approve=page.locator('.post-actions').getByRole('button',{name:'Aprobă',exact:true});await approve.waitFor();assert.equal(await approve.locator('svg').count(),1);await approve.click();
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();

@@ -7,7 +7,7 @@ const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8'),s
  await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
  await p.addInitScript(()=>window.__qaOwner=true);
  await p.goto('http://127.0.0.1:4173/#despre',{waitUntil:'networkidle'});
- await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();
+ await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();
  await p.getByRole('button',{name:'Editează Progresul traducerii',exact:true}).click();
  let form=p.locator('[data-about-section=progress] form'),input=form.locator('[name=translation_percent]');
  assert.equal(await input.getAttribute('step'),'0.01');

@@ -13,7 +13,6 @@
       <label class="field" data-email>E-mail<input name="email" type="email" autocomplete="email" required maxlength="254"></label>
       <label class="field" data-password>Parolă<input name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128"></label>
       <label class="field" data-confirm>Confirmă parola<input name="confirm" type="password" autocomplete="new-password" minlength="8" maxlength="128"></label>
-      <label class="checkbox-line" data-signup><input name="consent" type="checkbox"><span>Am citit <a href="#confidentialitate">politica de confidențialitate</a>.</span></label>
       <div id="auth-captcha"></div><p class="form-status" role="status" aria-live="polite"></p>
       <button class="btn" type="submit">Conectează-te</button>
     </form>
@@ -58,13 +57,14 @@
     mode = next; message(''); resetCaptcha();
     const signup = mode === 'register', password = mode === 'password', guest = mode === 'guest', registered = mode === 'registered';
     dialog.classList.toggle('registration-complete', registered);
+    dialog.classList.toggle('auth-register', signup);
     form.hidden = registered; body.querySelector('.auth-registration-success').hidden = !registered;
     document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Resetează parola',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!'})[mode];
     document.querySelector('#auth-dialog .dialog-copy').textContent = registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit în comunitate!';
     discord.hidden = !['login','register'].includes(mode) || !client;
     body.querySelector('.auth-divider').hidden = !['login','register'].includes(mode);
     form.querySelectorAll('[data-signup]').forEach(el => { el.hidden = !signup; });
-    form.elements.username.required = form.elements.consent.required = signup;
+    form.elements.username.required = signup;
     form.querySelector('[data-email]').hidden = password || guest; form.elements.email.required = !password && !guest;
     form.querySelector('[data-password]').hidden = ['reset','guest'].includes(mode); form.elements.password.required = !['reset','guest'].includes(mode);
     form.elements.password.autocomplete = signup || password ? 'new-password' : 'current-password';
@@ -80,7 +80,6 @@
   }
   body.querySelectorAll('[data-auth-mode]').forEach(button => button.onclick = () => setMode(button.dataset.authMode));
   body.querySelector('#email-registration-login').onclick = () => setMode('login');
-  body.querySelector('a').onclick = () => dialog.close();
   form.elements.confirm.oninput = () => form.elements.confirm.setCustomValidity('');
   function errorText(error) {
     const code = error?.code || '', text = error?.message || '';

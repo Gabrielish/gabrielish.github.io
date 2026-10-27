@@ -14,7 +14,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await p.locator('#current-work .about-section-tools').count(),0);
   assert.equal(await p.locator('#despre .about-copy + #current-work').count(),1);
   assert.equal(await p.locator('#actualizari #current-work').count(),0);
-  await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
+  await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
   assert.equal(await p.locator('#current-work .about-section-tools').isVisible(),owner);
   if(owner){
    await p.getByRole('button',{name:'Editează La ce lucrez acum',exact:true}).click();const form=p.locator('#current-work form');assert.equal(await form.locator('[name=title]').inputValue(),'La ce lucrez acum');

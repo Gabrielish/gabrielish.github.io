@@ -16,7 +16,7 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   await page.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
   await page.addInitScript(()=>{window.__qaOwner=true;window.__qaReleases=[{id:'release-1',author_name:'Gabrielish',kind:'translation',version:'0.8',tags:'Windows',title:'Automatic release',file_name:'test.zip',file_bytes:100,download_url:'https://github.com/Gabrielish/bg3ro/releases/download/test/test.zip',description:'Automatic release body',published_at:'2026-10-19T12:00:00Z'}];});
   await page.goto('http://127.0.0.1:4173/#actualizari',{waitUntil:'networkidle'});
-  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await page.waitForSelector('#auth-dialog',{state:'hidden'});
+  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#discord-login').click();await page.waitForSelector('#auth-dialog',{state:'hidden'});
   const releaseBefore=await page.locator('#updates-feed').textContent();
   assert.equal(await page.locator('#admin-tools .inline-update-publish > summary').count(),1,'Publication stays inline');
   assert.equal(await page.locator('#admin-tools').evaluate(el=>el.classList.contains('card')),false,'No administration card');
@@ -74,7 +74,7 @@ sdk=sdk.replace('updates:[]','updates:[],releases:window.__qaReleases')
   assert.equal(await manual.locator('.release-version-badge').textContent(),'Actualizat');
   assert.equal(await manual.locator('.release-news-link').getAttribute('href'),'https://example.com/edited');
   await manual.screenshot({path:`.qa/manual-update-${width}.png`});
-  await manual.getByRole('button',{name:'Ascunde actualizarea',exact:true}).click();await manual.locator(':scope.is-content-hidden').waitFor();await clickNav(page,'#sign-out');await page.waitForFunction(()=>!document.querySelector('.manual-update'));await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await manual.getByRole('button',{name:'Afișează actualizarea',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.manual-update.is-content-hidden'));
+  await manual.getByRole('button',{name:'Ascunde actualizarea',exact:true}).click();await manual.locator(':scope.is-content-hidden').waitFor();await clickNav(page,'#sign-out');await page.waitForFunction(()=>!document.querySelector('.manual-update'));await clickNav(page,'.topbar [data-auth-open]');await page.locator('#discord-login').click();await manual.getByRole('button',{name:'Afișează actualizarea',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.manual-update.is-content-hidden'));
   page.once('dialog',d=>d.dismiss());await manual.getByRole('button',{name:'Șterge actualizarea',exact:true}).click();assert.equal(await page.evaluate(()=>window.__communityTest.updates.length),1);
   page.once('dialog',d=>d.accept());await manual.getByRole('button',{name:'Șterge actualizarea',exact:true}).click();await page.waitForFunction(()=>window.__communityTest.updates.length===0);
   assert.equal(await page.locator('#updates-feed').textContent(),releaseBefore,'Automatic release news is unchanged');

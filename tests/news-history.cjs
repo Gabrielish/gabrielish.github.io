@@ -23,7 +23,7 @@ sdk=sdk.replace('updates:[]','updates:window.__qaUpdates,releases:window.__qaRel
   const order=()=>page.locator('#updates-feed > article').evaluateAll(nodes=>nodes.map(n=>n.dataset.newsId));
   assert.deepEqual(await order(),['latest','manual','old'],'One chronological DOM order below pinned release');
   assert.equal(await page.locator('#updates-feed .manual-update-toolbar').count(),0,'Visitors cannot edit');
-  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();await page.waitForSelector('#auth-dialog',{state:'hidden'});
+  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#discord-login').click();await page.waitForSelector('#auth-dialog',{state:'hidden'});
   const old=page.locator('[data-news-id=old]'),latest=page.locator('[data-news-id=latest]');
   assert.equal(await latest.getByRole('button',{name:'Editează anunțul versiunii'}).count(),0);
   const snapshot=await page.evaluate(()=>JSON.stringify(window.__communityTest.releases.find(r=>r.id==='old')));

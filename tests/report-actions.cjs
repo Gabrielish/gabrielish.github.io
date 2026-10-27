@@ -10,7 +10,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   await page.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk.replace("if(this.operation==='update'){state[key]","if(this.operation==='update'){if(state.failReportUpdate)return{data:null,error:{message:'Network error'}};state[key]")})();`}));
   await page.addInitScript(()=>window.__qaOwner=true);
   await page.goto('http://127.0.0.1:4173/#erori',{waitUntil:'networkidle'});
-  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#auth-consent').check();await page.locator('#discord-login').click();
+  await clickNav(page,'.topbar [data-auth-open]');await page.locator('#discord-login').click();
   await page.waitForSelector('#auth-dialog',{state:'hidden'});
   assert.equal(await page.locator('.report-item > form').count(),0);
   assert.equal(await page.locator('#report-name').isVisible(),false);

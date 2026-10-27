@@ -30,7 +30,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
  }
  await p.locator('#tab-erori').click();assert.equal(await p.locator('#reports-list .avatar-admin-badge').count(),2,'Report author and administrator reply have badges');
  await p.locator('#tab-actualizari').click();assert.equal(await p.locator('#updates-feed .avatar-admin-badge').count(),2,'Manual and automatic announcements have badges');
- await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
+ await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});
  assert.equal(await p.locator('#discussion-avatar').evaluate(n=>n.parentElement.classList.contains('avatar-with-role')),true);
  await clickNav(p,'#sign-out');await p.waitForFunction(()=>!document.querySelector('#discussion-avatar').parentElement.classList.contains('avatar-with-role'));
  assert.equal(await p.locator('#updates-feed .avatar-admin-badge').count(),2,'Public administrator badges remain after viewer logout');

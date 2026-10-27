@@ -11,18 +11,22 @@ function emailSDK(base){
 }
 (async()=>{const b=await chromium.launch({channel:'msedge',headless:true});try{
   for(const width of [320,390,1440]){
-    const p=await b.newPage({viewport:{width,height:1100}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+    const p=await b.newPage({viewport:{width,height:width===320?568:720}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
     await p.route('https://baldursgate3.game/**',r=>r.abort());
     await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test',authEnabled:true,authRedirectUrl:'https://gabrielish.github.io/',turnstileSiteKey:'synthetic-test-key'};"}));
-    await p.route('https://challenges.cloudflare.com/**',r=>r.fulfill({contentType:'text/javascript',body:"window.turnstile={render(selector,options){window.__captcha=options;document.querySelector(selector).textContent='Verificare CAPTCHA (test)';return 1;},reset(){}};"}));
+    await p.route('https://challenges.cloudflare.com/**',r=>r.fulfill({contentType:'text/javascript',body:"window.turnstile={render(selector,options){window.__captcha=options;const el=document.querySelector(selector);el.textContent='Verificare CAPTCHA (test)';el.style.height='65px';return 1;},reset(){}};"}));
     await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${emailSDK})((${sdk})());`}));
     await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
     assert.equal(await p.evaluate(()=>window.__communityTest.guestCalls||0),0,'CAPTCHA must not start an anonymous account automatically');
     await clickNav(p,'.topbar [data-auth-open]');await p.waitForFunction(()=>window.__captcha);
+    assert.equal(await p.locator('#auth-dialog input[type=checkbox]').count(),0);
+    assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false,'Compact login fits the viewport, including CAPTCHA');
+    await p.locator('#auth-dialog').screenshot({path:'.qa/email-login-compact-'+width+'.png'});
     await p.locator('[data-auth-mode=register]').click();
+    assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false,'Compact registration fits the viewport, including CAPTCHA');
     await p.locator('#auth-dialog').screenshot({path:'.qa/email-register-'+width+'.png'});
     await p.locator('[name=username]').fill('Membru QA');await p.locator('#email-auth [name=email]').fill('qa@example.invalid');
-    await p.locator('#email-auth [name=password]').fill('StrongPassword123!');await p.locator('[name=confirm]').fill('DifferentPassword');await p.locator('[name=consent]').check();
+    await p.locator('#email-auth [name=password]').fill('StrongPassword123!');await p.locator('[name=confirm]').fill('DifferentPassword');
     await p.locator('#email-auth [type=submit]').click();assert.equal(await p.evaluate(()=>window.__authCalls.length),0);
     await p.locator('[name=confirm]').fill('StrongPassword123!');await p.locator('#email-auth [type=submit]').click();
     assert.match(await p.locator('#email-auth .form-status').textContent(),/CAPTCHA/);assert.equal(await p.evaluate(()=>window.__authCalls.length),0);

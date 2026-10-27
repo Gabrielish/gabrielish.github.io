@@ -17,7 +17,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
  await p.route('https://baldursgate3.game/**',r=>r.abort());await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test'};"}));await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${sdk})();`}));
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3D0AAAAASUVORK5CYII=','base64');await p.route('https://test.supabase.co/storage/**',r=>r.fulfill({contentType:'image/png',body:png}));
  await p.goto('http://127.0.0.1:4173/#erori',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
- if(actor!=='guest'){await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});}
+ if(actor!=='guest'){await clickNav(p,'.topbar [data-auth-open]');await p.locator('#discord-login').click();await p.waitForSelector('#auth-dialog',{state:'hidden'});}
  const card=p.locator('.report-item'),edit=card.getByRole('button',{name:'Editează raportarea',exact:true}),form=p.locator('.report-inline-edit');
  await p.waitForFunction(()=>document.querySelectorAll('.report-attachments .report-photo-link').length===3);
  assert.equal(await card.locator('.report-answer .post-meta strong').textContent(),'gabrielish');assert.equal(await card.locator('.report-answer img.post-avatar').getAttribute('src'),'https://cdn.discordapp.com/embed/avatars/0.png');
