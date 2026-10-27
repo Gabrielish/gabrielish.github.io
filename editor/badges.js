@@ -60,7 +60,7 @@ export const Badge=Node.create({name:'badge',inline:true,group:'inline',atom:tru
 export function mountBadgeTools(editor,toolbar,form){
  for(const old of form.querySelectorAll('.discussion-badge-panel'))old.remove();
  const group=create('div');group.className='discussion-tool-group';group.hidden=!administrator;group.setAttribute('aria-label','Etichete administrator');
- const trigger=create('button');trigger.type='button';trigger.className='discussion-tool discussion-badge-trigger';trigger.setAttribute('aria-label','Etichetă');trigger.title='Adaugă sau modifică o etichetă';trigger.append(vector('tag'),create('span','Etichetă'));group.append(trigger);toolbar.append(group);
+ const trigger=create('button');trigger.type='button';trigger.className='discussion-tool discussion-badge-trigger';trigger.setAttribute('aria-label','Etichetă');trigger.title='Adaugă sau modifică o etichetă';trigger.append(vector('tag'));group.append(trigger);toolbar.append(group);
  const panel=create('div');panel.className='discussion-badge-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Configurarea etichetei');toolbar.after(panel);
  const fields=create('div');fields.className='badge-fields';const label=create('input');label.type='text';label.maxLength=80;label.placeholder='Versiunea v0.7.96';label.setAttribute('aria-label','Textul etichetei');
  const color=create('input');color.type='color';color.setAttribute('aria-label','Culoarea etichetei');const hex=create('input');hex.type='text';hex.maxLength=7;hex.setAttribute('aria-label','Codul culorii etichetei');hex.placeholder='#22c55e';fields.append(label,color,hex);panel.append(fields);

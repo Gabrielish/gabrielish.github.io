@@ -5,21 +5,24 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import {TextStyle,FontFamily,FontSize,Color} from '@tiptap/extension-text-style';
 import {Badge,cleanBadge,badgeElement,canUseBadges,mountBadgeTools} from './badges.js';
+import {YouTube,youtubeID,youtubeElement} from './youtube.js';
 
 const prefix='BG3RO-RICH-1:';
 function imageURL(value){try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;}catch{return null;}}
 const InlineImage=Node.create({name:'image',group:'block',atom:true,draggable:true,addAttributes(){return{src:{default:null},alt:{default:'Imagine atașată'}};},parseHTML(){return[{tag:'img[src]',getAttrs:el=>{const src=imageURL(el.getAttribute('src'));return src?{src,alt:(el.getAttribute('alt')||'Imagine atașată').slice(0,160)}:false;}}];},renderHTML({HTMLAttributes}){return['img',{src:imageURL(HTMLAttributes.src)||'',alt:String(HTMLAttributes.alt||'Imagine atașată').slice(0,160),class:'discussion-inline-image',loading:'lazy',referrerpolicy:'no-referrer'}];}});
-const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']}),TextStyle,FontFamily,FontSize,Color,InlineImage,Badge];
+const extensions=[StarterKit.configure({heading:{levels:[2,3]},link:{openOnClick:false,autolink:false,defaultProtocol:'https',protocols:['https','http']}}),TextAlign.configure({types:['heading','paragraph']}),TextStyle,FontFamily,FontSize,Color,InlineImage,Badge,YouTube];
 const fonts=['Arial','Georgia','Verdana','monospace'],sizes=['12px','14px','16px','18px','20px','24px'];
 let colorMenuSequence=0;
 function textStyle(attrs={}){const clean={};if(fonts.includes(attrs.fontFamily))clean.fontFamily=attrs.fontFamily;if(sizes.includes(attrs.fontSize))clean.fontSize=attrs.fontSize;if(/^#[\da-f]{6}$/i.test(attrs.color||''))clean.color=attrs.color;return clean;}
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
+function dropdownChevron(){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const[key,value]of Object.entries({viewBox:'0 0 16 16',width:12,height:12,fill:'none',stroke:'currentColor','stroke-width':1.5,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',class:'editor-dropdown-chevron'}))svg.setAttribute(key,value);const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d','m4 6 4 4 4-4');svg.append(path);return svg;}
 function safeURL(value){if(['#despre','#actualizari','#descarcari','#discutii','#erori','#contact','#intrebari-frecvente'].includes(value))return value;try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
 function cleanDoc(value,allowBadges=true){
  let budget=2000;
  function clean(n,depth=0){
   if(!n||typeof n!=='object'||depth>16||--budget<0)return null;
   if(n.type==='badge'){const attrs=cleanBadge(n.attrs);return allowBadges?{type:'badge',attrs}:{type:'text',text:attrs.label};}
+  if(n.type==='youtube'){const videoId=youtubeID(n.attrs?.videoId);return videoId?{type:'youtube',attrs:{videoId}}:null;}
   if(n.type==='image'){const src=imageURL(n.attrs?.src);return src?{type:'image',attrs:{src,alt:String(n.attrs?.alt||'Imagine atașată').slice(0,160)}}:null;}
   if(n.type==='text'){
    const result={type:'text',text:String(n.text||'')};
@@ -48,6 +51,7 @@ function render(body){
  function append(parent,n){
   if(n.type==='doc'){(n.content||[]).forEach(child=>append(parent,child));return;}
   if(n.type==='badge'){parent.append(badgeElement(n.attrs));return;}
+  if(n.type==='youtube'){parent.append(youtubeElement(n.attrs.videoId));return;}
   if(n.type==='image'){const src=imageURL(n.attrs?.src);if(!src)return;const image=node('img');image.src=src;image.alt=n.attrs.alt;image.className='discussion-inline-image';image.loading='lazy';image.decoding='async';image.referrerPolicy='no-referrer';image.tabIndex=0;image.setAttribute('role','button');image.setAttribute('aria-label','Deschide imaginea: '+n.attrs.alt);const open=()=>{const images=[...output.querySelectorAll('.discussion-inline-image')];window.BG3RO_IMAGE_VIEWER?.open(images.map(item=>({src:item.src,alt:item.alt})),images.indexOf(image),'Imagini atașate');};image.onclick=open;image.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}};parent.append(image);return;}
   if(n.type==='text'){
    let text=document.createTextNode(n.text);
@@ -64,7 +68,7 @@ function render(body){
  append(output,documentFor(body));return output;
 }
 function mount(form,isReply=false,isReport=false,idPrefix='',settings={}){
-let editor=null,cleanupResize=()=>{},cleanupListeners=()=>{},uploadFiles=null,uploading=false,destroyed=false,imageEpoch=0,closeImage=()=>{};
+let editor=null,cleanupResize=()=>{},cleanupListeners=()=>{},uploadFiles=null,uploading=false,destroyed=false,imageEpoch=0,closeImage=()=>{},closeVideo=()=>{};
 const q=selector=>form.querySelector(idPrefix?selector.replaceAll('#discussion-','#'+idPrefix+'discussion-'):isReport?selector.replaceAll('#discussion-','#report-'):isReply?selector.replaceAll('#discussion-','#reply-discussion-'):selector);
 const minimum=settings.minimum??(isReport?20:10),maximum=settings.maximum??(isReport?6000:4000);
 const textarea=q('#discussion-body');
@@ -76,6 +80,7 @@ const api={render,documentFor,hasMention:body=>{
 },get editor(){return editor;},clear(){imageEpoch++;editor?.commands.clearContent();textarea.value='';},reset(){
  imageEpoch++;
  closeImage();
+ closeVideo();
  form.querySelectorAll('.discussion-badge-panel').forEach(panel=>panel.hidden=true);form.querySelectorAll('.discussion-badge-trigger').forEach(button=>button.setAttribute('aria-expanded','false'));
  for(const menu of form.querySelectorAll('.discussion-editor-menu:popover-open'))menu.hidePopover();
  if(editor){editor.commands.clearContent();editor.view.updateState(EditorState.create({schema:editor.schema,plugins:editor.state.plugins,doc:editor.state.doc}));editor.emit('selectionUpdate',{editor,transaction:editor.state.tr});}
@@ -89,7 +94,7 @@ const api={render,documentFor,hasMention:body=>{
   const doc=cleanDoc(editor.getJSON(),canUseBadges());
   if(name&&doc.content?.[0]?.content?.[0]?.text!=='@'+name)doc.content.unshift({type:'paragraph',content:[{type:'text',text:'@'+name}]});
   const body=serialize(doc);
-  let hasImage=false;editor.state.doc.descendants(n=>{if(n.type.name==='image')hasImage=true;});
+  let hasImage=false;editor.state.doc.descendants(n=>{if(['image','youtube'].includes(n.type.name))hasImage=true;});
   if(editor.getText().trim().length<minimum&&!(hasImage&&!isReport))throw Error(`Scrie ${isReport?'o descriere':'un mesaj'} de cel puțin ${minimum} caractere.`);
   if(body.length>maximum)throw Error('Textul este prea lung. Scurtează textul sau elimină o parte din formatare.');
   return body;
@@ -97,6 +102,7 @@ const api={render,documentFor,hasMention:body=>{
   editor?.commands.insertContent([{type:'paragraph',content:[{type:'text',text:'@'+name}]},{type:'blockquote',content:documentFor(body).content},{type:'paragraph'}]);editor?.commands.focus('end');
  }};
 if(textarea&&host){
+ form.querySelectorAll('.discussion-image-panel,.discussion-video-panel').forEach(panel=>panel.remove());
  editor=new Editor({element:host,extensions,content:documentFor(textarea.value),editorProps:{attributes:{role:'textbox','aria-label':settings.label||(isReport?'Descrie eroarea de traducere':isReply?'Răspuns':'Mesaj'),'aria-multiline':'true','data-placeholder':settings.placeholder||(isReport?'Descrie eroarea de traducere…':'Scrie un comentariu…'),class:'discussion-prosemirror'},handlePaste(view,event){
   if(event.clipboardData?.files.length){event.preventDefault();uploadFiles?.([...event.clipboardData.files]);return true;}return false;
  },handleDrop(view,event,moved){if(!moved&&event.dataTransfer?.files.length){event.preventDefault();uploadFiles?.([...event.dataTransfer.files]);return true;}return false;}},onUpdate(){
@@ -115,12 +121,14 @@ if(textarea&&host){
  icons.justify='M3 5h18M3 10h18M3 15h18M3 20h18';
  icons.separator='M4 12h16';
  icons.image='M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm-1 13 5-5 4 4 4-6 5 7M8 7h.01';
+ icons.imageURL='M12 21H4V3h16v9M3 15l5-5 4 4 4-6 4 5M8 7h.01M15 18l2-2a3 3 0 0 1 4 4l-2 2m-5-1-1 1a3 3 0 0 1-4-4l2-2m3 4 3-3';
+ icons.video='M3 5h13v14H3V5Zm13 5 5-4v12l-5-4';
  const controls=[],selects=[];
  let group=toolbar;
  function section(label){group=node('div');group.className='discussion-tool-group';group.setAttribute('role','group');group.setAttribute('aria-label',label);toolbar.append(group);}
  function select(label,options,attribute,command){
   let selection=null;
-  const trigger=node('button'),caption=node('span'),chevron=node('span','⌄'),menu=node('div');
+  const trigger=node('button'),caption=node('span'),chevron=dropdownChevron(),menu=node('div');
   trigger.type='button';trigger.className='discussion-tool-select';trigger.setAttribute('aria-label',label);trigger.title=label;chevron.setAttribute('aria-hidden','true');trigger.append(caption,chevron);
   menu.className='discussion-editor-menu discussion-font-menu';menu.id='editor-font-'+(++colorMenuSequence);menu.setAttribute('popover','auto');menu.setAttribute('role','menu');menu.setAttribute('aria-label',label);
   for(const [value,text]of options){const option=node('button',text);option.type='button';option.tabIndex=-1;option.dataset.value=value;option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{close();if(selection)editor.view.dispatch(editor.state.tr.setSelection(selection.resolve(editor.state.doc)));editor.view.focus();command(value);});menu.append(option);}
@@ -147,7 +155,7 @@ if(textarea&&host){
  button('Cursiv','italic',()=>editor.chain().focus().toggleItalic().run(),()=>editor.isActive('italic'));
  button('Subliniat','underline',()=>editor.chain().focus().toggleUnderline().run(),()=>editor.isActive('underline'));
  button('Tăiat','strike',()=>editor.chain().focus().toggleStrike().run(),()=>editor.isActive('strike'));
- const palette=[['','Implicită'],['#ef4444','Roșu'],['#f97316','Portocaliu'],['#eab308','Galben'],['#22c55e','Verde'],['#3b82f6','Albastru'],['#a855f7','Mov'],['#ec4899','Roz'],['#6b7280','Gri']];
+ const palette=[['','Implicit'],['#ef4444','Roșu'],['#f97316','Portocaliu'],['#eab308','Galben'],['#22c55e','Verde'],['#3b82f6','Albastru'],['#a855f7','Mov'],['#ec4899','Roz'],['#6b7280','Gri']];
  const colorMenu=node('div');colorMenu.className='discussion-editor-menu discussion-color-menu';colorMenu.id='editor-colors-'+(++colorMenuSequence);colorMenu.setAttribute('popover','auto');colorMenu.setAttribute('role','menu');colorMenu.setAttribute('aria-label','Culori pentru text');
  const closeColors=()=>{if(colorMenu.matches(':popover-open'))colorMenu.hidePopover();colorButton.setAttribute('aria-expanded','false');};
  const colorButton=button('Culoarea textului','A',event=>{
@@ -161,7 +169,7 @@ if(textarea&&host){
  // Declare the invoker so native light-dismiss does not close the menu on
  // pointerdown and then make our click handler reopen it immediately.
  colorButton.setAttribute('popovertarget',colorMenu.id);
- colorButton.classList.add('discussion-color');colorButton.replaceChildren(node('span','A'),node('span','⌄'));colorButton.setAttribute('aria-haspopup','menu');colorButton.setAttribute('aria-controls',colorMenu.id);colorButton.setAttribute('aria-expanded','false');
+ colorButton.classList.add('discussion-color');colorButton.replaceChildren(node('span','A'),dropdownChevron());colorButton.setAttribute('aria-haspopup','menu');colorButton.setAttribute('aria-controls',colorMenu.id);colorButton.setAttribute('aria-expanded','false');
  for(const [value,label]of palette){const option=node('button');option.type='button';option.setAttribute('role','menuitemradio');option.setAttribute('aria-checked','false');option.dataset.color=value;const swatch=node('span');swatch.className='editor-color-swatch';swatch.style.backgroundColor=value||'var(--panel)';swatch.setAttribute('aria-hidden','true');option.append(swatch,node('span',label));option.addEventListener('mousedown',event=>event.preventDefault());option.addEventListener('click',()=>{closeColors();editor.view.focus();const chain=editor.chain().focus();value?chain.setColor(value).run():chain.unsetColor().run();});colorMenu.append(option);}
  group.append(colorMenu);
  colorMenu.addEventListener('toggle',()=>colorButton.setAttribute('aria-expanded',String(colorMenu.matches(':popover-open'))));
@@ -192,7 +200,13 @@ if(textarea&&host){
  const chooseImage=node('button','Încarcă imagine'),imageAddress=node('input'),insertImage=node('button','Inserează'),cancelImage=node('button','Anulează'),imageStatus=node('p');
  chooseImage.type=insertImage.type=cancelImage.type='button';chooseImage.className='btn secondary small-btn';insertImage.className='btn small-btn';cancelImage.className='btn secondary small-btn';imageAddress.type='text';imageAddress.inputMode='url';imageAddress.placeholder='https://…';imageAddress.setAttribute('aria-label','Adresa imaginii');imageAddress.className='discussion-image-url';imageStatus.className='discussion-image-status';imageStatus.setAttribute('role','status');imagePanel.append(chooseImage,imageFile,imageAddress,insertImage,cancelImage,imageStatus);toolbar.after(imagePanel);
  closeImage=()=>{imagePanel.hidden=true;imageAddress.value='';imageStatus.textContent='';};
- const imageButton=button('Adaugă imagine','image',()=>{imagePanel.hidden=!imagePanel.hidden;chooseImage.hidden=!!form.closest('#conversatii')||(isReport&&form.id!=='report-form');chooseImage.disabled=!(form.id==='report-form'||window.BG3RO_EDITOR_IMAGES?.canUpload(form));if(!imagePanel.hidden)imageAddress.focus();},()=>editor.isActive('image'));
+ const imageButton=button('Adaugă imagine','image',()=>{closeVideo();imagePanel.hidden=!imagePanel.hidden;imagePanel.dataset.mode='upload';chooseImage.hidden=!!form.closest('#conversatii')||(isReport&&form.id!=='report-form');chooseImage.disabled=!(form.id==='report-form'||window.BG3RO_EDITOR_IMAGES?.canUpload(form));if(!imagePanel.hidden)imageAddress.focus();},()=>editor.isActive('image'));
+ button('Inserează imagine din URL','imageURL',()=>{closeVideo();if(!imagePanel.hidden&&imagePanel.dataset.mode==='url'){closeImage();return;}imagePanel.dataset.mode='url';imagePanel.hidden=false;chooseImage.hidden=true;imageStatus.textContent='';imageAddress.focus();});
+ const videoPanel=node('div');videoPanel.className='discussion-video-panel';videoPanel.hidden=true;
+ const videoAddress=node('input'),insertVideo=node('button','Inserează'),cancelVideo=node('button','Anulează'),videoStatus=node('p');videoAddress.type='text';videoAddress.inputMode='url';videoAddress.placeholder='https://www.youtube.com/watch?v=…';videoAddress.setAttribute('aria-label','Adresa videoclipului YouTube');videoAddress.className='discussion-image-url';insertVideo.type=cancelVideo.type='button';insertVideo.className='btn small-btn';cancelVideo.className='btn secondary small-btn';videoStatus.className='discussion-video-status';videoStatus.setAttribute('role','status');videoPanel.append(videoAddress,insertVideo,cancelVideo,videoStatus);toolbar.after(videoPanel);
+ closeVideo=()=>{videoPanel.hidden=true;videoAddress.value='';videoStatus.textContent='';};
+ const videoButton=button('Inserează videoclip YouTube','video',()=>{const open=videoPanel.hidden;closeImage();closeVideo();videoPanel.hidden=!open;if(open)videoAddress.focus();},()=>editor.isActive('youtube'));
+ insertVideo.onclick=()=>{const videoId=youtubeID(videoAddress.value.trim());if(!videoId){videoStatus.textContent='Introdu un link YouTube valid.';return;}editor.view.focus();const selection=editor.state.selection,nodes=[{type:'youtube',attrs:{videoId}},{type:'paragraph'}];if(selection.node?.isAtom)editor.commands.insertContentAt(selection.to,nodes);else editor.commands.insertContent(nodes);closeVideo();};cancelVideo.onclick=()=>{closeVideo();videoButton.focus();};
  const putImage=attrs=>{editor.view.focus();const nodes=[{type:'image',attrs},{type:'paragraph'}],selection=editor.state.selection;if(selection.node?.type.name==='image')editor.commands.insertContentAt(selection.to,nodes);else editor.commands.insertContent(nodes);};
  insertImage.onclick=()=>{const src=imageURL(imageAddress.value.trim());if(!src){imageStatus.textContent='Introdu adresa https:// a unei imagini.';return;}putImage({src,alt:'Imagine atașată'});closeImage();};
  cancelImage.onclick=()=>{closeImage();imageButton.focus();};chooseImage.onclick=()=>imageFile.click();

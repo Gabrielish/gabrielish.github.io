@@ -1,6 +1,6 @@
 .content-badge{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--badge-color,#22c55e) 13%,transparent);color:var(--badge-color,#22c55e);font-size:.82em;font-weight:600;line-height:1.5;vertical-align:middle;white-space:normal}
 .content-badge>span:last-child{min-width:0;overflow-wrap:anywhere}.content-badge svg{display:block;width:14px;height:14px;flex:none}.content-badge-icon{display:inline-flex;align-items:center;justify-content:center;flex:none;line-height:1}
-.discussion-badge-trigger{width:auto;gap:6px;padding-inline:8px;font-size:12px}
+.discussion-badge-trigger{width:30px;padding:0}
 .discussion-badge-panel{padding:12px;border-bottom:1px solid var(--line);background:var(--panel);color:var(--text)}
 .badge-fields,.badge-extra{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .discussion-badge-panel input:not([type=file]){min-height:34px;border:1px solid var(--field-border);border-radius:7px;background:var(--field-bg);color:var(--text);padding:6px 9px;font-size:13px;max-width:100%}

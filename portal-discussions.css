@@ -8,20 +8,23 @@
 .discussion-image-panel{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:var(--panel)}
 .discussion-image-panel .btn{min-height:32px;padding:5px 10px;font-size:12px}.discussion-image-url{min-width:100px;flex:1;background:#0b0c0e;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:13px}.discussion-image-status{width:100%;font-size:12px!important;margin:0!important;color:var(--muted)}.discussion-image-status:empty{display:none}
 .discussion-inline-image{display:block;max-width:100%;height:auto;max-height:420px;object-fit:contain;border-radius:8px;margin:12px 0;cursor:zoom-in}
+.discussion-video-panel{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:var(--panel)}
+.discussion-video-panel .btn{min-height:32px;padding:5px 10px;font-size:12px}.discussion-video-status{width:100%;font-size:12px!important;margin:0!important;color:var(--muted)}.discussion-video-status:empty{display:none}
+.discussion-video{width:100%;max-width:720px;aspect-ratio:16/9;margin:12px 0;border-radius:8px;overflow:hidden;background:#090a0b}.discussion-video iframe{display:block;width:100%;height:100%;border:0}.discussion-prosemirror .discussion-video iframe{pointer-events:none}
 .discussion-prosemirror .discussion-inline-image{max-height:240px;cursor:default}.discussion-prosemirror .ProseMirror-selectednode{outline:2px solid var(--gold)}
 .discussion-editor-shell{border:1px solid var(--field-border);border-radius:9px;overflow:hidden;background:#0d0f11}
 .discussion-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;padding:5px;border-bottom:1px solid var(--line);background:#101215}
 .discussion-tool-group{display:flex;align-items:center;gap:1px;border-right:1px solid var(--line);padding:0 4px;max-width:100%}
-.discussion-tool-group:last-child{border-right:0}.discussion-tool-select{width:auto;max-width:96px;min-height:32px;padding:4px 19px 4px 5px;border:0;border-radius:4px;background:transparent;color:var(--muted);font:inherit;font-size:12px}
-.discussion-tool-select{display:inline-flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;white-space:nowrap}
+.discussion-tool-group:last-child{border-right:0}.discussion-tool-select{width:auto;max-width:110px;min-height:32px;padding:4px 8px;border:0;border-radius:4px;background:transparent;color:var(--muted);font:inherit;font-size:12px}
+.discussion-tool-select{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;white-space:nowrap}
 .discussion-tool-select>span:first-child{overflow:hidden;text-overflow:ellipsis}
-.discussion-tool-select>span:last-child{flex:none}
+.discussion-toolbar .editor-dropdown-chevron{display:block;width:12px;height:12px;flex:none;align-self:center;stroke-width:1.5;margin:0}
 .discussion-tool-select:hover,.discussion-tool-select[aria-expanded=true]{background:#ddc9a71a;color:var(--gold)}
 .discussion-tool-select:focus-visible{outline:1px solid var(--gold);outline-offset:1px}
 .discussion-color{display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:16px;cursor:pointer}
 .discussion-tool.discussion-color{width:42px}
 .discussion-color>span:first-child{text-decoration:underline;text-decoration-color:var(--editor-selected-color,currentColor);text-decoration-thickness:2px;text-underline-offset:4px}
-.discussion-color>span:last-child{font-size:12px;text-decoration:none}
+.discussion-color>.editor-dropdown-chevron{width:12px;height:12px;text-decoration:none}
 .discussion-color[aria-expanded=true]{background:#ddc9a71a;color:var(--gold)}
 .discussion-editor-menu{position:fixed;inset:auto;margin:0;padding:8px;width:144px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow-y:auto;box-sizing:border-box;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px #0006}
 .discussion-editor-menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:6px 8px;border:0;border-radius:6px;background:transparent;color:inherit;font:inherit;font-size:13px;text-align:left}
