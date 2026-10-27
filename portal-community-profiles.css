@@ -2,6 +2,7 @@
 .contact-reply-form{display:grid;gap:12px;margin-top:18px}.contact-reply-form label{display:grid;gap:6px}.contact-reply-form input{min-height:38px;padding:8px 10px;font-size:13px}.contact-reply-form .form-end{display:flex;justify-content:flex-end;gap:10px}.contact-reply-form .btn{min-height:36px;padding:7px 14px;font-size:13px}
 .profile-avatar-link{display:inline-grid;align-self:start;justify-self:start;width:max-content;height:max-content;border-radius:50%;color:inherit}
 .profile-name-link{color:inherit;text-decoration:none}.profile-name-link:hover{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.profile-name-link[data-profile-pending]{visibility:hidden}
 #reports-list .report-answer>.profile-avatar-link .post-avatar{width:36px;height:36px}
 .is-content-hidden>.post>.profile-avatar-link{filter:grayscale(1);opacity:.5}
 .community-route .project-banner,.community-route .sidebar{display:none}

@@ -7,7 +7,7 @@
  const date=value=>{const d=new Date(value);return Number.isFinite(d.valueOf())?new Intl.DateTimeFormat('ro-RO',{dateStyle:'medium',timeStyle:'short'}).format(d):'';};
  const profileLink=(content,id,name,avatar=false)=>{
   if(!uuid.test(id||''))return content;
-  const link=node('a',avatar?'profile-avatar-link':'profile-name-link');link.href='#profil/'+id;link.dataset.profileId=id;if(avatar)link.setAttribute('aria-label','Profilul lui '+(name||'utilizator'));link.append(content);return link;
+  const link=node('a',avatar?'profile-avatar-link':'profile-name-link');link.href='#profil/'+id;link.dataset.profileId=id;if(avatar)link.setAttribute('aria-label','Profilul lui '+(name||'utilizator'));else{link.dataset.profilePending='';link.setAttribute('aria-busy','true');}link.append(content);window.BG3RO_APPLY_PROFILE?.(link);return link;
  };
  window.BG3RO_PROFILE_LINK=profileLink;
  const avatar=(profile,large=false)=>{
