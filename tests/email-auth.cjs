@@ -23,6 +23,9 @@ function emailSDK(base){
     assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false,'Compact login fits the viewport, including CAPTCHA');
     await p.locator('#auth-dialog').screenshot({path:'.qa/email-login-compact-'+width+'.png'});
     await p.locator('[data-auth-mode=register]').click();
+    assert.equal((await p.locator('#discord-login').textContent()).trim(),'Înregistrare prin Discord');
+    assert.equal(await p.locator('[name=username]').getAttribute('placeholder'),'Porecla ta');
+    assert.equal(await p.locator('[name=password]').getAttribute('placeholder'),'Minimum 8 caractere');
     assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false,'Compact registration fits the viewport, including CAPTCHA');
     await p.locator('#auth-dialog').screenshot({path:'.qa/email-register-'+width+'.png'});
     await p.locator('[name=username]').fill('Membru QA');await p.locator('#email-auth [name=email]').fill('qa@example.invalid');
@@ -43,6 +46,7 @@ function emailSDK(base){
     await p.locator('#auth-dialog').screenshot({path:'.qa/email-registration-success-'+width+'.png'});
     assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollWidth>el.clientWidth),false);
     await p.locator('#email-registration-login').click();
+    assert.equal((await p.locator('#discord-login').textContent()).trim(),'Conectează-te prin Discord');
     assert.equal(await p.locator('#auth-heading').textContent(),'Conectare');assert.equal(await p.locator('.auth-registration-success').isVisible(),false);
     assert.equal(await p.locator('#email-auth [name=email]').inputValue(),'qa@example.invalid','Login preserves the address');
     await p.locator('[data-auth-mode=reset]').click();

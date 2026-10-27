@@ -9,10 +9,10 @@
   body.id = 'email-auth';
   body.innerHTML = `<div class="auth-divider"><span>SAU CU E-MAIL</span></div>
     <form id="email-auth-form">
-      <label class="field" data-signup>Nume utilizator<input name="username" autocomplete="username" minlength="2" maxlength="40"></label>
-      <label class="field" data-email>E-mail<input name="email" type="email" autocomplete="email" required maxlength="254"></label>
+      <label class="field" data-signup>Nume de utilizator<input name="username" autocomplete="username" placeholder="Porecla ta" minlength="2" maxlength="40"></label>
+      <label class="field" data-email>E-mail<input name="email" type="email" autocomplete="email" placeholder="nume@exemplu.ro" required maxlength="254"></label>
       <label class="field" data-password>Parolă<input name="password" type="password" autocomplete="current-password" required minlength="8" maxlength="128"></label>
-      <label class="field" data-confirm>Confirmă parola<input name="confirm" type="password" autocomplete="new-password" minlength="8" maxlength="128"></label>
+      <label class="field" data-confirm>Confirmă parola<input name="confirm" type="password" autocomplete="new-password" placeholder="Repetă parola" minlength="8" maxlength="128"></label>
       <div id="auth-captcha"></div><p class="form-status" role="status" aria-live="polite"></p>
       <button class="btn" type="submit">Conectează-te</button>
     </form>
@@ -70,12 +70,15 @@
     document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Parolă uitată',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!','reset-sent':'Parolă uitată'})[mode];
     document.querySelector('#auth-dialog .dialog-copy').textContent = resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit!';
     discord.hidden = !['login','register'].includes(mode) || !client;
+    const discordCaption = [...document.querySelector('#discord-login').childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+    if (discordCaption) discordCaption.textContent = signup ? 'Înregistrare prin Discord' : 'Conectează-te prin Discord';
     body.querySelector('.auth-divider').hidden = !['login','register'].includes(mode);
     form.querySelectorAll('[data-signup]').forEach(el => { el.hidden = !signup; });
     form.elements.username.required = signup;
     form.querySelector('[data-email]').hidden = password || guest; form.elements.email.required = !password && !guest;
     form.querySelector('[data-password]').hidden = ['reset','guest'].includes(mode); form.elements.password.required = !['reset','guest'].includes(mode);
     form.elements.password.autocomplete = signup || password ? 'new-password' : 'current-password';
+    form.elements.password.placeholder = signup || password ? 'Minimum 8 caractere' : 'Parola ta';
     form.querySelector('[data-confirm]').hidden = !signup && !password; form.elements.confirm.required = signup || password;
     form.elements.confirm.setCustomValidity('');
     form.querySelector('#auth-captcha').hidden = password;
