@@ -17,6 +17,14 @@
       <div id="auth-captcha"></div><p class="form-status" role="status" aria-live="polite"></p>
       <button class="btn" type="submit">Conectează-te</button>
     </form>
+    <section class="auth-registration-success" hidden aria-label="Confirmarea înregistrării">
+      <div class="auth-success-notice" role="status" aria-live="polite">
+        <strong>Înregistrarea a avut succes!</strong>
+        <p>Am trimis un e-mail de verificare la adresa <strong class="auth-confirm-email"></strong>.</p>
+        <p>Apasă pe linkul din e-mail pentru a-ți activa contul. Dacă nu găsești mesajul, verifică și folderul Spam.</p>
+      </div>
+      <button type="button" id="email-registration-login">Mergi la conectare</button>
+    </section>
     <div class="auth-links"><button type="button" data-auth-mode="register">Nu ai cont? Înregistrează-te</button><button type="button" data-auth-mode="reset">Ai uitat parola?</button></div>`;
   discord.after(body);
   const form = body.querySelector('form'), status = form.querySelector('.form-status'), submit = form.querySelector('[type=submit]');
@@ -33,10 +41,10 @@
     });
   }
   async function captcha() {
-    if (!config.turnstileSiteKey || mode === 'password' || !dialog.open) return;
+    if (!config.turnstileSiteKey || ['password','registered'].includes(mode) || !dialog.open) return;
     try {
       await loadCaptcha();
-      if (widget !== undefined || !dialog.open) return;
+      if (widget !== undefined || !dialog.open || ['password','registered'].includes(mode)) return;
       widget = window.turnstile.render('#auth-captcha', {
         sitekey: config.turnstileSiteKey, theme: 'dark', size: 'flexible', language: 'ro',
         callback: value => { token = value; message(''); },
@@ -45,12 +53,14 @@
       });
     } catch { message('CAPTCHA nu s-a încărcat. Verifică rețeaua și redeschide formularul.', true); }
   }
-  function setMode(next) {
-    if (busy) return;
+  function setMode(next, completed = false) {
+    if (busy && !completed) return;
     mode = next; message(''); resetCaptcha();
-    const signup = mode === 'register', password = mode === 'password', guest = mode === 'guest';
-    document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Resetează parola',password:'Alege o parolă nouă',guest:'Continuă ca oaspete'})[mode];
-    document.querySelector('#auth-dialog .dialog-copy').textContent = signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit în comunitate!';
+    const signup = mode === 'register', password = mode === 'password', guest = mode === 'guest', registered = mode === 'registered';
+    dialog.classList.toggle('registration-complete', registered);
+    form.hidden = registered; body.querySelector('.auth-registration-success').hidden = !registered;
+    document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Resetează parola',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!'})[mode];
+    document.querySelector('#auth-dialog .dialog-copy').textContent = registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit în comunitate!';
     discord.hidden = !['login','register'].includes(mode) || !client;
     body.querySelector('.auth-divider').hidden = !['login','register'].includes(mode);
     form.querySelectorAll('[data-signup]').forEach(el => { el.hidden = !signup; });
@@ -62,13 +72,14 @@
     form.elements.confirm.setCustomValidity('');
     form.querySelector('#auth-captcha').hidden = password;
     submit.textContent = ({login:'Conectează-te',register:'Înregistrează-te',reset:'Trimite linkul',password:'Salvează',guest:'Continuă'})[mode];
-    body.querySelector('.auth-links').hidden = password || guest;
+    body.querySelector('.auth-links').hidden = password || guest || registered;
     const toggle = body.querySelector('[data-auth-mode]');
     toggle.dataset.authMode = mode === 'login' ? 'register' : 'login';
     toggle.textContent = mode === 'login' ? 'Nu ai cont? Înregistrează-te' : 'Ai deja cont? Conectează-te';
     captcha();
   }
   body.querySelectorAll('[data-auth-mode]').forEach(button => button.onclick = () => setMode(button.dataset.authMode));
+  body.querySelector('#email-registration-login').onclick = () => setMode('login');
   body.querySelector('a').onclick = () => dialog.close();
   form.elements.confirm.oninput = () => form.elements.confirm.setCustomValidity('');
   function errorText(error) {
@@ -100,7 +111,11 @@
       else result = await client.auth.signInWithPassword({email,password,options});
       if (result.error) throw result.error;
       form.elements.password.value = form.elements.confirm.value = '';
-      if (action === 'register' && !result.data?.session) message('Verifică e-mailul pentru confirmarea contului, inclusiv folderul Spam.');
+      if (action === 'register' && !result.data?.session) {
+        body.querySelector('.auth-confirm-email').textContent = email;
+        setMode('registered', true);
+        if (dialog.open) body.querySelector('#email-registration-login').focus({preventScroll:true});
+      }
       else if (action === 'reset') message('Dacă adresa are un cont, vei primi un link pentru resetarea parolei.');
       else { recovery = false; dialog.close(); }
     } catch (error) { message(errorText(error), true); }
