@@ -18,7 +18,7 @@
  const root=document.querySelector('#despre').parentElement;
  const profilePanel=node('section','community-profile panel-stack');profilePanel.id='profil';profilePanel.hidden=true;root.append(profilePanel);
  const dmPanel=node('section','community-messages panel-stack');dmPanel.id='conversatii';dmPanel.hidden=true;root.append(dmPanel);
- const nav=document.querySelector('.navbar-actions'),ownLink=node('a','nav-login nav-community','Profilul meu'),dmLink=node('a','nav-login nav-community','Mesaje');ownLink.id='nav-profile';dmLink.id='nav-private-messages';ownLink.hidden=dmLink.hidden=true;dmLink.href='#conversatii';nav.prepend(ownLink,dmLink);
+ const ownLink=document.getElementById('nav-profile'),dmLink=document.getElementById('nav-private-messages');
  let client=null,userId=null,admin=false,epoch=0,profileRequest=0,inboxRequest=0,threadRequest=0,selected=null,peer=null,inbox=[],messages=[],limit=100,more=false,editor=null,timer=null,profileId=null,sending=false;
  const drafts=new Map();let lastRoute='',starting=false;
  const heading=node('div','community-page-heading');heading.append(node('h2','','Mesaje'),button('Mesaj nou','plus',()=>{searchWrap.hidden=false;search.focus();}));

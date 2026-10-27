@@ -19,6 +19,6 @@
       try { persistent.setItem(name, clean); if (persistent !== temporary) temporary.removeItem(name); }
       catch (_) { temporary.setItem(name, clean); }
     },
-    removeItem(name) { if (name === key) persistent.removeItem(name); temporary.removeItem(name); }
+    removeItem(name) { if (name === key) { persistent.removeItem(name); window.BG3RO_NAV_STATE?.clear(); } temporary.removeItem(name); }
   };
 })();

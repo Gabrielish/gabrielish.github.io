@@ -21,6 +21,6 @@ Fără site key, widgetul nu apare și nu este simulată o verificare reușită.
 
 ## Restaurarea navbarului
 
-Sesiunea există deja în stocarea persistentă Supabase (`bg3ro-auth`), cu tokenurile Discord suplimentare eliminate. Bara ascunde starea provizorie până la restaurarea sesiunii; nu afișează întâi Conectare și apoi comenzile contului. Cache-ul numelui este folosit numai pentru prezentare, niciodată pentru autorizare.
+Sesiunea există deja în stocarea persistentă Supabase (`bg3ro-auth`), cu tokenurile Discord suplimentare eliminate. Controalele există direct în HTML. Înainte de prima afișare, bara restaurează numele public și contoarele din `bg3ro-nav-display`, numai dacă identificatorul corespunde sesiunii salvate. Această stare vizuală nu include roluri sau permisiuni. Cererile de sesiune, profil și notificări verifică apoi datele în fundal. Reînnoirea sesiunii nu golește numele și contoarele; deconectarea sau schimbarea contului elimină starea vizuală veche.
 
 Documentație: [Supabase CAPTCHA](https://supabase.com/docs/guides/auth/auth-captcha), [SMTP](https://supabase.com/docs/guides/auth/auth-smtp), [Cloudflare widget](https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/).

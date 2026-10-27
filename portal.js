@@ -219,7 +219,6 @@
     $$('[data-user-form]').forEach(form => { form.hidden = !user; });
     $$('[data-auth-open]').forEach(button => { button.hidden = member; });
     $('#sign-out').hidden = !member;
-    $('#sign-out').textContent = 'Deconectare';
     $('#my-reports').hidden = !client;
     $('#admin-tools').hidden = !moderator;
     if (location.hash === '#mesaje') {

@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
   <meta charset="utf-8">
-  <script>document.documentElement.classList.add('auth-restoring');</script>
+  <script src="./portal-nav-state.js?v=20261027-stable-nav"></script>
   <style>.auth-restoring .navbar-actions>[data-auth-open],.auth-restoring .nav-account-tools,.auth-restoring #sign-out{visibility:hidden!important}</style>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="strict-origin">
@@ -74,7 +74,7 @@
   <script src="./portal-editor-images.js?v=20261024-editor-images" defer></script>
   <script src="./portal-gallery.js?v=20261026-gallery-management" defer></script>
   <script src="./portal-report-form.js?v=20261020-progress-version" defer></script>
-  <script src="./portal-auth-storage.js?v=20261018-remember-session" defer></script>
+  <script src="./portal-auth-storage.js?v=20261027-stable-nav" defer></script>
   <link rel="stylesheet" href="./portal-content.css?v=20261020-chronological">
   <script src="./portal-content.js?v=20261023-inline-updates" defer></script>
   <script src="./portal-news-feed.js?v=20261024-muted-hidden" defer></script>
@@ -86,11 +86,11 @@
   <script src="./portal-reactions.js?v=20261023-lucide-icons" defer></script>
   <script src="./portal-polls.js?v=20261022-polls" defer></script>
   <link rel="stylesheet" href="./portal-community-profiles.css?v=20261027-current-profile-names">
-  <script src="./portal-community-profiles.js?v=20261027-current-profile-names" defer></script>
+  <script src="./portal-community-profiles.js?v=20261027-stable-nav" defer></script>
   <link rel="stylesheet" href="./portal-account.css?v=20261026-notification-menu">
-  <script src="./portal-account.js?v=20261027-email-auth" defer></script>
+  <script src="./portal-account.js?v=20261027-stable-nav" defer></script>
   <script src="./portal-email-auth.js?v=20261027-compact-auth" defer></script>
-  <script src="./portal.js?v=20261027-email-auth" defer></script>
+  <script src="./portal.js?v=20261027-stable-nav" defer></script>
   <script src="./portal-navbar.js?v=20261018-compact-mobile" defer></script>
   <script src="./portal-video.js?v=20261018-no-dice" defer></script>
   <link rel="stylesheet" href="./portal-focus.css?v=20261026-no-tab-rings">
@@ -115,9 +115,10 @@
   <a class="skip-link" href="#continut">Sari la conținut</a>
   <header class="topbar"><div class="container topbar-inner">
     <a class="wordmark" href="./" aria-label="BG3.RO — pagina proiectului"><img src="./assets/brand-mark-romania.svg" width="37" height="37" alt=""><span>BG3<span class="brand-ro">.RO</span></span></a>
-    <nav class="main-navigation" id="main-navigation" aria-label="Navigație principală"><a class="nexus-link" href="https://www.nexusmods.com/baldursgate3/mods/24379" target="_blank" rel="noopener noreferrer"><svg class="download-symbol nexus-symbol" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><use href="./assets/download-icons.svg?v=20261026-nexus-complete#nexus" width="24" height="24"/></svg><span>Nexus Mods</span></a><div class="navbar-actions"><button class="nav-login" type="button" data-auth-open data-auth-label="CONECTARE">CONECTARE</button><button class="nav-login" type="button" id="sign-out" hidden>Deconectare</button><a class="nav-support" href="#support-dialog"><span>Susține proiectul</span></a></div></nav>
+    <nav class="main-navigation" id="main-navigation" aria-label="Navigație principală"><a class="nexus-link" href="https://www.nexusmods.com/baldursgate3/mods/24379" target="_blank" rel="noopener noreferrer"><svg class="download-symbol nexus-symbol" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><use href="./assets/download-icons.svg?v=20261026-nexus-complete#nexus" width="24" height="24"/></svg><span>Nexus Mods</span></a><div class="navbar-actions"><div class="nav-account-tools" hidden><a id="nav-private-messages" class="nav-login nav-account-icon" href="#conversatii" title="Mesaje" aria-label="Mesaje" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H7l-5 3 1-6a8 8 0 1 1 18-5ZM7 11h.01M11 11h.01M15 11h.01"/></svg><span class="nav-account-count" hidden></span></a><button id="nav-notifications" class="nav-account-icon" type="button" title="Notificări" aria-label="Notificări" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="nav-account-count" hidden></span></button><a id="nav-profile" class="nav-login nav-account-profile" href="#setari/profil" title="Setările profilului" aria-label="Setările profilului" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a7 7 0 0 0-14 0v2h14ZM16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg><span></span></a><button class="nav-login nav-account-icon" type="button" id="sign-out" title="Deconectare" aria-label="Deconectare" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H4v18h5m5-5 5-4-5-4m-6 4h12"/></svg></button></div><button class="nav-login" type="button" data-auth-open data-auth-label="CONECTARE">CONECTARE</button><a class="nav-support" href="#support-dialog"><span>Susține proiectul</span></a></div></nav>
     <button class="nav-toggle" type="button" aria-label="Deschide meniul" aria-expanded="false" aria-controls="main-navigation"><span class="dot-grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></button>
   </div></header>
+  <script>window.BG3RO_NAV_STATE?.restore();</script>
   <main>
     <section class="project-banner hero" aria-labelledby="project-title">
       <img class="banner-art" src="https://baldursgate3.game/about/video-still.jpg" width="1920" height="1080" alt="" fetchpriority="high">
