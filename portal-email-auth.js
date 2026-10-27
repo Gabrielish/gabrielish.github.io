@@ -2,7 +2,7 @@
   'use strict';
   const dialog = document.querySelector('#auth-dialog'), discord = document.querySelector('#discord-login-form');
   const config = window.BG3RO_CONFIG || {};
-  let client, mode = 'login', busy = false, token = '', widget, guestResolve;
+  let client, mode = 'login', busy = false, token = '', widget, guestResolve, recoveryUserId;
   const callbackURL = new URL(location.href);
   let recovery = callbackURL.searchParams.get('auth') === 'recovery' && callbackURL.searchParams.has('code');
   const body = document.createElement('div');
@@ -31,6 +31,13 @@
       </div>
       <button type="button" id="email-reset-login">Înapoi la conectare</button>
     </section>
+    <section class="auth-password-success" hidden aria-label="Parolă schimbată">
+      <div class="auth-success-notice" role="status" aria-live="polite">
+        <strong>Parola a fost schimbată cu succes!</strong>
+        <p>Acum te poți conecta folosind noua parolă.</p>
+      </div>
+      <button class="btn" type="button" id="email-password-login">Mergi la conectare</button>
+    </section>
     <div class="auth-links"><button type="button" data-auth-mode="register">Nu ai cont? Înregistrează-te</button><button type="button" data-auth-mode="reset">Ai uitat parola?</button></div>`;
   discord.after(body);
   const form = body.querySelector('form'), status = form.querySelector('.form-status'), submit = form.querySelector('[type=submit]');
@@ -47,10 +54,10 @@
     });
   }
   async function captcha() {
-    if (!config.turnstileSiteKey || ['password','registered','reset-sent'].includes(mode) || !dialog.open) return;
+    if (!config.turnstileSiteKey || ['password','registered','reset-sent','password-changed'].includes(mode) || !dialog.open) return;
     try {
       await loadCaptcha();
-      if (widget !== undefined || !dialog.open || ['password','registered','reset-sent'].includes(mode)) return;
+      if (widget !== undefined || !dialog.open || ['password','registered','reset-sent','password-changed'].includes(mode)) return;
       widget = window.turnstile.render('#auth-captcha', {
         sitekey: config.turnstileSiteKey, theme: 'dark', size: 'flexible', language: 'ro',
         callback: value => { token = value; message(''); },
@@ -63,12 +70,14 @@
     if (busy && !completed) return;
     mode = next; message(''); resetCaptcha();
     const signup = mode === 'register', password = mode === 'password', guest = mode === 'guest', registered = mode === 'registered', resetSent = mode === 'reset-sent', resetting = mode === 'reset' || resetSent;
+    const passwordChanged = mode === 'password-changed';
     dialog.classList.toggle('registration-complete', registered);
     dialog.classList.toggle('auth-register', signup);
-    form.hidden = registered || resetSent; body.querySelector('.auth-registration-success').hidden = !registered;
+    form.hidden = registered || resetSent || passwordChanged; body.querySelector('.auth-registration-success').hidden = !registered;
     body.querySelector('.auth-reset-success').hidden = !resetSent;
-    document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Parolă uitată',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!','reset-sent':'Parolă uitată'})[mode];
-    document.querySelector('#auth-dialog .dialog-copy').textContent = resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit!';
+    body.querySelector('.auth-password-success').hidden = !passwordChanged;
+    document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Parolă uitată',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!','reset-sent':'Parolă uitată','password-changed':'Parolă resetată'})[mode];
+    document.querySelector('#auth-dialog .dialog-copy').textContent = passwordChanged ? 'Parola ta a fost actualizată.' : resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit!';
     discord.hidden = !['login','register'].includes(mode) || !client;
     const discordCaption = [...document.querySelector('#discord-login').childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
     if (discordCaption) discordCaption.textContent = signup ? 'Înregistrare prin Discord' : 'Conectează-te prin Discord';
@@ -83,7 +92,7 @@
     form.elements.confirm.setCustomValidity('');
     form.querySelector('#auth-captcha').hidden = password;
     submit.textContent = ({login:'Conectează-te',register:'Înregistrează-te',reset:'Trimite link de recuperare',password:'Salvează',guest:'Continuă'})[mode] || 'Conectează-te';
-    body.querySelector('.auth-links').hidden = password || guest || registered || resetSent;
+    body.querySelector('.auth-links').hidden = password || guest || registered || resetSent || passwordChanged;
     body.querySelector('[data-auth-mode="reset"]').hidden = resetting;
     const toggle = body.querySelector('[data-auth-mode]');
     toggle.dataset.authMode = mode === 'login' ? 'register' : 'login';
@@ -93,6 +102,7 @@
   body.querySelectorAll('[data-auth-mode]').forEach(button => button.onclick = () => setMode(button.dataset.authMode));
   body.querySelector('#email-registration-login').onclick = () => setMode('login');
   body.querySelector('#email-reset-login').onclick = () => setMode('login');
+  body.querySelector('#email-password-login').onclick = () => { recoveryUserId = null; setMode('login'); };
   form.elements.confirm.oninput = () => form.elements.confirm.setCustomValidity('');
   function errorText(error) {
     const code = error?.code || '', text = error?.message || '';
@@ -132,6 +142,11 @@
         setMode('reset-sent', true);
         if (dialog.open) body.querySelector('#email-reset-login').focus({preventScroll:true});
       }
+      else if (action === 'password') {
+        recovery = false;
+        setMode('password-changed', true);
+        if (dialog.open) body.querySelector('#email-password-login').focus({preventScroll:true});
+      }
       else { recovery = false; dialog.close(); }
     } catch (error) { message(errorText(error), true); }
     finally { busy = false; submit.disabled = false; resetCaptcha(); }
@@ -143,9 +158,10 @@
     client = event.detail.client;
     body.hidden = !client || config.authEnabled === false;
     // Only a successfully restored session can open the password-change form.
-    if (recovery && event.detail.userId) { recovery = false; setTimeout(() => { if (!dialog.open) dialog.showModal(); setMode('password'); }, 0); }
+    if (recovery && event.detail.userId) { recovery = false; recoveryUserId = event.detail.userId; setTimeout(() => { if (!dialog.open) dialog.showModal(); setMode('password'); }, 0); }
   });
   window.BG3RO_AUTH_UI = {
+    keepOpenFor(id) { return id === recoveryUserId && ['password','password-changed'].includes(mode); },
     recovery(enabled = true) { recovery = enabled; },
     guestToken() { return new Promise(resolve => { if (guestResolve) { resolve(null); return; } dialog.showModal(); setMode('guest'); guestResolve = resolve; }); }
   };

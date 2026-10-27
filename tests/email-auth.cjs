@@ -1,11 +1,11 @@
 const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('node:assert/strict'),{clickNav}=require('./nav-action.cjs');
 const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
-const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>'));
+const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>')).replace('let authCallback=()=>{};',"let authCallback=()=>{};window.__emailAuthEvent=(event,session)=>authCallback(event,session);");
 function emailSDK(base){
   window.__authCalls=[];const record=(kind,value)=>window.__authCalls.push({kind,value});
   base.auth.signUp=async value=>{record('signup',value);return{data:{session:null},error:window.__failSignup?{code:'email_address_not_authorized'}:null};};
   base.auth.resetPasswordForEmail=async(email,options)=>{record('reset',{email,options});return{data:{},error:window.__failReset?{code:'email_address_not_authorized'}:null};};
-  base.auth.updateUser=async value=>{record('password',value);return{data:{},error:null};};
+  base.auth.updateUser=async value=>{record('password',value);if(window.__failPassword)return{error:{code:'weak_password'}};setTimeout(()=>window.__emailAuthEvent('USER_UPDATED',{user:window.__communityTest.user}),0);return{data:{},error:null};};
   base.auth.signInWithPassword=async value=>{record('login',value);if(window.__badLogin)return{error:{code:'invalid_credentials'}};return base.auth.signInWithOAuth({provider:'email'});};
   window.__authClient=base;return base;
 }
@@ -72,7 +72,20 @@ function emailSDK(base){
     await p.evaluate(()=>{window.__badLogin=false;window.__captcha.callback('next-token');});await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
     await p.evaluate(()=>{window.BG3RO_AUTH_UI.recovery();dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client:window.__authClient,userId:'alice',moderator:false}}));});
     await p.waitForFunction(()=>document.querySelector('#auth-heading').textContent==='Alege o parolă nouă');
-    await p.locator('#email-auth [name=password]').fill('NewPassword123!');await p.locator('[name=confirm]').fill('NewPassword123!');await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>!document.querySelector('#auth-dialog').open);
+    await p.locator('#email-auth [name=password]').fill('NewPassword123!');await p.locator('[name=confirm]').fill('NewPassword123!');
+    await p.evaluate(()=>{window.__failPassword=true;});await p.locator('#email-auth [type=submit]').click();
+    await p.waitForFunction(()=>document.querySelector('#email-auth .form-status').textContent.includes('mai puternică'));
+    assert.equal(await p.locator('.auth-password-success').isVisible(),false,'Failed password update must not show success');
+    await p.evaluate(()=>{window.__failPassword=false;});await p.locator('#email-auth [type=submit]').click();
+    await p.waitForSelector('.auth-password-success:visible');await p.waitForTimeout(200);
+    assert.equal(await p.locator('#auth-dialog').isVisible(),true,'USER_UPDATED must not close the confirmation');
+    assert.match(await p.locator('.auth-password-success').textContent(),/Parola a fost schimbată cu succes!/);
+    assert.equal(await p.locator('#email-auth-form').isVisible(),false);
+    assert.equal(await p.locator('#email-auth [name=password]').inputValue(),'');assert.equal(await p.locator('[name=confirm]').inputValue(),'');
+    assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false);
+    await p.locator('#auth-dialog').screenshot({path:'.qa/password-changed-'+width+'.png'});
+    await p.locator('#email-password-login').click();assert.equal(await p.locator('#auth-heading').textContent(),'Conectare');
+    await p.locator('#auth-dialog .dialog-close').click();
     await clickNav(p,'#sign-out');await clickNav(p,'.topbar [data-auth-open]');
     assert.equal(await p.locator('#email-auth [name=password]').inputValue(),'');
     await p.locator('#auth-dialog .dialog-close').click();

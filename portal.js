@@ -282,7 +282,7 @@
       if (!error) moderator = data === true;
       if (!$('#report-name').value) $('#report-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
     }
-    if (user && !user.is_anonymous && dialog.open) dialog.close();
+    if (user && !user.is_anonymous && dialog.open && !window.BG3RO_AUTH_UI?.keepOpenFor?.(user.id)) dialog.close();
     syncAuth(); await Promise.all([loadComments(), loadReports(), loadUpdates()]);
   }
   let updatesRequest = 0;
