@@ -9,6 +9,23 @@
 #auth-dialog .dialog-copy{line-height:1.7;margin-bottom:22px;text-align:center;color:var(--muted)}
 #auth-dialog #discord-login,#auth-dialog #auth-guest{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
 #auth-dialog .form-status:empty{display:none}
+#discord-login-form{display:flex;flex-direction:column;gap:12px}
+#discord-login-form[hidden]{display:none!important}
+#discord-login{order:-1}
 .auth-choice-divider{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:12px;margin:18px 0}
 .auth-choice-divider::before,.auth-choice-divider::after{content:'';height:1px;flex:1;background:var(--line)}
+#auth-dialog{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;padding:28px;border-radius:20px;box-sizing:border-box}
+#email-auth[hidden],#email-auth [hidden]{display:none!important}
+.auth-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:24px 0}
+.auth-divider::before,.auth-divider::after{content:'';height:1px;background:var(--line);flex:1}
+#email-auth-form{display:grid;gap:18px}
+#email-auth .field{display:grid;gap:8px;margin:0;font-size:14px}
+#email-auth input:not([type=checkbox]){width:100%;min-width:0;height:42px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface,#111214);color:var(--text,#eee);font:inherit;box-sizing:border-box}
+#email-auth .btn{width:100%;padding:12px 18px;border-radius:12px}
+#auth-captcha{min-width:0;max-width:100%}
+.auth-links{display:grid;justify-items:center;gap:12px;margin-top:24px}
+.auth-links button{border:0;background:none;color:var(--gold,#d7c6a1);padding:0;font:inherit;font-size:14px;cursor:pointer}
+.auth-links button:hover{text-decoration:underline}
+#email-auth .form-status{margin:0;font-size:13px;line-height:1.6}
+@media(max-width:420px){#auth-dialog{padding:20px 16px}#auth-dialog .dialog-title h2{font-size:25px}.auth-divider{margin:20px 0}}
 @media(max-width:600px){.auth-gate-actions{width:100%}.auth-gate-actions>.btn{flex:1;white-space:normal}.auth-required>p{flex-basis:100%}}

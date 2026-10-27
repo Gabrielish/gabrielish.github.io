@@ -15,11 +15,12 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert.equal(await page.locator('#erori [data-auth-gate]').isVisible(),false);
   assert.equal(await page.locator('#sign-out').isVisible(),false);
   assert.equal(await page.locator('.compatibility-fields').isVisible(),false);
-  assert.equal(await page.locator('#auth-guest').count(),0,'Login modal is Discord-only');
+  assert.equal(await page.locator('#auth-guest').count(),0,'Guest access remains outside the account login form');
   await clickNav(page,'.topbar [data-auth-open]');
   assert(await page.locator('#auth-dialog').isVisible());
   assert.equal(await page.locator('#auth-heading').textContent(),'Conectare');
-  assert.equal(await page.locator('#auth-dialog .dialog-copy').textContent(),'Bine ai venit pe BG3.RO!');
+  assert.equal(await page.locator('#auth-dialog .dialog-copy').textContent(),'Bine ai venit în comunitate!');
+  assert(await page.locator('#email-auth-form').isVisible(),'Email login is available next to Discord');
   assert.equal((await page.locator('#discord-login').textContent()).trim(),'Conectează-te prin Discord');
   assert.equal(await page.locator('#auth-consent').isChecked(),false,'Privacy checkbox is unchanged');
   await page.locator('#auth-dialog').screenshot({path:`.qa/auth-guest-modal-${width}.png`});
@@ -40,5 +41,5 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   assert(await page.locator('#discussion-form').isVisible(),'Logout returns to guest access');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);await page.close();
  }
- console.log('PASS: automatic guest access, Discord-only modal, guest header, unchanged voting restriction, Discord upgrade and logout back to guest at 320/390/1440px.');
+ console.log('PASS: automatic guest access, Discord/email modal, guest header, unchanged voting restriction, Discord upgrade and logout back to guest at 320/390/1440px.');
 }finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

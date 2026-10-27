@@ -18,7 +18,7 @@ function syntheticSDK(){
   let authCallback=()=>{};
   const client={
     auth:{getSession:async()=>({data:{session:state.user?{user:state.user}:null},error:null}),onAuthStateChange:cb=>{authCallback=cb;return{data:{subscription:{unsubscribe(){}}}}},
-      signInWithOAuth:async(options)=>{state.oauth=options;if(state.failOAuth)return{error:{message:'Network error'}};state.user={id:window.__qaOwner?'owner':'alice',user_metadata:{full_name:'Jucător Discord',moderator:true}};const session={user:state.user};setTimeout(()=>authCallback('SIGNED_IN',session),0);return{data:{},error:null}},
+      signInWithOAuth:async(options)=>{state.oauth=options;if(state.failOAuth)return{error:{message:'Network error'}};state.user={id:window.__qaOwner?'owner':'alice',app_metadata:{provider:options.provider||'discord'},user_metadata:{full_name:'Jucător Discord',moderator:true}};const session={user:state.user};setTimeout(()=>authCallback('SIGNED_IN',session),0);return{data:{},error:null}},
       signInAnonymously:async()=>{state.guestCalls=(state.guestCalls||0)+1;state.user={id:'guest',is_anonymous:true,user_metadata:{}};const session={user:state.user};setTimeout(()=>authCallback('SIGNED_IN',session),0);return{data:{session},error:null}},
       exchangeCodeForSession:async code=>{state.exchangeCode=code;if(code==='expired')return{data:{session:null},error:{message:'expired'}};state.user={id:'alice',user_metadata:{full_name:'Jucător Discord',moderator:true}};return{data:{session:{user:state.user}},error:null}},
       signOut:async()=>{state.user=null;authCallback('SIGNED_OUT',null);return{error:null}}},

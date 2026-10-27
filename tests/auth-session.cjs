@@ -16,7 +16,10 @@ const mock=`export const createClient=(_url,_key,options)=>{
  await context.route('https://baldursgate3.game/**',r=>r.abort());
  await context.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test-public'};"}));
  await context.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:mock}));
- const open=async()=>{const p=await context.newPage();await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');return p;};
+ const open=async()=>{const p=await context.newPage();await p.addInitScript(()=>{
+  window.__loginFlashes=[];let signed=false;try{const u=JSON.parse(localStorage.getItem('bg3ro-auth'))?.user;signed=!!u&&!u.is_anonymous;}catch{}
+  if(signed){const watch=()=>{const login=document.querySelector('.topbar [data-auth-open]');if(login?.checkVisibility({visibilityProperty:true}))window.__loginFlashes.push(login.textContent);if(!document.documentElement.classList.contains('portal-ready'))requestAnimationFrame(watch);};requestAnimationFrame(watch);}
+ });await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');assert.deepEqual(await p.evaluate(()=>window.__loginFlashes),[],'A restored member must never see a provisional login button');return p;};
  let p=await open();await clickNav(p,'.topbar [data-auth-open]');await p.locator('#auth-consent').check();await p.locator('#discord-login').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
  assert.equal(await p.evaluate(()=>window.__communityTest.oauth.options.queryParams.prompt),'consent');
  assert(await p.evaluate(()=>{const stored=JSON.parse(localStorage.getItem('bg3ro-auth'));return stored.user.id==='alice'&&!stored.provider_token&&!stored.provider_refresh_token&&!sessionStorage.getItem('bg3ro-auth');}));

@@ -1,0 +1,56 @@
+const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('node:assert/strict'),{clickNav}=require('./nav-action.cjs');
+const source=fs.readFileSync(require.resolve('./portal-community.cjs'),'utf8');
+const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf('\n(async()=>'));
+function emailSDK(base){
+  window.__authCalls=[];const record=(kind,value)=>window.__authCalls.push({kind,value});
+  base.auth.signUp=async value=>{record('signup',value);return{data:{session:null},error:null};};
+  base.auth.resetPasswordForEmail=async(email,options)=>{record('reset',{email,options});return{data:{},error:null};};
+  base.auth.updateUser=async value=>{record('password',value);return{data:{},error:null};};
+  base.auth.signInWithPassword=async value=>{record('login',value);if(window.__badLogin)return{error:{code:'invalid_credentials'}};return base.auth.signInWithOAuth({provider:'email'});};
+  window.__authClient=base;return base;
+}
+(async()=>{const b=await chromium.launch({channel:'msedge',headless:true});try{
+  for(const width of [320,390,1440]){
+    const p=await b.newPage({viewport:{width,height:1100}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+    await p.route('https://baldursgate3.game/**',r=>r.abort());
+    await p.route('**/portal-config.js*',r=>r.fulfill({contentType:'text/javascript',body:"window.BG3RO_CONFIG={supabaseUrl:'https://test.supabase.co',supabasePublishableKey:'test',authEnabled:true,authRedirectUrl:'https://gabrielish.github.io/',turnstileSiteKey:'synthetic-test-key'};"}));
+    await p.route('https://challenges.cloudflare.com/**',r=>r.fulfill({contentType:'text/javascript',body:"window.turnstile={render(selector,options){window.__captcha=options;document.querySelector(selector).textContent='Verificare CAPTCHA (test)';return 1;},reset(){}};"}));
+    await p.route('https://esm.sh/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const createClient=()=>(${emailSDK})((${sdk})());`}));
+    await p.goto('http://127.0.0.1:4173/',{waitUntil:'networkidle'});await p.waitForSelector('html.portal-ready');
+    assert.equal(await p.evaluate(()=>window.__communityTest.guestCalls||0),0,'CAPTCHA must not start an anonymous account automatically');
+    await clickNav(p,'.topbar [data-auth-open]');await p.waitForFunction(()=>window.__captcha);
+    await p.locator('[data-auth-mode=register]').click();
+    await p.locator('#auth-dialog').screenshot({path:'.qa/email-register-'+width+'.png'});
+    await p.locator('[name=username]').fill('Membru QA');await p.locator('#email-auth [name=email]').fill('qa@example.invalid');
+    await p.locator('#email-auth [name=password]').fill('StrongPassword123!');await p.locator('[name=confirm]').fill('DifferentPassword');await p.locator('[name=consent]').check();
+    await p.locator('#email-auth [type=submit]').click();assert.equal(await p.evaluate(()=>window.__authCalls.length),0);
+    await p.locator('[name=confirm]').fill('StrongPassword123!');await p.locator('#email-auth [type=submit]').click();
+    assert.match(await p.locator('#email-auth .form-status').textContent(),/CAPTCHA/);assert.equal(await p.evaluate(()=>window.__authCalls.length),0);
+    await p.evaluate(()=>window.__captcha.callback('signup-token'));await p.locator('#email-auth [type=submit]').click();
+    await p.waitForFunction(()=>window.__authCalls.length===1);let call=await p.evaluate(()=>window.__authCalls[0]);assert.equal(call.value.options.captchaToken,'signup-token');assert.equal(call.value.options.data.full_name,'Membru QA');assert.equal(call.value.options.data.is_admin,undefined);
+    assert.match(await p.locator('#email-auth .form-status').textContent(),/confirmarea contului/);assert.equal(await p.locator('#email-auth [name=password]').inputValue(),'');
+    await p.locator('[data-auth-mode=reset]').click();await p.evaluate(()=>window.__captcha.callback('reset-token'));await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>window.__authCalls.length===2);
+    call=await p.evaluate(()=>window.__authCalls[1]);assert.equal(call.kind,'reset');assert.equal(call.value.options.redirectTo,'https://gabrielish.github.io/?auth=recovery');
+    await p.locator('[data-auth-mode=login]').click();await p.locator('#email-auth [name=password]').fill('StrongPassword123!');
+    await p.evaluate(()=>{window.__badLogin=true;window.__captcha.callback('login-token');});await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>document.querySelector('#email-auth .form-status').textContent.includes('nu sunt corecte'));
+    await p.evaluate(()=>{window.__badLogin=false;window.__captcha.callback('next-token');});await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
+    await p.evaluate(()=>{window.BG3RO_AUTH_UI.recovery();dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client:window.__authClient,userId:'alice',moderator:false}}));});
+    await p.waitForFunction(()=>document.querySelector('#auth-heading').textContent==='Alege o parolă nouă');
+    await p.locator('#email-auth [name=password]').fill('NewPassword123!');await p.locator('[name=confirm]').fill('NewPassword123!');await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>!document.querySelector('#auth-dialog').open);
+    await clickNav(p,'#sign-out');await clickNav(p,'.topbar [data-auth-open]');
+    assert.equal(await p.locator('#email-auth [name=password]').inputValue(),'');
+    await p.locator('#auth-dialog .dialog-close').click();
+    await p.locator('.tab-list a[href="#erori"]').click();await p.locator('[data-guest-start=report]').click();await p.waitForFunction(()=>document.querySelector('#auth-heading').textContent==='Continuă ca oaspete');
+    await p.evaluate(()=>window.__captcha.callback('guest-token'));await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>window.__communityTest.user?.is_anonymous);
+    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    if(width===1440){
+      await p.goto('http://127.0.0.1:4173/?auth=recovery&code=test-code',{waitUntil:'networkidle'});
+      await p.waitForFunction(()=>document.querySelector('#auth-dialog').open&&document.querySelector('#auth-heading').textContent==='Alege o parolă nouă');
+      assert.equal(new URL(p.url()).search,'','Recovery callback query is removed after exchange');
+      await p.goto('http://127.0.0.1:4173/?auth=recovery&code=expired',{waitUntil:'networkidle'});
+      await p.waitForSelector('html.portal-ready');
+      assert.equal(await p.locator('#auth-heading').textContent(),'Conectare','Expired callback must not expose the recovery form');
+    }
+    assert.deepEqual(errors,[]);await p.close();console.log('PASS email auth/CAPTCHA/guest/recovery '+width);
+  }
+}finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

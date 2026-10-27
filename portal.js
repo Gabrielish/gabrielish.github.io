@@ -130,7 +130,7 @@
   let discordConsentRequired = authError;
   function discordWasAuthorized() { try { return localStorage.getItem('bg3ro-discord-authorized') === '1'; } catch (_) { return false; } }
   if (authCode || authError) {
-    ['code','error','error_code','error_description'].forEach(key => callbackURL.searchParams.delete(key));
+    ['code','error','error_code','error_description','auth'].forEach(key => callbackURL.searchParams.delete(key));
     history.replaceState(null, '', callbackURL.pathname + callbackURL.search + callbackURL.hash);
   }
   const statusLabels = { pending: 'În verificare', approved: 'Publicat', rejected: 'Nepublicat', new: 'Nou', investigating: 'În lucru', resolved: 'Rezolvat', closed: 'Închis' };
@@ -175,14 +175,18 @@
   let guestStarting = false;
   let guestSessionPromise = null;
   // Restore a saved identity first and share one in-flight anonymous sign-in.
-  async function ensureGuestSession() {
+  async function ensureGuestSession(interactive = false) {
     if (!client || !authEnabled || user) return;
     if (!guestSessionPromise) guestSessionPromise = (async () => {
       const {data: restored, error: restoreError} = await client.auth.getSession();
       if (restoreError) throw restoreError;
       let session = restored.session;
       if (!session) {
-        const {data, error} = await client.auth.signInAnonymously();
+        // With CAPTCHA enabled, only ask for a challenge after an explicit guest action.
+        if (config.turnstileSiteKey && !interactive) return;
+        const captchaToken = config.turnstileSiteKey ? await window.BG3RO_AUTH_UI.guestToken() : undefined;
+        if (config.turnstileSiteKey && !captchaToken) throw new Error('Guest verification cancelled');
+        const {data, error} = await client.auth.signInAnonymously(captchaToken ? {options:{captchaToken}} : undefined);
         if (error || !data.session) throw error || new Error('Guest session unavailable');
         session = data.session;
       }
@@ -192,8 +196,8 @@
   }
   function discordName() {
     const metadata = user?.user_metadata || {};
-    const name = String(metadata.preferred_username || metadata.user_name || metadata.full_name || metadata.name || 'Jucător Discord').replace(/[\u0000-\u001f]/g, '').trim().slice(0,40);
-    return name.includes('@') || name.length < 2 ? 'Jucător Discord' : name;
+    const name = String(metadata.preferred_username || metadata.user_name || metadata.full_name || metadata.name || 'Utilizator').replace(/[\u0000-\u001f]/g, '').trim().slice(0,40);
+    return name.includes('@') || name.length < 2 ? 'Utilizator' : name;
   }
   function syncAuth() {
     const member = !!user && !user.is_anonymous;
@@ -226,6 +230,7 @@
     $('#discord-login').disabled = !client || !authEnabled;
     $$('[data-guest-start]').forEach(button => { button.disabled = guestStarting || !client || !authEnabled; });
     window.dispatchEvent(new CustomEvent('bg3ro:auth', { detail: { client, userId: member ? user.id : null, moderator, guest: !!user?.is_anonymous } }));
+    document.documentElement.classList.remove('auth-restoring');
     if (dialog.open && !user) {
       $('#auth-unavailable').hidden = !!client && authEnabled;
       $('#discord-login-form').hidden = !client || !authEnabled;
@@ -242,7 +247,7 @@
     const destination = button.dataset.guestStart === 'auto' ? (location.hash === '#erori' ? 'report' : 'discussion') : button.dataset.guestStart;
     guestStarting = true; $$('[data-guest-start]').forEach(el => { el.disabled = true; });
     try {
-      await ensureGuestSession();
+      await ensureGuestSession(true);
       if (dialog.open) dialog.close();
       goTab(destination === 'report' ? 'erori' : 'discutii');
       $('#'+destination+'-name').focus();
@@ -271,7 +276,9 @@
   async function sessionChanged(session) {
     user = session?.user || null; moderator = false;
     if (user && !user.is_anonymous) {
-      try { localStorage.setItem('bg3ro-discord-authorized', '1'); } catch (_) {}
+      if (user.app_metadata?.provider === 'discord' || user.identities?.some(identity => identity.provider === 'discord')) {
+        try { localStorage.setItem('bg3ro-discord-authorized', '1'); } catch (_) {}
+      }
       const { data, error } = await client.rpc('bg3ro_is_moderator');
       if (!error) moderator = data === true;
       if (!$('#report-name').value) $('#report-name').value = String(user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 40);
@@ -568,12 +575,14 @@
         if (authCode && authEnabled) {
           const result = await client.auth.exchangeCodeForSession(authCode);
           callbackFailed = !!result.error;
+          if (callbackFailed) window.BG3RO_AUTH_UI?.recovery(false);
         }
         const { data, error } = await client.auth.getSession();
         if (error) throw error;
         client.auth.onAuthStateChange((event, session) => {
           // getSession above already restores INITIAL_SESSION; do not replay a stale snapshot.
           if (event === 'INITIAL_SESSION') return;
+          if (event === 'PASSWORD_RECOVERY') window.BG3RO_AUTH_UI?.recovery();
           setTimeout(() => sessionChanged(session).then(() => event === 'SIGNED_OUT' ? ensureGuestSession() : null).then(loadUpdates).catch(() => toast('Comunitatea nu a putut fi actualizată.')), 0);
         });
         await sessionChanged(data.session);
@@ -584,8 +593,8 @@
           if (callbackFailed || !data.session) {
             $('#auth-unavailable').hidden = true; $('#discord-login-form').hidden = false;
             discordConsentRequired = true;
-            formStatus($('#discord-login-form'), 'Conectarea Discord a fost anulată sau a expirat. Încearcă din nou din acest browser; dacă este nevoie, Discord îți va cere autorizarea.', true); dialog.showModal();
-          } else toast('Ești conectat prin Discord. Poți participa la comunitate.');
+            formStatus($('#discord-login-form'), 'Conectarea a fost anulată sau linkul a expirat. Încearcă din nou din browserul în care ai pornit conectarea.', true); dialog.showModal();
+          } else toast('Ești conectat. Poți participa la comunitate.');
         }
         await ensureGuestSession().catch(() => toast('Accesul ca oaspete nu este disponibil momentan. Poți reîncerca din formular.'));
       } catch (_error) { client = null; }
