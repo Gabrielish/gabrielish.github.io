@@ -4,7 +4,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
 function emailSDK(base){
   window.__authCalls=[];const record=(kind,value)=>window.__authCalls.push({kind,value});
   base.auth.signUp=async value=>{record('signup',value);return{data:{session:null},error:window.__failSignup?{code:'email_address_not_authorized'}:null};};
-  base.auth.resetPasswordForEmail=async(email,options)=>{record('reset',{email,options});return{data:{},error:null};};
+  base.auth.resetPasswordForEmail=async(email,options)=>{record('reset',{email,options});return{data:{},error:window.__failReset?{code:'email_address_not_authorized'}:null};};
   base.auth.updateUser=async value=>{record('password',value);return{data:{},error:null};};
   base.auth.signInWithPassword=async value=>{record('login',value);if(window.__badLogin)return{error:{code:'invalid_credentials'}};return base.auth.signInWithOAuth({provider:'email'});};
   window.__authClient=base;return base;
@@ -45,9 +45,25 @@ function emailSDK(base){
     await p.locator('#email-registration-login').click();
     assert.equal(await p.locator('#auth-heading').textContent(),'Conectare');assert.equal(await p.locator('.auth-registration-success').isVisible(),false);
     assert.equal(await p.locator('#email-auth [name=email]').inputValue(),'qa@example.invalid','Login preserves the address');
-    await p.locator('[data-auth-mode=reset]').click();await p.evaluate(()=>window.__captcha.callback('reset-token'));await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>window.__authCalls.length===2);
+    await p.locator('[data-auth-mode=reset]').click();
+    assert.equal(await p.locator('#auth-heading').textContent(),'Parolă uitată');
+    assert.equal(await p.locator('#discord-login-form').isVisible(),false);assert.equal(await p.locator('[data-password]').isVisible(),false);
+    assert.equal(await p.locator('#email-auth-form [type=submit]').textContent(),'Trimite link de recuperare');
+    await p.locator('#auth-dialog').screenshot({path:'.qa/password-reset-'+width+'.png'});
+    await p.evaluate(()=>{window.__failReset=true;window.__captcha.callback('failed-reset-token');});await p.locator('#email-auth [type=submit]').click();
+    await p.waitForFunction(()=>document.querySelector('#email-auth .form-status').textContent.includes('nu a putut fi trimis'));
+    assert.equal(await p.locator('.auth-reset-success').isVisible(),false,'Failed email request must not show success');
+    await p.evaluate(()=>{window.__failReset=false;window.__authCalls.pop();window.__captcha.callback('reset-token');});await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>window.__authCalls.length===2);
     call=await p.evaluate(()=>window.__authCalls[1]);assert.equal(call.kind,'reset');assert.equal(call.value.options.redirectTo,'https://gabrielish.github.io/?auth=recovery');
-    await p.locator('[data-auth-mode=login]').click();await p.locator('#email-auth [name=password]').fill('StrongPassword123!');
+    await p.waitForSelector('.auth-reset-success:visible');
+    assert.match(await p.locator('.auth-reset-success').textContent(),/E-mail trimis/);
+    assert.match(await p.locator('.auth-reset-success').textContent(),/Dacă există un cont/);
+    assert.equal(await p.locator('#email-auth-form').isVisible(),false);
+    assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false);
+    await p.locator('#auth-dialog').screenshot({path:'.qa/password-reset-sent-'+width+'.png'});
+    await p.locator('#email-reset-login').click();assert.equal(await p.locator('#auth-heading').textContent(),'Conectare');
+    assert.equal(await p.locator('#email-auth [name=email]').inputValue(),'qa@example.invalid');
+    await p.locator('#email-auth [name=password]').fill('StrongPassword123!');
     await p.evaluate(()=>{window.__badLogin=true;window.__captcha.callback('login-token');});await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>document.querySelector('#email-auth .form-status').textContent.includes('nu sunt corecte'));
     await p.evaluate(()=>{window.__badLogin=false;window.__captcha.callback('next-token');});await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>!document.querySelector('#sign-out').hidden);
     await p.evaluate(()=>{window.BG3RO_AUTH_UI.recovery();dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client:window.__authClient,userId:'alice',moderator:false}}));});

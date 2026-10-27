@@ -38,8 +38,10 @@
 .auth-success-notice{padding:22px;border-radius:12px;background:#f0fdf4;color:#355f40;font-size:15px;line-height:1.6;text-align:left}
 .auth-success-notice p{margin:12px 0 0;max-width:none;color:inherit;font-size:inherit;line-height:inherit}
 .auth-confirm-email{overflow-wrap:anywhere}
-#email-registration-login{display:block;margin:24px auto 0;border:0;background:none;color:var(--gold,#d7c6a1);font:inherit;font-size:15px;cursor:pointer;padding:8px}
-#email-registration-login:hover{text-decoration:underline;color:var(--text,#eee)}
+#email-registration-login,#email-reset-login{display:block;margin:24px auto 0;border:0;background:none;color:var(--gold,#d7c6a1);font:inherit;font-size:15px;cursor:pointer;padding:8px}
+#email-registration-login:hover,#email-reset-login:hover{text-decoration:underline;color:var(--text,#eee)}
+.auth-reset-success .auth-success-notice{background:#18271e;color:#78d287;padding:20px;font-size:14px}
+.auth-reset-success .auth-success-notice p{margin-top:8px}
 @media(max-width:420px){#auth-dialog{padding:18px 16px}#auth-dialog .dialog-title h2{font-size:24px}#email-auth input{font-size:16px!important}}
 @media(max-height:650px){#auth-dialog{padding:14px 16px}#auth-dialog .dialog-title h2{font-size:22px}#auth-dialog .dialog-copy{margin-bottom:10px}.auth-divider{margin:10px 0}#email-auth-form{gap:8px}#email-auth .field{gap:4px}.auth-links{margin-top:12px}}
 @media(max-width:600px){.auth-gate-actions{width:100%}.auth-gate-actions>.btn{flex:1;white-space:normal}.auth-required>p{flex-basis:100%}}

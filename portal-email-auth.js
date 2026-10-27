@@ -24,6 +24,13 @@
       </div>
       <button type="button" id="email-registration-login">Mergi la conectare</button>
     </section>
+    <section class="auth-reset-success" hidden aria-label="Confirmarea recuperării parolei">
+      <div class="auth-success-notice" role="status" aria-live="polite">
+        <strong>E-mail trimis</strong>
+        <p>Dacă există un cont cu această adresă de e-mail, ți-am trimis instrucțiuni pentru resetarea parolei.</p>
+      </div>
+      <button type="button" id="email-reset-login">Înapoi la conectare</button>
+    </section>
     <div class="auth-links"><button type="button" data-auth-mode="register">Nu ai cont? Înregistrează-te</button><button type="button" data-auth-mode="reset">Ai uitat parola?</button></div>`;
   discord.after(body);
   const form = body.querySelector('form'), status = form.querySelector('.form-status'), submit = form.querySelector('[type=submit]');
@@ -40,10 +47,10 @@
     });
   }
   async function captcha() {
-    if (!config.turnstileSiteKey || ['password','registered'].includes(mode) || !dialog.open) return;
+    if (!config.turnstileSiteKey || ['password','registered','reset-sent'].includes(mode) || !dialog.open) return;
     try {
       await loadCaptcha();
-      if (widget !== undefined || !dialog.open || ['password','registered'].includes(mode)) return;
+      if (widget !== undefined || !dialog.open || ['password','registered','reset-sent'].includes(mode)) return;
       widget = window.turnstile.render('#auth-captcha', {
         sitekey: config.turnstileSiteKey, theme: 'dark', size: 'flexible', language: 'ro',
         callback: value => { token = value; message(''); },
@@ -55,12 +62,13 @@
   function setMode(next, completed = false) {
     if (busy && !completed) return;
     mode = next; message(''); resetCaptcha();
-    const signup = mode === 'register', password = mode === 'password', guest = mode === 'guest', registered = mode === 'registered';
+    const signup = mode === 'register', password = mode === 'password', guest = mode === 'guest', registered = mode === 'registered', resetSent = mode === 'reset-sent', resetting = mode === 'reset' || resetSent;
     dialog.classList.toggle('registration-complete', registered);
     dialog.classList.toggle('auth-register', signup);
-    form.hidden = registered; body.querySelector('.auth-registration-success').hidden = !registered;
-    document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Resetează parola',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!'})[mode];
-    document.querySelector('#auth-dialog .dialog-copy').textContent = registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit în comunitate!';
+    form.hidden = registered || resetSent; body.querySelector('.auth-registration-success').hidden = !registered;
+    body.querySelector('.auth-reset-success').hidden = !resetSent;
+    document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Parolă uitată',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!','reset-sent':'Parolă uitată'})[mode];
+    document.querySelector('#auth-dialog .dialog-copy').textContent = resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit în comunitate!';
     discord.hidden = !['login','register'].includes(mode) || !client;
     body.querySelector('.auth-divider').hidden = !['login','register'].includes(mode);
     form.querySelectorAll('[data-signup]').forEach(el => { el.hidden = !signup; });
@@ -71,15 +79,17 @@
     form.querySelector('[data-confirm]').hidden = !signup && !password; form.elements.confirm.required = signup || password;
     form.elements.confirm.setCustomValidity('');
     form.querySelector('#auth-captcha').hidden = password;
-    submit.textContent = ({login:'Conectează-te',register:'Înregistrează-te',reset:'Trimite linkul',password:'Salvează',guest:'Continuă'})[mode];
-    body.querySelector('.auth-links').hidden = password || guest || registered;
+    submit.textContent = ({login:'Conectează-te',register:'Înregistrează-te',reset:'Trimite link de recuperare',password:'Salvează',guest:'Continuă'})[mode] || 'Conectează-te';
+    body.querySelector('.auth-links').hidden = password || guest || registered || resetSent;
+    body.querySelector('[data-auth-mode="reset"]').hidden = resetting;
     const toggle = body.querySelector('[data-auth-mode]');
     toggle.dataset.authMode = mode === 'login' ? 'register' : 'login';
-    toggle.textContent = mode === 'login' ? 'Nu ai cont? Înregistrează-te' : 'Ai deja cont? Conectează-te';
+    toggle.textContent = resetting ? 'Înapoi la conectare' : mode === 'login' ? 'Nu ai cont? Înregistrează-te' : 'Ai deja cont? Conectează-te';
     captcha();
   }
   body.querySelectorAll('[data-auth-mode]').forEach(button => button.onclick = () => setMode(button.dataset.authMode));
   body.querySelector('#email-registration-login').onclick = () => setMode('login');
+  body.querySelector('#email-reset-login').onclick = () => setMode('login');
   form.elements.confirm.oninput = () => form.elements.confirm.setCustomValidity('');
   function errorText(error) {
     const code = error?.code || '', text = error?.message || '';
@@ -115,7 +125,10 @@
         setMode('registered', true);
         if (dialog.open) body.querySelector('#email-registration-login').focus({preventScroll:true});
       }
-      else if (action === 'reset') message('Dacă adresa are un cont, vei primi un link pentru resetarea parolei.');
+      else if (action === 'reset') {
+        setMode('reset-sent', true);
+        if (dialog.open) body.querySelector('#email-reset-login').focus({preventScroll:true});
+      }
       else { recovery = false; dialog.close(); }
     } catch (error) { message(errorText(error), true); }
     finally { busy = false; submit.disabled = false; resetCaptcha(); }
