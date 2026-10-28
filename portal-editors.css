@@ -3,6 +3,7 @@
 .dialog-close{position:relative;display:grid;place-items:center;flex:0 0 36px;padding:0;border:1px solid transparent;font-size:0;line-height:0;transition:background-color .18s,border-color .18s,color .18s,box-shadow .18s}
 .dialog-close::before,.dialog-close::after{content:'';position:absolute;left:50%;top:50%;width:14px;border-top:2px solid currentColor;transform:translate(-50%,-50%) rotate(45deg)}
 .dialog-close::after{transform:translate(-50%,-50%) rotate(-45deg)}
+.dialog-close:has(svg)::before,.dialog-close:has(svg)::after{content:none}
 .dialog-close:hover,.dialog-close:focus-visible{background:#393124;border-color:#8f7654;color:#f4ecd9;box-shadow:0 0 0 2px #d7bc8a12}
 .dialog-close:active{background:#453a29}
 .card-header.editable-header{flex-wrap:nowrap;align-items:flex-start}

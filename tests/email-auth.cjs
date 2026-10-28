@@ -20,6 +20,7 @@ function emailSDK(base){
     assert.equal(await p.evaluate(()=>window.__communityTest.guestCalls||0),0,'CAPTCHA must not start an anonymous account automatically');
     await clickNav(p,'.topbar [data-auth-open]');await p.waitForFunction(()=>window.__captcha);
     assert.equal(await p.locator('#auth-dialog input[type=checkbox]').count(),0);
+    assert.equal(await p.locator('#auth-dialog .dialog-close').textContent(),'','Close icon must not have a second text glyph');
     assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false,'Compact login fits the viewport, including CAPTCHA');
     await p.locator('#auth-dialog').screenshot({path:'.qa/email-login-compact-'+width+'.png'});
     await p.locator('[data-auth-mode=register]').click();
