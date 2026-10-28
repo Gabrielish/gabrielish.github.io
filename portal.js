@@ -201,6 +201,7 @@
   }
   function syncAuth() {
     const member = !!user && !user.is_anonymous;
+    document.documentElement.classList.toggle('auth-member',member);
     $('#discussion-name').readOnly = member;
     if (member) $('#discussion-name').value = discordName();
     const ownAvatar=$('#discussion-avatar');

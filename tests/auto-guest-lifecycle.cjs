@@ -21,6 +21,8 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    assert.equal(await page.locator('#sign-out').evaluate(el=>el.hidden),false);
   }else if(mode==='guest'){
    assert(await page.locator('#discussion-form').isVisible());
+   assert.notEqual(await page.locator('.discussion-identity').evaluate(el=>getComputedStyle(el).display),'none','Guests can still enter their name');
+   assert.notEqual(await page.locator('.report-guest-name').evaluate(el=>getComputedStyle(el).display),'none');
    assert.equal(await page.locator('#sign-out').evaluate(el=>el.hidden),true);
   }else if(mode==='failure'){
    assert(await page.locator('#discussion-form').isVisible(),'Draft remains available when guest authentication fails');

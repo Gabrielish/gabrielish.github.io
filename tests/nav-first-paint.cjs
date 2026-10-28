@@ -18,7 +18,7 @@ function restoredSDK(base){
    sessionStorage.setItem('bg3ro-nav-name:'+id,'Another OLD name');
    localStorage.setItem('bg3ro-cookie-preferences',JSON.stringify({version:1,analytics:false,updatedAt:Date.now()}));
    window.__frames=[];window.__watchNav=true;
-   function watch(){const name=document.querySelector('#nav-profile span'),tools=document.querySelector('.nav-account-tools');if(name&&tools)window.__frames.push({name:name.textContent,tools:!tools.hidden,login:document.querySelector('.navbar-actions>[data-auth-open]').checkVisibility({visibilityProperty:true}),badge:document.querySelector('#nav-notifications .nav-account-count').textContent});if(window.__watchNav)requestAnimationFrame(watch);}
+   function watch(){const name=document.querySelector('#nav-profile span'),tools=document.querySelector('.nav-account-tools');if(name&&tools)window.__frames.push({name:name.textContent,tools:!tools.hidden,login:document.querySelector('.navbar-actions>[data-auth-open]').checkVisibility({visibilityProperty:true}),guestFields:[...document.querySelectorAll('.discussion-identity,.report-guest-name')].some(el=>getComputedStyle(el).display!=='none'),badge:document.querySelector('#nav-notifications .nav-account-count').textContent});if(window.__watchNav)requestAnimationFrame(watch);}
    requestAnimationFrame(watch);
   },A);
   await p.route('https://baldursgate3.game/**',r=>r.abort());
@@ -29,6 +29,8 @@ function restoredSDK(base){
   await p.goto('http://127.0.0.1:4173/',{waitUntil:'commit'});
   await p.waitForFunction(()=>document.querySelector('#nav-profile span')?.textContent==='gabrielish');
   assert.equal(await p.evaluate(()=>window.__communityTest),undefined,'Navbar must already be restored before the SDK and deferred account scripts run');
+  await p.waitForFunction(()=>document.querySelector('.report-guest-name'));
+  for(const selector of ['.discussion-identity','.report-guest-name'])assert.equal(await p.locator(selector).evaluate(el=>getComputedStyle(el).display),'none','Member name field is hidden before SDK restoration');
   assert.equal(await p.locator('#nav-notifications .nav-account-count').textContent(),'1');
   assert.equal(await p.locator('.navbar-actions>[data-auth-open]').isVisible(),false);
   const rect=selector=>p.locator(selector).evaluate(el=>{const r=el.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height};});
@@ -42,7 +44,7 @@ function restoredSDK(base){
   assert.equal(await p.locator('#nav-profile span').textContent(),'gabrielish');assert.equal(await p.locator('#nav-notifications .nav-account-count').textContent(),'1','Token refresh must not reset counters to zero');
   if(width<1100){assert.equal(await p.locator('.main-navigation').isVisible(),false);await p.locator('.nav-toggle').click();assert(await p.locator('#nav-profile').isVisible());}
   await p.waitForTimeout(1100);await p.evaluate(()=>window.__watchNav=false);
-  const frames=await p.evaluate(()=>window.__frames);assert(frames.length>0);assert(frames.every(f=>f.name==='gabrielish'&&f.tools&&!f.login&&f.badge==='1'),'Navbar flashed a provisional name, login button, hidden controls or empty counter');
+  const frames=await p.evaluate(()=>window.__frames);assert(frames.length>0);assert(frames.every(f=>f.name==='gabrielish'&&f.tools&&!f.login&&f.badge==='1'&&!f.guestFields),'Navbar flashed a provisional name, login button, hidden controls or empty counter');
   await p.evaluate(()=>{localStorage.removeItem('bg3ro-auth');dispatchEvent(new CustomEvent('bg3ro:auth',{detail:{client:window.__testNavClient,userId:null,moderator:false}}));});
   assert.equal(await p.evaluate(()=>localStorage.getItem('bg3ro-nav-display')),null,'Logout clears cached presentation');
   assert.equal(await p.locator('.nav-account-tools').isVisible(),false);assert.deepEqual(errors,[]);await p.close();console.log('PASS first-paint navbar '+width+' with delayed scripts/profile, stable geometry/counts and logout isolation');

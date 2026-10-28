@@ -22,6 +22,7 @@
   function clear() { for (const store of ['localStorage','sessionStorage']) try { window[store].removeItem(key); } catch {} }
   const user = sessionUser(), initial = user && !user.is_anonymous ? load(user.id) : null;
   document.documentElement.classList.add('nav-enhanced');
+  document.documentElement.classList.toggle('auth-member',!!user&&!user.is_anonymous);
   if (user && !user.is_anonymous && !initial?.name) document.documentElement.classList.add('auth-restoring');
   function restore() {
     if (!initial?.name) return;
