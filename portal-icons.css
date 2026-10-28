@@ -9,3 +9,12 @@
 .updater-download span{min-width:0;overflow-wrap:anywhere}
 .sidebar .updater-platform{margin:7px 0 16px;text-align:center;font-size:11px;line-height:1.5;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){.sidebar .btn.updater-download{transition:none}}
+
+.sidebar .updater-platform .updater-info-trigger{display:inline-grid;place-items:center;vertical-align:-3px;width:20px;height:20px;min-height:0;padding:0;border:0;background:none;color:var(--gold);border-radius:50%;cursor:pointer}
+.updater-info-trigger:hover{color:var(--text);background:#d7bc8a18!important}
+.updater-info-popover{position:fixed;inset:auto;margin:0;width:290px;max-width:calc(100vw - 20px);max-height:calc(100dvh - 20px);overflow:auto;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);box-shadow:0 8px 32px #0008;font:12px/1.5 var(--sans);text-align:left}
+.updater-info-popover::backdrop{background:transparent}
+.updater-info-popover>strong{font-size:13px}.updater-info-popover p{margin:7px 0;color:var(--muted)}
+.updater-scan-links{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px}.updater-scan-links a{color:var(--gold);text-underline-offset:3px}
+.updater-info-popover small{display:block;font-size:10px;line-height:1.4;color:var(--muted);margin-top:7px}
+@media(pointer:coarse){.sidebar .updater-platform .updater-info-trigger{width:28px;height:28px;vertical-align:-7px}}
