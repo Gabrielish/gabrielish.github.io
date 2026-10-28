@@ -3,7 +3,7 @@
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
   const ids = ['despre', 'actualizari', 'descarcari', 'discutii', 'erori'];
-  const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni', 'profil', 'conversatii', 'setari', 'notificari'];
+  const informationIds = ['contact', 'intrebari-frecvente', 'confidentialitate', 'termeni', 'profil', 'conversatii', 'setari', 'notificari', 'utilizatori'];
   const routeIds = [...ids, ...informationIds];
   const tabs = $$('.tab-list a');
   const panels = ids.map(id => document.getElementById(id));
@@ -37,7 +37,7 @@
   }
   setTab(location.hash.slice(1));
   document.getElementById('initial-tab-visibility')?.remove();
-  if (informationIds.includes(location.hash.slice(1))) requestAnimationFrame(() => tablist.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  if (informationIds.includes(location.hash.slice(1)) && location.hash !== '#utilizatori') requestAnimationFrame(() => tablist.scrollIntoView({ block: 'start', behavior: 'instant' }));
   tabs.forEach((tab, i) => tab.addEventListener('click', event => { event.preventDefault(); goTab(ids[i]); }));
   $$('[data-go-tab]').forEach(link => link.addEventListener('click', event => {
     event.preventDefault();

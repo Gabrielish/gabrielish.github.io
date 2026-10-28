@@ -9,9 +9,10 @@ const hash=file=>crypto.createHash('sha256').update(fs.readFileSync('assets/down
   await p.goto('http://127.0.0.1:4173/');for(const name of ['portal.css','portal-icons.css'])await p.addStyleTag({content:fs.readFileSync(name,'utf8')});await p.addScriptTag({content:fs.readFileSync('updater-download.js','utf8')});
   const button=p.locator('.updater-info-trigger'),tip=p.locator('.updater-info-popover');
   if(touch)await button.tap();else await button.hover();await p.locator('.updater-info-popover:popover-open').waitFor();
-  const text=await tip.textContent();if(os==='windows'){assert(text.includes('SmartScreen'));assert(!text.includes('Confidențialitate'));assert(text.includes('administrator'));}else if(os==='macos'){assert(text.includes('Deschide oricum'));assert(!text.includes('SmartScreen'));}else assert(!text.includes('SmartScreen')&&!text.includes('Deschide oricum'));
+  const text=await tip.textContent();if(os==='windows'){assert(text.includes('Chrome'));assert(text.includes('detecții antivirus'));assert(!text.includes('Confidențialitate'));assert(text.includes('administrator'));}else if(os==='macos'){assert(text.includes('Deschide oricum'));assert(!text.includes('Chrome'));}else assert(!text.includes('Chrome')&&!text.includes('Deschide oricum'));
   const links=tip.locator('a');assert.equal(await links.count(),os==='other'?2:1);
-  for(const target of os==='other'?['windows','macos']:[os]){const expected=hash(target==='windows'?'BG3RO-Updater.exe':'BG3RO-Updater-macOS.zip');assert.equal(await tip.locator('a[href$="'+expected+'"]').count(),1,'VirusTotal identifier must match the actual downloadable file');}
+  for(const target of os==='other'?['windows','macos']:[os]){const expected=target==='windows'?hash('BG3RO-Updater.exe'):'952583b60d6d73e7ed968c968d3a19133a68d1425dffbca7a131bf60a3f363a1';assert.equal(await tip.locator('a[href$="'+expected+'?nocache=1"]').count(),1);}
+  if(os!=='windows')assert(text.includes('alt hash decât arhiva distribuită acum'));
   const rect=await tip.boundingBox();assert(rect.x>=0&&rect.x+rect.width<=width+1&&rect.y>=0&&rect.y+rect.height<=800);
   if(!touch){await links.first().hover();await p.waitForTimeout(250);assert(await tip.evaluate(el=>el.matches(':popover-open')),'Links remain reachable when moving from the info icon');}
   await tip.screenshot({path:'.qa/updater-info-'+os+'-'+width+'.png'});await p.keyboard.press('Escape');assert.equal(await tip.evaluate(el=>el.matches(':popover-open')),false);
