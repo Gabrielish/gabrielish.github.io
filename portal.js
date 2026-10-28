@@ -292,7 +292,7 @@
     const ticket = preview ? updatesRequest : ++updatesRequest;
     const target = document.createElement('div');
     if (!client && !preview) return;
-    const { data, error } = preview || await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label,is_visible').order('published_at', { ascending: false }).limit(30);
+    const { data, error } = preview || await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label,badge_color,badge_icon,badge_svg,is_visible').order('published_at', { ascending: false }).limit(30);
     if (ticket !== updatesRequest) return;
     if(error && $('#updates-feed').children.length)return;
     if(!preview && !error)updatesLive=true;

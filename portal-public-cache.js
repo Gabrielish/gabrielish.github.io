@@ -8,14 +8,14 @@
   const reportFields='id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url,author_is_admin,author_profile_id,reply_profile_id';
   const definitions={
     about:'bg3ro_about_sections?select=*&is_visible=eq.true&order=sort_order.asc,id.asc',
-    updates:'bg3ro_project_updates?select=id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label,is_visible&is_visible=eq.true&order=published_at.desc&limit=30',
+    updates:'bg3ro_project_updates?select=id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label,badge_color,badge_icon,badge_svg,is_visible&is_visible=eq.true&order=published_at.desc&limit=30',
     releases:'bg3ro_releases?select=*&is_visible=eq.true&is_deleted=eq.false&order=published_at.desc&limit=100',
     news:'rpc/bg3ro_release_news',
     posts:'bg3ro_discussion_posts?select='+postFields+'&status=eq.approved&parent_id=is.null&order=created_at.desc,id.desc&offset='+(page*10)+'&limit=10',
     reports:'bg3ro_bug_reports?select='+reportFields+'&is_public=eq.true&order=created_at.desc&limit=20',
     profiles:'bg3ro_profiles?select=id,display_name,avatar_url&limit=100'
   };
-  const cacheKey=name=>prefix+name+(name==='posts'?':'+page:'');
+  const cacheKey=name=>prefix+name+(name==='posts'?':'+page:name==='updates'?':header-badge-v2':'');
   function publicOnly(name,value){
     if(!value||!Array.isArray(value.data))return null;
     const data=value.data.filter(row=>row&&typeof row==='object'&&

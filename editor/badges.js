@@ -20,6 +20,7 @@ const icons={
 const svgNS='http://www.w3.org/2000/svg';
 const create=(tag,text)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;return element;};
 function vector(name){const svg=document.createElementNS(svgNS,'svg');for(const [key,value]of Object.entries({viewBox:'0 0 24 24',width:16,height:16,fill:'none',stroke:'currentColor','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':'true',focusable:'false'}))svg.setAttribute(key,value);const path=document.createElementNS(svgNS,'path');path.setAttribute('d',icons[name][1]);svg.append(path);return svg;}
+export {icons as badgeIcons,vector as badgeVector};
 
 // Rebuild SVG geometry in a fresh document: scripts, CSS, links, images,
 // event handlers, filters and external resources never enter the rendered DOM.

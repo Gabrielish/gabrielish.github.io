@@ -5,6 +5,8 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import {TextStyle,FontFamily,FontSize,Color} from '@tiptap/extension-text-style';
 import {Badge,cleanBadge,badgeElement,canUseBadges,mountBadgeTools} from './badges.js';
+import {mountUpdateBadgeField} from './badge-field.js';
+window.BG3RO_BADGES={element:badgeElement,mountField:mountUpdateBadgeField};
 import {YouTube,youtubeID,youtubeElement} from './youtube.js';
 
 const prefix='BG3RO-RICH-1:';
