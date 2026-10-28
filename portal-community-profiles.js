@@ -2,7 +2,7 @@
  'use strict';
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
- const icon=(kind)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const[k,v]of Object.entries({viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor','stroke-width':1.8,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':true}))s.setAttribute(k,v);const p=document.createElementNS(s.namespaceURI,'path');p.setAttribute('d',{message:'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm-2 2 10 7L22 6',plus:'M12 5v14M5 12h14',back:'m14 6-6 6 6 6',hide:'M3 3l18 18M7 7a18 18 0 0 0-6 5c3 5 8 8 13 6M10 5c5-1 9 3 11 7l-4 5'}[kind]);s.append(p);return s;};
+ const icon=(kind)=>{const s=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const[k,v]of Object.entries({viewBox:'0 0 24 24',width:18,height:18,fill:'none',stroke:'currentColor','stroke-width':1.8,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':true}))s.setAttribute(k,v);const p=document.createElementNS(s.namespaceURI,'path');p.setAttribute('d',{posts:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',message:'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm-2 2 10 7L22 6',plus:'M12 5v14M5 12h14',back:'m14 6-6 6 6 6',hide:'M3 3l18 18M7 7a18 18 0 0 0-6 5c3 5 8 8 13 6M10 5c5-1 9 3 11 7l-4 5'}[kind]);s.append(p);return s;};
  const button=(text,kind,action,cls='btn')=>{const b=node('button',cls);b.type='button';if(kind)b.append(icon(kind));b.append(node('span','',text));b.onclick=action;return b;};
  const date=value=>{const d=new Date(value);return Number.isFinite(d.valueOf())?new Intl.DateTimeFormat('ro-RO',{dateStyle:'medium',timeStyle:'short'}).format(d):'';};
  const profileLink=(content,id,name,avatar=false)=>{
@@ -55,11 +55,11 @@
    const hero=node('header','card profile-hero'),identity=node('div','profile-identity'),title=node('h1','',profile.display_name),joined=node('p','profile-joined');
    if(Number.isFinite(Date.parse(profile.joined_at)))joined.append(window.BG3RO_PROFILE_META.icon('calendar'),node('span','','Înregistrat pe '+new Intl.DateTimeFormat('ro-RO',{dateStyle:'long'}).format(new Date(profile.joined_at))));
    const badges=node('div','profile-badges'),meta=node('div','profile-meta');if(points!==null)badges.append(node('span','profile-role profile-level',window.BG3RO_PROFILE_META.level(points)));if(profile.is_admin)badges.append(node('span','profile-role profile-admin-role','Admin'));meta.append(joined);if(points!==null){const score=node('span','profile-points');score.append(window.BG3RO_PROFILE_META.icon('coins'),node('span','',points+(points===1?' punct':' puncte')));meta.append(score);}identity.append(badges,title,meta);
-   const send=button('Trimite mesaj','message',()=>startConversation(profile.id));send.hidden=profile.id===userId;hero.append(avatar(profile,true),identity,send);
+   const send=button('Trimite mesaj','message',()=>startConversation(profile.id));send.classList.add('profile-send');send.hidden=profile.id===userId;meta.append(send);hero.append(avatar(profile,true),identity);
    const columns=node('div','profile-columns'),feed=node('section','card profile-activity'),stats=node('aside','card profile-stats');feed.append(node('h2','','Activitate publică'));
    if(activity.error){feed.append(node('p','','Activitatea nu a putut fi încărcată.'));}
    else{
-    stats.append(node('h2','','Statistici'),node('p','','Postări publice'),node('strong','profile-count',String(activity.count||0)));
+    const stat=node('div','profile-stat-row'),label=node('span','profile-stat-label');label.append(icon('posts'),node('span','','Postări'));stat.append(label,node('strong','profile-count',String(activity.count||0)));stats.append(node('h2','','Statistici'),stat);
     if(!activity.data?.length)feed.append(node('p','small','Nu există încă postări publice.'));
     for(const post of activity.data||[]){const article=node('article','profile-activity-item'),time=node('time','',date(post.created_at));time.dateTime=post.created_at;article.append(time,window.BG3RO_CONTENT.render(post.body));feed.append(article);}
     if((activity.count||0)>10)feed.append(node('p','small','Cele mai recente 10 postări publice.'));

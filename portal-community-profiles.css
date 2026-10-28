@@ -60,3 +60,19 @@
 .profile-joined,.profile-points{display:inline-flex;align-items:center;gap:6px}
 .profile-meta svg{flex:none;width:16px;height:16px}
 .profile-points{font-size:13px;color:var(--gold);font-weight:600}
+
+/* Compact public profile and one-line statistics. */
+.profile-hero{gap:22px;padding:24px}
+.profile-hero .post-avatar{width:88px;height:88px}
+.profile-hero .post-avatar-default{padding:16px}
+.profile-identity h1{font-size:28px;margin:5px 0 8px}
+.profile-meta{gap:10px 16px}
+.profile-meta>.profile-send{min-height:34px;padding:6px 12px;font-size:12px}
+.profile-columns{gap:20px;grid-template-columns:minmax(0,1fr) 250px}
+.profile-columns>.card,.profile-bio.card{padding:22px 24px}
+.profile-columns h2{font-size:18px;margin-bottom:18px}
+.profile-stat-row{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:13px}
+.profile-stat-label{display:inline-flex;align-items:center;gap:8px;color:var(--muted)}
+.profile-stat-label svg{width:16px;height:16px;flex:none}
+.profile-stats .profile-count{display:inline;font-size:14px;margin:0;color:var(--text);line-height:1.5}
+@media(max-width:760px){.profile-hero{padding:20px;gap:16px}.profile-hero .post-avatar{width:72px;height:72px}.profile-identity{min-width:0;flex-basis:180px}.profile-identity h1{font-size:24px}.profile-columns{grid-template-columns:minmax(0,1fr)}.profile-columns>.card,.profile-bio.card{padding:20px}}
