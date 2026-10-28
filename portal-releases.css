@@ -306,16 +306,28 @@ input.release-archive-input{position:absolute;width:1px;height:1px;min-height:0;
 .release-description:has(.rich-content){white-space:normal}
 @media(max-width:600px){.release-inline-editor{padding:10px}.release-fields-row,#release-publish-form>.release-publish-platform-row{grid-template-columns:minmax(0,1fr)}:is(.release-inline-editor,#release-publish-form) .field select{min-height:40px;font-size:16px}:is(.release-inline-editor,#release-publish-form)>.form-end>.btn{font-size:12px;padding:7px 12px}}
 
-/* Publishing and the administrator archive share a compact action row. */
-#release-editor{display:grid;grid-template-columns:max-content max-content;align-items:center;gap:16px 22px}
-#release-editor>details{display:contents}
-#release-editor>details>summary{grid-column:1;grid-row:1}
-#release-editor>.release-archive-toggle{grid-column:2;grid-row:1;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:2px 0;border:0;background:none;box-shadow:none;color:var(--gold);font-size:12px;font-weight:400}
-#release-editor>.release-archive-toggle:hover,#release-editor>details>summary:hover{color:var(--text)}
-.release-archive-toggle svg{width:16px;height:16px}
-.release-publish-content{grid-column:1/-1;grid-row:2;display:grid;gap:16px;min-width:0}
+/* Publishing and archive controls remain inside the download column. */
+#release-editor{display:block;min-width:0;max-width:100%}
+#release-editor>details{display:block;min-width:0}
+.release-management-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px 22px}
+.release-management-actions>.btn{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:2px 0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--gold);font-size:12px;font-weight:400}
+.release-management-actions>.btn:hover{background:none;color:var(--text)}
+.release-management-actions svg{width:16px;height:16px;flex:none}
+.release-publish-content{display:grid;gap:12px;min-width:0;margin-top:14px}
 #release-editor>details:not([open])>.release-publish-content{display:none}
-.release-publish-content>p{margin:0;font-size:12px}
+.release-publish-content>p{margin:0;font-size:12px;line-height:1.5}
+#release-publish-form{display:grid;gap:10px;min-width:0}
+#release-publish-form .field{margin:0;gap:5px}
+#release-publish-form>.form-grid{margin:0;gap:10px}
+.release-publish-metadata{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:10px;min-width:0}
+.release-publish-content>.release-upload-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;margin:0}
+.release-upload-field>label,.release-upload-field>.form-status{grid-column:1/-1;margin:0}
+.release-upload-field>.release-file-picker{grid-column:1;min-width:0}
+#release-editor #upload-release-file{grid-column:2;align-self:start;width:auto;white-space:normal}
+.release-file-details{min-width:0}
+#release-editor .release-file-details>summary{font-size:12px;min-height:26px}
+.release-file-details-content{display:grid;gap:10px;padding:10px 0;min-width:0}
+.release-file-details-content>p{margin:0;font-size:11px;color:var(--muted)}
 .release-archive>h2,.release-archive-group>h3{margin:0}
 .release-archive-group{gap:16px}
-@media(max-width:420px){#release-editor{gap:14px}#release-editor:has(>details[open]){padding:18px 14px}}
+@media(max-width:600px){.release-publish-metadata{grid-template-columns:minmax(0,1fr)}.release-publish-content>.release-upload-field{grid-template-columns:minmax(0,1fr)}#release-editor #upload-release-file{grid-column:1;justify-self:start}#release-editor:has(>details[open]){padding:18px 14px}}
