@@ -50,7 +50,8 @@
   <script src="./portal-config.js?v=20261027-email-auth" defer></script>
   <link rel="stylesheet" href="./portal-cookies.css?v=20261027-preferences">
   <script src="./portal-cookies.js?v=20261027-preferences" defer></script>
-  <script src="./portal-public-about.js?v=20261024-fast-about" defer></script>
+  <script src="./portal-public-cache.js?v=20261028-instant-public" defer></script>
+  <script src="./portal-public-about.js?v=20261028-instant-public" defer></script>
   <link rel="stylesheet" href="./portal-sidebar.css?v=20261023-reference-colors">
   <script src="./portal-versions.js?v=20261020-progress-version" defer></script>
   <script src="./portal-sidebar.js?v=20261022-vote-details" defer></script>
@@ -59,12 +60,11 @@
   <script src="./portal-avatar.js?v=20261024-account" defer></script>
   <link rel="stylesheet" href="./portal-editors.css?v=20261023-inline-about">
   <script src="./portal-editors.js?v=20261024-about-sections" defer></script>
-  <script src="./portal-releases.js?v=20261026-independent-news" defer></script>
   <link rel="stylesheet" href="./portal-icons.css?v=20261026-rounded-downloads">
-  <link rel="stylesheet" href="./portal-discussions.css?v=20261026-editor-media">
+  <link rel="stylesheet" href="./portal-discussions.css?v=20261028-empty-feed">
   <link rel="stylesheet" href="./portal-forms.css?v=20261024-muted-hidden">
   <link rel="stylesheet" href="./portal-avatar.css?v=20261024-editor-images-fast">
-  <link rel="stylesheet" href="./portal-auth.css?v=20261027-password-changed">
+  <link rel="stylesheet" href="./portal-auth.css?v=20261028-close-button">
   <link rel="stylesheet" href="./portal-report-form.css?v=20261026-report-replies">
   <script src="./portal-report-replies.js?v=20261026-report-replies" defer></script>
   <link rel="stylesheet" href="./portal-image-viewer.css?v=20261023-gallery-viewer">
@@ -77,20 +77,21 @@
   <script src="./portal-auth-storage.js?v=20261027-stable-nav" defer></script>
   <link rel="stylesheet" href="./portal-content.css?v=20261020-chronological">
   <script src="./portal-content.js?v=20261023-inline-updates" defer></script>
-  <script src="./portal-news-feed.js?v=20261024-muted-hidden" defer></script>
+  <script src="./portal-news-feed.js?v=20261028-instant-public" defer></script>
   <script src="./portal-updates.js?v=20261024-profiles" defer></script>
   <link rel="stylesheet" href="./portal-badges.css?v=20261027-editor-media">
   <script src="./assets/discussion-editor.js?v=20261027-editor-media" defer></script>
   <link rel="stylesheet" href="./portal-about-sections.css?v=20261026-gallery-management">
-  <script src="./portal-about-sections.js?v=20261026-gallery-motion" defer></script>
+  <script src="./portal-about-sections.js?v=20261028-instant-public" defer></script>
   <script src="./portal-reactions.js?v=20261023-lucide-icons" defer></script>
   <script src="./portal-polls.js?v=20261022-polls" defer></script>
   <link rel="stylesheet" href="./portal-community-profiles.css?v=20261027-current-profile-names">
   <script src="./portal-community-profiles.js?v=20261027-stable-nav" defer></script>
+  <script src="./portal-releases.js?v=20261028-instant-public" defer></script>
   <link rel="stylesheet" href="./portal-account.css?v=20261026-notification-menu">
-  <script src="./portal-account.js?v=20261027-stable-nav" defer></script>
-  <script src="./portal-email-auth.js?v=20261027-password-changed" defer></script>
-  <script src="./portal.js?v=20261027-password-changed" defer></script>
+  <script src="./portal-account.js?v=20261028-instant-public" defer></script>
+  <script src="./portal-email-auth.js?v=20261028-signup-copy" defer></script>
+  <script src="./portal.js?v=20261028-instant-public" defer></script>
   <script src="./portal-navbar.js?v=20261018-compact-mobile" defer></script>
   <script src="./portal-video.js?v=20261018-no-dice" defer></script>
   <link rel="stylesheet" href="./portal-focus.css?v=20261026-no-tab-rings">
@@ -159,7 +160,7 @@
             <section class="card project-gallery" id="project-gallery" aria-labelledby="project-gallery-title"><div class="project-gallery-header"><h2 id="project-gallery-title">Galerie</h2></div><div id="project-gallery-grid" class="project-gallery-grid"></div><p id="gallery-status" class="form-status" role="status"></p></section>
           </section>
           <section id="actualizari" class="tab-panel panel-stack" aria-labelledby="tab-actualizari">
-            <div id="updates-feed" class="release-list" aria-label="Istoricul actualizărilor"><p class="card muted">Se încarcă actualizările…</p></div>
+            <div id="updates-feed" class="release-list" aria-label="Istoricul actualizărilor"></div>
             <div id="admin-tools" hidden>
               <details class="inline-update-publish"><summary>Publică o actualizare</summary><form id="update-form"><div class="field"><label for="update-title">Titlu</label><input id="update-title" name="title" required maxlength="160"></div><div class="field"><label for="update-body">Conținut</label><textarea id="update-body" name="body" required maxlength="12000"></textarea></div><button class="btn" type="submit">Publică</button><p class="form-status" role="status"></p></form></details>
             </div>
@@ -225,8 +226,8 @@
           <section id="discutii" class="tab-panel panel-stack" aria-labelledby="tab-discutii">
             <div class="card discussion-compose"><h2 class="visually-hidden">Scrie în Discuții</h2>
               <div class="notice backend-notice" hidden>Comunitatea nu este conectată încă la baza de date. Mesajele nu pot fi trimise deocamdată. Poți scrie pe <a href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=posts" target="_blank" rel="noopener noreferrer">Nexus Mods</a>.</div>
-              <div class="auth-required" data-auth-gate><p>Intră în conversație.</p><div class="auth-gate-actions"><button class="btn secondary" data-auth-open type="button">Conectare</button><button class="btn secondary" data-guest-start="discussion" type="button">Continuă ca oaspete</button></div></div>
-              <div id="discussion-composer-home"><form id="discussion-form" class="discussion-composer" data-user-form hidden>
+
+              <div id="discussion-composer-home"><form id="discussion-form" class="discussion-composer" data-user-form>
                 <input id="discussion-title" name="title" type="hidden" value="Comentariu"><input name="parent_id" type="hidden">
                 <img id="discussion-avatar" class="post-avatar post-avatar-default" src="./assets/discussion-avatar.svg" alt="" width="44" height="44" referrerpolicy="no-referrer">
                 <div class="discussion-compose-main">
@@ -240,13 +241,13 @@
                 </div>
               </form></div>
             </div>
-            <div class="card discussion-feed-card"><div id="discussion-list"><p class="small">Se încarcă discuțiile…</p></div></div>
+            <div class="card discussion-feed-card"><div id="discussion-list"></div></div>
             <div id="discussion-pagination" class="discussion-pagination" hidden><nav aria-label="Paginile discuțiilor"><button id="previous-comments" type="button" class="discussion-page" aria-label="Pagina anterioară">‹</button><div id="discussion-pages"></div><button id="next-comments" type="button" class="discussion-page" aria-label="Pagina următoare">›</button></nav><p id="comments-page" role="status"></p></div>
           </section>
           <section id="erori" class="tab-panel panel-stack" aria-labelledby="tab-erori">
             <div class="card community-compose report-compose"><h2 class="report-compose-heading"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7a4 4 0 0 1 8 0m-4 2v12m-5-11H3m18 0h-4M7 15H3m18 0h-4M7 6 4 3m13 3 3-3M7 19l-3 2m13-2 3 2M7 9h10v7a5 5 0 0 1-10 0Z"/></svg>Raportează o eroare de traducere</h2><div class="report-translation-notice"><strong>Această secțiune este destinată doar raportării erorilor de traducere (greșeli de scriere, traduceri greșite, texte lipsă etc.).</strong></div><div class="notice backend-notice" hidden>Baza de date nu este încă conectată. Raportarea din site nu este activă; poți trimite detaliile pe <a href="https://www.nexusmods.com/baldursgate3/mods/24379?tab=posts" target="_blank" rel="noopener noreferrer">Nexus Mods</a>.</div>
-              <div class="auth-required" data-auth-gate><p>Alege cum vrei să trimiți raportarea.</p><div class="auth-gate-actions"><button class="btn secondary" data-auth-open type="button">Conectare</button><button class="btn secondary" data-guest-start="report" type="button">Continuă ca oaspete</button></div></div>
-              <form id="report-form" data-user-form hidden>
+
+              <form id="report-form" data-user-form>
   <div class="field report-guest-name"><label for="report-name">Numele tău</label><input id="report-name" name="author_name" required minlength="2" maxlength="40" autocomplete="nickname" placeholder="Cum vrei să apari în raportare?"></div>
   <div hidden><input id="report-title" name="title" type="hidden"><input id="report-kind" name="category" type="hidden" value="text"><input id="report-platform" name="platform" type="hidden" value="other"><select id="report-version" name="mod_version"><option value="">Se încarcă versiunile…</option><option value="Nespecificată">Nu știu versiunea</option></select></div>
   <div class="discussion-editor-shell"><div id="report-toolbar" class="discussion-toolbar" role="toolbar" aria-label="Formatarea raportării"></div><div id="report-editor" class="discussion-editor-content"></div><label class="visually-hidden" for="report-body">Descrie eroarea de traducere</label><textarea id="report-body" name="body" required minlength="20" maxlength="6000" placeholder="Descrie eroarea de traducere…"></textarea></div>

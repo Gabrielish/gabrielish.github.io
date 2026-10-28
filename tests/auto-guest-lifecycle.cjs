@@ -23,11 +23,14 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
    assert(await page.locator('#discussion-form').isVisible());
    assert.equal(await page.locator('#sign-out').evaluate(el=>el.hidden),true);
   }else if(mode==='failure'){
-   assert.equal(await page.locator('#discussion-form').isVisible(),false,'No fake success when anonymous Auth fails');
-   assert(await page.locator('#discutii [data-auth-gate]').isVisible(),'Retry fallback remains available');
+   assert(await page.locator('#discussion-form').isVisible(),'Draft remains available when guest authentication fails');
+   assert.equal(await page.locator('[data-auth-gate]').count(),0,'Old authentication panel is removed');
+   assert.equal(await page.evaluate(()=>window.__communityTest.user),null,'Failure must not create a fake signed-in identity');
    await page.evaluate(()=>window.__guestFailure=false);
-   await page.locator('[data-guest-start=discussion]').click();
-   await page.waitForSelector('#discussion-form',{state:'visible'});
+   await page.locator('#discussion-name').fill('Vizitator');
+   await page.locator('#discussion-editor .discussion-prosemirror').fill('Mesaj după reîncercarea autentificării.');
+   await page.locator('#discussion-form [type=submit]').click();
+   await page.waitForFunction(()=>window.__communityTest.comments.length===1);
    assert.equal(await page.evaluate(()=>window.__communityTest.guestCalls),2,'One deliberate retry');
   }else assert.equal(await page.locator('#discussion-form').isVisible(),false);
   assert.deepEqual(errors,[]);await page.close();

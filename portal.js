@@ -215,8 +215,7 @@
     ownAvatar.onerror=()=>{ownAvatar.onerror=null;ownAvatar.src='./assets/discussion-avatar.svg';ownAvatar.classList.add('post-avatar-default');};
     $('#report-name').closest('.field').hidden = member;
     $('#report-name').disabled = member;
-    $$('[data-auth-gate]').forEach(gate => { gate.hidden = !!user || !client || !authEnabled; });
-    $$('[data-user-form]').forEach(form => { form.hidden = !user; });
+    $$('[data-user-form]').forEach(form => { form.hidden = !authEnabled; });
     $$('[data-auth-open]').forEach(button => { button.hidden = member; });
     $('#sign-out').hidden = !member;
     $('#my-reports').hidden = !client;
@@ -285,13 +284,16 @@
     if (user && !user.is_anonymous && dialog.open && !window.BG3RO_AUTH_UI?.keepOpenFor?.(user.id)) dialog.close();
     syncAuth(); await Promise.all([loadComments(), loadReports(), loadUpdates()]);
   }
-  let updatesRequest = 0;
-  async function loadUpdates() {
-    const ticket = ++updatesRequest;
+  let updatesRequest = 0, updatesLive = false, commentsLive = false, reportsLive = false;
+  async function loadUpdates(preview = null) {
+    if(preview && updatesLive)return;
+    const ticket = preview ? updatesRequest : ++updatesRequest;
     const target = document.createElement('div');
-    if (!client) { window.BG3RO_NEWS.commit('manual', []); return; }
-    const { data, error } = await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label,is_visible').order('published_at', { ascending: false }).limit(30);
+    if (!client && !preview) return;
+    const { data, error } = preview || await client.from('bg3ro_project_updates').select('id,author_id,author_name,author_avatar_url,title,body,published_at,link_url,link_label,badge_label,is_visible').order('published_at', { ascending: false }).limit(30);
     if (ticket !== updatesRequest) return;
+    if(error && $('#updates-feed').children.length)return;
+    if(!preview && !error)updatesLive=true;
     if (error) { target.append(element('p', 'card small', 'Actualizările nu au putut fi încărcate.')); }
     else window.BG3RO_UPDATES.render(client, data, target, moderator, user?.id, loadUpdates);
     window.BG3RO_NEWS.commit('manual', [...target.children]);
@@ -312,16 +314,18 @@
     });
     return button;
   }
-  async function loadComments() {
-    const ticket = ++commentsRequest;
+  async function loadComments(preview = null) {
+    if(preview && (commentsLive || page !== (window.BG3RO_PUBLIC_DATA?.page || 0)))return;
+    const ticket = preview ? commentsRequest : ++commentsRequest;
     const target = $('#discussion-list');
     // Never discard the live ProseMirror instance when refreshing its parent thread.
     if($('#reply-discussion-form')?.closest('#discussion-list'))parkComposer();
-    if (!client) { target.replaceChildren(element('p', 'small', 'Discuțiile vor apărea aici după conectarea comunității.')); return; }
+    if (!client && !preview) return;
     const fields = 'id,author_id,author_name,title,body,status,parent_id,created_at,is_guest,author_avatar_url,author_is_admin';
-    const { data, count, error } = await client.from('bg3ro_discussion_posts').select(fields, { count: 'exact' }).is('parent_id', null).order('created_at', { ascending: false }).order('id', { ascending: false }).range(page * discussionsPerPage, page * discussionsPerPage + discussionsPerPage - 1);
+    const { data, count, error } = preview || await client.from('bg3ro_discussion_posts').select(fields, { count: 'exact' }).is('parent_id', null).order('created_at', { ascending: false }).order('id', { ascending: false }).range(page * discussionsPerPage, page * discussionsPerPage + discussionsPerPage - 1);
     if (ticket !== commentsRequest) return;
-    if (error) { target.replaceChildren(element('p', 'small', 'Discuțiile nu au putut fi încărcate. Încearcă din nou mai târziu.')); return; }
+    if (error) { if(!target.children.length)target.replaceChildren(element('p', 'small', 'Discuțiile nu au putut fi încărcate. Încearcă din nou mai târziu.')); return; }
+    if(!preview)commentsLive=true;
     if (!data.length && page > 0) { page=Math.max(0,Math.ceil((count||0)/discussionsPerPage)-1); return loadComments(); }
     if($('#reply-discussion-form')?.closest('#discussion-list'))parkComposer();
     target.replaceChildren(); tabCount('#tab-discutii', 'Discuții', count);
@@ -375,7 +379,7 @@
     let offset = 0;
     const more = actionButton('Mai multe răspunsuri', loadReplyBatch); more.classList.add('replies-more'); more.hidden = true; target.append(more);
     async function loadReplyBatch() {
-      const result = await client.from('bg3ro_discussion_posts').select(fields, { count: 'exact' }).in('parent_id', data.map(post => post.id)).order('created_at', { ascending: true }).order('id', { ascending: true }).range(offset, offset + 99);
+      const result = preview ? {data:preview.replies||[],count:(preview.replies||[]).length} : await client.from('bg3ro_discussion_posts').select(fields, { count: 'exact' }).in('parent_id', data.map(post => post.id)).order('created_at', { ascending: true }).order('id', { ascending: true }).range(offset, offset + 99);
       if (ticket !== commentsRequest) return;
       if (result.error) { more.hidden = false; more.textContent = 'Reîncarcă răspunsurile'; throw result.error; }
       for (const reply of result.data) { const thread = threads.get(reply.parent_id); if (thread) thread.replies.append(renderPost(reply, thread.post)); }
@@ -404,8 +408,9 @@
   $('#reply-cancel-reply')?.addEventListener('click', ()=>{if(!$('#reply-discussion-form [type=submit]').disabled)cancelReply();});
   $('#previous-comments').addEventListener('click', () => changeDiscussionPage(page - 1));
   $('#next-comments').addEventListener('click', () => changeDiscussionPage(page + 1));
-  for(const form of [$('#discussion-form'),$('#reply-discussion-form')].filter(Boolean))form.addEventListener('submit', event => {
-    event.preventDefault(); if (!client || !user) return;
+  for(const form of [$('#discussion-form'),$('#reply-discussion-form')].filter(Boolean))form.addEventListener('submit', async event => {
+    event.preventDefault(); if (!client) return;
+    try{if(!user)await ensureGuestSession(true);}catch{toast('Accesul ca oaspete nu a putut fi pornit. Încearcă din nou.');return;}if(!user)return;
     const nameInput=$('#discussion-name');
     if(user.is_anonymous){nameInput.value=nameInput.value.trim();if(!nameInput.reportValidity()){nameInput.scrollIntoView({block:'center',behavior:'instant'});nameInput.focus();return;}}
     submit(form, async () => {
@@ -422,10 +427,12 @@
       form.elements.body.value = '';editor?.clear();if(poll)window.BG3RO_POLLS.clear();if(values.parent_id)cancelReply();formStatus(form,'');if (!values.parent_id) page = 0;await loadComments();
     });
   });
-  $('#report-form').addEventListener('submit', event => {
-    event.preventDefault(); if (!client || !user) return;
-    submit(event.currentTarget, async () => {
-      const form = event.currentTarget, values = Object.fromEntries(new FormData(form)); delete values.website; delete values.public_consent;
+  $('#report-form').addEventListener('submit', async event => {
+    const form = event.currentTarget;
+    event.preventDefault(); if (!client) return;
+    try{if(!user)await ensureGuestSession(true);}catch{toast('Accesul ca oaspete nu a putut fi pornit. Încearcă din nou.');return;}if(!user)return;
+    submit(form, async () => {
+      const values = Object.fromEntries(new FormData(form)); delete values.website; delete values.public_consent;
       Object.keys(values).forEach(key => { values[key] = values[key].trim(); });
       if (!user.is_anonymous) {
         values.author_name = discordName();
@@ -449,13 +456,15 @@
     opened.menu.style.top=Math.max(12,Math.min(r.top>m.height+16?r.top-m.height-8:r.bottom+8,innerHeight-m.height-12))+'px';
   }
   addEventListener('scroll',placeReportState,{capture:true,passive:true});addEventListener('resize',placeReportState);
-  async function loadReports() {
-    const request = ++reportsRequest;
-    if (!client) return;
+  async function loadReports(preview = null) {
+    if(preview && reportsLive)return;
+    const request = preview ? reportsRequest : ++reportsRequest;
+    if (!client && !preview) return;
     const target = $('#reports-list');
-    const { data, count, error } = await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url,author_is_admin,author_profile_id,reply_profile_id'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
+    const { data, count, error } = preview || await client.from('bg3ro_bug_reports').select('id,title,body,category,platform,mod_version,game_version,status,moderator_reply,reply_author_name,reply_author_avatar_url,reply_created_at,created_at,is_public,author_name,is_guest,screenshot_path,screenshot_paths,author_avatar_url,author_is_admin,author_profile_id,reply_profile_id'+(user?',author_id':''), { count: 'exact' }).order('created_at', { ascending: false }).limit(reportsLimit);
     if (request !== reportsRequest) return;
-    if (error) { target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
+    if (error) { if(!target.children.length)target.replaceChildren(element('p', 'small', 'Raportările nu au putut fi încărcate.')); return; }
+    if(!preview)reportsLive=true;
     closeReportState();for(const api of reportReplyEditors)api.destroy();reportReplyEditors.clear();
     target.replaceChildren(); tabCount('#tab-erori', 'Raportare erori', count); $('#more-reports').hidden = reportsLimit >= count;
     if (!data.length) {const empty=element('div','report-empty');empty.append(bugIcon(),element('p','','Nu a fost raportată încă nicio eroare.'));target.append(empty);}
@@ -550,7 +559,7 @@
         const answer=window.BG3RO_REPORT_EDITOR?window.BG3RO_REPORT_EDITOR.render(report.moderator_reply):element('p','',report.moderator_reply);answer.classList.add('report-project-reply');replyContent.append(meta,answer);reply.append(window.BG3RO_PROFILE_LINK(window.BG3RO_AVATAR_BADGE(replyAvatar,true),report.reply_profile_id,report.reply_author_name,true),replyContent);content.append(reply);
       }
       target.append(article);
-      window.BG3RO_REPORT_PHOTO.show(client, report, photos).catch(() => {});
+      if(client)window.BG3RO_REPORT_PHOTO.show(client, report, photos).catch(() => {});
     });
     window.dispatchEvent(new CustomEvent('bg3ro:reports-rendered',{detail:{reports:data}}));
   }
@@ -582,7 +591,7 @@
           // getSession above already restores INITIAL_SESSION; do not replay a stale snapshot.
           if (event === 'INITIAL_SESSION') return;
           if (event === 'PASSWORD_RECOVERY') window.BG3RO_AUTH_UI?.recovery();
-          setTimeout(() => sessionChanged(session).then(() => event === 'SIGNED_OUT' ? ensureGuestSession() : null).then(loadUpdates).catch(() => toast('Comunitatea nu a putut fi actualizată.')), 0);
+          setTimeout(() => sessionChanged(session).then(() => event === 'SIGNED_OUT' ? ensureGuestSession() : null).catch(() => toast('Comunitatea nu a putut fi actualizată.')), 0);
         });
         await sessionChanged(data.session);
         if (authCode || authError) {
@@ -609,8 +618,9 @@
         notice.textContent = 'Autentificarea este temporar dezactivată. Mesajele și raportările vor putea fi trimise după reactivare.';
       });
     }
-    syncAuth(); await Promise.all([loadUpdates(), loadComments(), loadReports()]);
+    if(!client)syncAuth();
     document.documentElement.classList.add('portal-ready');
   }
+  for(const [name,render]of [['posts',loadComments],['reports',loadReports],['updates',loadUpdates]])window.BG3RO_PUBLIC_DATA?.watch(name,value=>{render(value).catch(()=>{});});
   initialize().catch(() => { document.documentElement.classList.add('portal-ready'); toast('Conexiunea la comunitate nu a reușit. Conținutul proiectului rămâne disponibil.'); });
 })();

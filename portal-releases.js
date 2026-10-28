@@ -287,6 +287,18 @@
       $("#github-quick-download").dataset.releaseId = latest.id;
     }
   }
+  let liveReady=false;
+  for(const name of ['releases','news'])window.BG3RO_PUBLIC_DATA?.watch(name,value=>{
+    if(liveReady)return;
+    if(name==='releases')rows=value.data.map(normalize);else newsRows=value.data.map(normalize);
+    draw();
+  });
+  function normalize(row) {
+    const copy={...row,platform:platformOf(row),is_visible:row.is_visible!==false,is_deleted:row.is_deleted===true};
+    for(const field of ['version','title','description','tags','news_title','news_body','news_badge'])copy[field]=window.BG3RO_VERSIONS.text(copy[field]);
+    copy.version=window.BG3RO_VERSIONS.version(copy.version);
+    return copy;
+  }
   async function load() {
     const ticket = ++request;
     if (!client) return;
@@ -299,12 +311,7 @@
         .limit(100),client.rpc('bg3ro_release_news')]);
       if (ticket !== request) return;
       if (result.error||announcements.error) throw result.error||announcements.error;
-      const normalize=row => {
-        const copy={...row,platform:platformOf(row),is_visible:row.is_visible!==false,is_deleted:row.is_deleted===true};
-        for(const field of ['version','title','description','tags','news_title','news_body','news_badge'])copy[field]=window.BG3RO_VERSIONS.text(copy[field]);
-        copy.version=window.BG3RO_VERSIONS.version(copy.version);
-        return copy;
-      };
+      liveReady=true;
       rows = (result.data || []).map(normalize);
       newsRows = (announcements.data || []).map(normalize);
       draw();
@@ -320,6 +327,7 @@
   window.addEventListener("bg3ro:auth", (e) => {
     client = e.detail.client;
     moderator = e.detail.moderator === true;
+    if(!moderator){rows=rows.filter(row=>row.is_visible&&!row.is_deleted);newsRows=newsRows.filter(row=>row.news_is_visible!==false&&!row.is_deleted);}
     $("#release-editor").hidden = !moderator;
     if (!moderator) $("#release-publish-form").reset();
     if (rows.length) draw();

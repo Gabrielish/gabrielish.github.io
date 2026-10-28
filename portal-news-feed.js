@@ -8,6 +8,7 @@
    const pinned=Number(b.dataset.newsPinned==='true')-Number(a.dataset.newsPinned==='true');
    return pinned||(Date.parse(b.dataset.newsDate)||0)-(Date.parse(a.dataset.newsDate)||0)||(b.dataset.newsId||'').localeCompare(a.dataset.newsId||'');
   });
+  if(!all.length&&sources.size<2)return;
   if(!all.length){const p=document.createElement('p');p.className='card small';p.textContent='Nu sunt încă actualizări publicate.';feed.replaceChildren(p);}
   else feed.replaceChildren(...all);
  }

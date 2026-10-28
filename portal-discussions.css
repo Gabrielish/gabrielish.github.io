@@ -204,3 +204,5 @@
  #discutii .post-replies{margin-left:12px}
  #discutii .is-inline-reply.discussion-composer{padding:10px}
 }
+
+.card.discussion-feed-card:has(#discussion-list:empty),#my-reports:has(#reports-list:empty){display:none}

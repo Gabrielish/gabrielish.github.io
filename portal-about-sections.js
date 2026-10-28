@@ -12,9 +12,11 @@
   originals.set(id,[...content.childNodes].map(n=>n.cloneNode(true)));card.dataset.aboutSection=id;card.hidden=true;cards.set(id,{card,heading,content});return cards.get(id);
  }
  for(const [id,card]of builtins)setup(id,card);
- const loading=node('div','card about-loading');loading.setAttribute('role','status');loading.append(node('p','','Se încarcă informațiile proiectului…'));for(let i=0;i<3;i++)loading.append(node('span','about-loading-line'));root.insertBefore(loading,management);root.setAttribute('aria-busy','true');
+ const loading=node('div');loading.hidden=true;root.setAttribute('aria-busy','true');
  function loaded(){ready=true;loading.hidden=true;root.setAttribute('aria-busy','false');}
- if(window.BG3RO_PUBLIC_ABOUT)window.BG3RO_PUBLIC_ABOUT.then(data=>{if(!ready&&data){rows=data;draw(false);loaded();message('');}});
+ let liveReady=false;
+ if(window.BG3RO_PUBLIC_DATA)window.BG3RO_PUBLIC_DATA.watch('about',value=>{if(!liveReady&&!editing){rows=value.data;draw(false);loaded();message('');}});
+ else if(window.BG3RO_PUBLIC_ABOUT)window.BG3RO_PUBLIC_ABOUT.then(data=>{if(!ready&&data){rows=data;draw(false);loaded();message('');}});
  function message(text,error=false){status.textContent=text;status.classList.toggle('error',error);management.hidden=!admin&&!text;}
  function closeEditor(focus=true){if(!editing)return;const {form,api,trigger}=editing;api?.destroy();form.remove();editing=null;add.hidden=!admin;for(const tools of root.querySelectorAll('.about-section-tools'))tools.hidden=!admin;if(focus&&admin&&trigger?.isConnected)trigger.focus({preventScroll:true});}
  function discard(){if(!editing)return true;if(editing.dirty&&!confirm('Renunți la modificările nesalvate?'))return false;closeEditor(false);return true;}
@@ -98,7 +100,7 @@
   order=tiles.map((_,index)=>index);
   if(manage){view.content.ondragover=event=>{if(dragIndex!==null){event.preventDefault();event.dataTransfer.dropEffect='move';moveAt(event.clientX,event.clientY);}};view.content.ondrop=event=>{if(dragIndex!==null){event.preventDefault();finish(false);}};}
  }
- async function load(){if(!client)return;const ticket=++epoch,active=client;try{const {data,error}=await active.from('bg3ro_about_sections').select('*').order('sort_order').order('id');if(ticket!==epoch)return;if(error)throw error;rows=data||[];draw();loaded();message('');}catch{if(ticket===epoch){loading.hidden=true;root.setAttribute('aria-busy','false');message('Rubricile nu au putut fi încărcate. Încearcă din nou.',true);retry.hidden=false;}}}
+ async function load(){if(!client)return;const ticket=++epoch,active=client;try{const {data,error}=await active.from('bg3ro_about_sections').select('*').order('sort_order').order('id');if(ticket!==epoch)return;if(error)throw error;liveReady=true;rows=data||[];draw();loaded();message('');}catch{if(ticket===epoch){loading.hidden=true;root.setAttribute('aria-busy','false');message('Rubricile nu au putut fi încărcate. Încearcă din nou.',true);retry.hidden=false;}}}
  async function change(row,values){if(busy||!admin||!discard())return;const ticket=epoch,active=client;busy=true;message('Se salvează…');try{const {data,error}=await active.from('bg3ro_about_sections').update(values).eq('id',row.id).select('id').maybeSingle();if(error||!data)throw error||Error('Not saved');if(ticket===epoch)await load();}catch{if(ticket===epoch)message('Modificarea nu a fost salvată. Încearcă din nou.',true);}finally{busy=false;}}
  async function moveSection(row,delta){
   if(busy||!admin||!discard())return;const position=rows.findIndex(item=>item.id===row.id),target=position+delta;if(position<0||target<0||target>=rows.length)return;

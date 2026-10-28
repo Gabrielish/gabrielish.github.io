@@ -77,7 +77,7 @@
     body.querySelector('.auth-reset-success').hidden = !resetSent;
     body.querySelector('.auth-password-success').hidden = !passwordChanged;
     document.querySelector('#auth-heading').textContent = ({login:'Conectare',register:'Înregistrare',reset:'Parolă uitată',password:'Alege o parolă nouă',guest:'Continuă ca oaspete',registered:'Înregistrare finalizată!','reset-sent':'Parolă uitată','password-changed':'Parolă resetată'})[mode];
-    document.querySelector('#auth-dialog .dialog-copy').textContent = passwordChanged ? 'Parola ta a fost actualizată.' : resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont în comunitate.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit!';
+    document.querySelector('#auth-dialog .dialog-copy').textContent = passwordChanged ? 'Parola ta a fost actualizată.' : resetting ? 'Introdu adresa ta de e-mail și îți vom trimite un link de resetare a parolei.' : registered ? 'Verifică adresa de e-mail' : signup ? 'Creează un cont.' : password ? 'Introdu și confirmă noua parolă.' : guest ? 'Confirmă că ești o persoană.' : 'Bine ai venit!';
     discord.hidden = !['login','register'].includes(mode) || !client;
     const discordCaption = [...document.querySelector('#discord-login').childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
     if (discordCaption) discordCaption.textContent = signup ? 'Înregistrare prin Discord' : 'Conectează-te prin Discord';

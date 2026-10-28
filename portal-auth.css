@@ -7,7 +7,7 @@
 #auth-dialog .dialog-title h2{text-align:center;font-size:26px;line-height:1.2;margin:0}
 #auth-dialog .dialog-title>.dialog-close{position:absolute;right:0;top:0}
 #auth-dialog .dialog-copy{font-size:13px;line-height:1.5;margin:0 0 16px;text-align:center;color:var(--muted)}
-#auth-dialog .dialog-close{width:32px;height:32px;min-height:32px;padding:0;font-size:22px}
+#auth-dialog .dialog-close{width:32px;height:32px;min-width:32px;min-height:32px;padding:0;font-size:0;line-height:0}
 #auth-dialog #discord-login,#auth-dialog #auth-guest{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
 #auth-dialog .form-status:empty{display:none}
 #discord-login-form{display:flex;flex-direction:column;gap:12px}

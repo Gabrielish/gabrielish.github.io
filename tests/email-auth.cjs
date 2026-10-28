@@ -23,6 +23,8 @@ function emailSDK(base){
     assert.equal(await p.locator('#auth-dialog').evaluate(el=>el.scrollHeight>el.clientHeight+1),false,'Compact login fits the viewport, including CAPTCHA');
     await p.locator('#auth-dialog').screenshot({path:'.qa/email-login-compact-'+width+'.png'});
     await p.locator('[data-auth-mode=register]').click();
+    assert.equal(await p.locator('#auth-dialog .dialog-copy').textContent(),'Creează un cont.');
+    assert.equal(await p.locator('#auth-dialog .dialog-close').evaluate(el=>getComputedStyle(el).fontSize),'0px','Only the CSS cross is painted');
     assert.equal((await p.locator('#discord-login').textContent()).trim(),'Înregistrare prin Discord');
     assert.equal(await p.locator('[name=username]').getAttribute('placeholder'),'Porecla ta');
     assert.equal(await p.locator('[name=password]').getAttribute('placeholder'),'Minimum 8 caractere');
@@ -89,7 +91,7 @@ function emailSDK(base){
     await clickNav(p,'#sign-out');await clickNav(p,'.topbar [data-auth-open]');
     assert.equal(await p.locator('#email-auth [name=password]').inputValue(),'');
     await p.locator('#auth-dialog .dialog-close').click();
-    await p.locator('.tab-list a[href="#erori"]').click();await p.locator('[data-guest-start=report]').click();await p.waitForFunction(()=>document.querySelector('#auth-heading').textContent==='Continuă ca oaspete');
+    await p.locator('.tab-list a[href="#erori"]').click();await p.locator('#report-name').fill('Vizitator');await p.locator('#report-editor .discussion-prosemirror').fill('O raportare suficient de detaliată pentru test.');await p.locator('#report-form [type=submit]').click();await p.waitForFunction(()=>document.querySelector('#auth-heading').textContent==='Continuă ca oaspete');
     await p.evaluate(()=>window.__captcha.callback('guest-token'));await p.locator('#email-auth [type=submit]').click();await p.waitForFunction(()=>window.__communityTest.user?.is_anonymous);
     assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     if(width===1440){
