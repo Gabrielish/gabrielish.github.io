@@ -49,12 +49,12 @@
   profilePanel.replaceChildren(node('p','small','Se încarcă profilul…'));
   if(!client||!uuid.test(id||'')){profilePanel.replaceChildren(node('div','card','Profilul nu este disponibil.'));return;}
   try{
-   const [result,activity]=await Promise.all([client.from('bg3ro_profiles').select('id,display_name,avatar_url,joined_at,is_admin,bio').eq('id',id).maybeSingle(),client.from('bg3ro_discussion_posts').select('id,body,created_at,parent_id',{count:'exact'}).eq('author_id',id).eq('status','approved').order('created_at',{ascending:false}).limit(10)]);
+   const [result,activity,points]=await Promise.all([client.from('bg3ro_profiles').select('id,display_name,avatar_url,joined_at,is_admin,bio').eq('id',id).maybeSingle(),client.from('bg3ro_discussion_posts').select('id,body,created_at,parent_id',{count:'exact'}).eq('author_id',id).eq('status','approved').order('created_at',{ascending:false}).limit(10),window.BG3RO_PROFILE_META.publicPoints(id)]);
    if(!current(ticket)||request!==profileRequest)return;if(result.error)throw result.error;
    const profile=result.data;if(!profile){profilePanel.replaceChildren(node('div','card','Profilul nu a fost găsit.'));return;}
    const hero=node('header','card profile-hero'),identity=node('div','profile-identity'),title=node('h1','',profile.display_name),joined=node('p','profile-joined');
-   if(Number.isFinite(Date.parse(profile.joined_at)))joined.textContent='Înregistrat pe '+new Intl.DateTimeFormat('ro-RO',{dateStyle:'long'}).format(new Date(profile.joined_at));
-   identity.append(title,joined);if(profile.is_admin)identity.prepend(node('span','profile-role','Administrator'));
+   if(Number.isFinite(Date.parse(profile.joined_at)))joined.append(window.BG3RO_PROFILE_META.icon('calendar'),node('span','','Înregistrat pe '+new Intl.DateTimeFormat('ro-RO',{dateStyle:'long'}).format(new Date(profile.joined_at))));
+   const badges=node('div','profile-badges'),meta=node('div','profile-meta');if(points!==null)badges.append(node('span','profile-role profile-level',window.BG3RO_PROFILE_META.level(points)));if(profile.is_admin)badges.append(node('span','profile-role profile-admin-role','Admin'));meta.append(joined);if(points!==null){const score=node('span','profile-points');score.append(window.BG3RO_PROFILE_META.icon('coins'),node('span','',points+(points===1?' punct':' puncte')));meta.append(score);}identity.append(badges,title,meta);
    const send=button('Trimite mesaj','message',()=>startConversation(profile.id));send.hidden=profile.id===userId;hero.append(avatar(profile,true),identity,send);
    const columns=node('div','profile-columns'),feed=node('section','card profile-activity'),stats=node('aside','card profile-stats');feed.append(node('h2','','Activitate publică'));
    if(activity.error){feed.append(node('p','','Activitatea nu a putut fi încărcată.'));}

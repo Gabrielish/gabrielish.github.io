@@ -39,3 +39,8 @@
 .notification-popover .notification-copy>a{font-size:13px;line-height:1.4}
 .notification-popover .notification-copy time{font-size:11px;margin-top:2px}
 .notification-preview-item>.notification-unread-dot{width:7px;height:7px}
+
+.account-summary .account-points,.account-summary .account-joined{display:flex;align-items:center;justify-content:center;gap:6px}
+.account-summary :is(.account-points,.account-joined) svg{width:16px;height:16px;flex:none}
+.account-role-timeline .account-role-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.account-current-role{font-weight:600;line-height:1.4}

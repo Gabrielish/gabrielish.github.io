@@ -52,3 +52,11 @@
 @media(max-width:600px){#reports-list .report-answer>.profile-avatar-link .post-avatar{width:32px;height:32px}.profile-hero>.btn{margin-left:0}.profile-identity{min-width:150px}}
 @media(max-width:1100px){.community-route .portal-shell{padding-top:112px}}
 @media(max-width:760px){.community-route .portal-shell{padding-top:92px}}
+
+.profile-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.profile-level{border-radius:999px;background:#ffffff0c;color:var(--muted);font-weight:600}
+.profile-admin-role{background:var(--gold);color:#16130c;font-weight:700}
+.profile-meta{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.profile-joined,.profile-points{display:inline-flex;align-items:center;gap:6px}
+.profile-meta svg{flex:none;width:16px;height:16px}
+.profile-points{font-size:13px;color:var(--gold);font-weight:600}
