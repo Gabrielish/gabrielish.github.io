@@ -2,6 +2,10 @@
 <html lang="ro">
 <head>
   <meta charset="utf-8">
+  <script>
+    // Keep other project tabs out of the first paint, before deferred scripts run.
+    (()=>{const route=location.hash.slice(1).split('/')[0],tabs=['despre','actualizari','descarcari','discutii','erori'],pages=['contact','intrebari-frecvente','confidentialitate','termeni','profil','conversatii','setari','notificari'];const selected=[...tabs,...pages].includes(route)?route:'despre';const style=document.createElement('style');style.id='initial-tab-visibility';style.textContent='.tab-panel:not(#'+selected+'){display:none!important}';document.head.append(style);})();
+  </script>
   <script src="./portal-nav-state.js?v=20261028-member-fields"></script>
   <style>.auth-member :is(.discussion-identity,.report-guest-name){display:none!important}.auth-restoring .navbar-actions>[data-auth-open],.auth-restoring .nav-account-tools,.auth-restoring #sign-out{visibility:hidden!important}</style>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -91,7 +95,7 @@
   <link rel="stylesheet" href="./portal-account.css?v=20261026-notification-menu">
   <script src="./portal-account.js?v=20261028-instant-public" defer></script>
   <script src="./portal-email-auth.js?v=20261028-signup-copy" defer></script>
-  <script src="./portal.js?v=20261028-member-fields" defer></script>
+  <script src="./portal.js?v=20261028-initial-tab" defer></script>
   <script src="./portal-navbar.js?v=20261018-compact-mobile" defer></script>
   <script src="./portal-video.js?v=20261018-no-dice" defer></script>
   <link rel="stylesheet" href="./portal-focus.css?v=20261026-no-tab-rings">

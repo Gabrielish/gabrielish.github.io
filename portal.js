@@ -36,6 +36,7 @@
     setTab(id, focus);
   }
   setTab(location.hash.slice(1));
+  document.getElementById('initial-tab-visibility')?.remove();
   if (informationIds.includes(location.hash.slice(1))) requestAnimationFrame(() => tablist.scrollIntoView({ block: 'start', behavior: 'instant' }));
   tabs.forEach((tab, i) => tab.addEventListener('click', event => { event.preventDefault(); goTab(ids[i]); }));
   $$('[data-go-tab]').forEach(link => link.addEventListener('click', event => {
