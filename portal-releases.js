@@ -17,6 +17,12 @@
     editorSequence = 0;
   const richEditors=new Map(),platforms={all:'Windows și macOS',windows:'Windows',macos:'macOS'};
   let publishAPI=null;
+  let archiveOpen=false;
+  const archiveView=el('section','release-archive panel-stack'),archiveList=el('div','release-list'),archiveToggle=el('button','btn release-archive-toggle'),archiveLabel=el('span','','Arhivă');
+  archiveView.id='release-archive-view';archiveView.hidden=true;archiveView.setAttribute('aria-label','Arhiva versiunilor');archiveView.append(el('h2','','Arhiva versiunilor'),archiveList);
+  archiveToggle.type='button';archiveToggle.append(outlineIcon(['M3 3h18v5H3zM5 8v13h14V8M10 12h4']),archiveLabel);archiveToggle.setAttribute('aria-expanded','false');archiveToggle.setAttribute('aria-controls',archiveView.id);
+  $('#release-editor').append(archiveToggle);$('#release-editor').after(archiveView);
+  archiveToggle.onclick=()=>{archiveOpen=!archiveOpen;archiveView.hidden=!moderator||!archiveOpen;archiveToggle.setAttribute('aria-expanded',String(archiveOpen));};
   const platformOf=row=>row.platform||(/windows/i.test(row.tags||'')&&!/mac\s?os/i.test(row.tags||'')?'windows':/mac\s?os/i.test(row.tags||'')&&!/windows/i.test(row.tags||'')?'macos':'all');
   function disposeEditors(){for(const [form,api]of richEditors){api.destroy();form.remove();}richEditors.clear();}
   function el(tag, cls, text) {
@@ -207,8 +213,11 @@
     main.replaceChildren();
     extras.replaceChildren();
     news.replaceChildren();
+    archiveList.replaceChildren();let archivedCount=0;
     Object.entries(kinds).forEach(([kind, title]) => {
-      const matches=rows.filter(r=>r.kind===kind&&!r.is_deleted&&(moderator||r.is_visible)),seen=new Set(),display=moderator?matches:matches.filter(row=>{const platform=platformOf(row);if(seen.has(platform))return false;seen.add(platform);return true;}),target = kind === "translation" ? main : extras;
+      const matches=rows.filter(r=>r.kind===kind&&!r.is_deleted&&(moderator||r.is_visible)).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at)||b.id.localeCompare(a.id)),seen=new Set(),display=[],archived=[],target = kind === "translation" ? main : extras;
+      for(const row of matches){const platform=platformOf(row);if(row.is_visible&&!seen.has(platform)){seen.add(platform);display.push(row);}else archived.push(row);}
+      if(moderator&&archived.length){const group=el('section','release-archive-group panel-stack');group.append(el('h3','',title));for(const row of archived)group.append(card(row));archiveList.append(group);archivedCount+=archived.length;}
       if (display.length) display.forEach(row=>target.append(card(row)));
       else {
         if (kind === "translation") return;
@@ -224,6 +233,8 @@
         target.append(placeholder);
       }
     });
+    archiveLabel.textContent='Arhivă'+(archivedCount?' ('+archivedCount+')':'');archiveView.hidden=!moderator||!archiveOpen;archiveToggle.setAttribute('aria-expanded',String(moderator&&archiveOpen));
+    if(moderator&&!archivedCount)archiveList.append(el('p','small','Nu există încă versiuni în arhivă.'));
     const localizationUpdates = newsRows.filter(row=>moderator||row.news_is_visible!==false).sort((a,b)=>Date.parse(b.published_at)-Date.parse(a.published_at));
     localizationUpdates.forEach((row,index) => {
       const article = el("article", "card release-news"),
@@ -307,10 +318,11 @@
         .from("bg3ro_releases")
         .select(fields)
         .eq('is_deleted',false)
-        .order("published_at", { ascending: false })
+        .order("published_at", { ascending: false }).order("id", { ascending: false })
         .limit(100),client.rpc('bg3ro_release_news')]);
       if (ticket !== request) return;
       if (result.error||announcements.error) throw result.error||announcements.error;
+      if(moderator){const seen=new Set((result.data||[]).map(row=>row.id));let batch=result.data||[],offset=batch.length;while(batch.length===100){const next=await client.from('bg3ro_releases').select(fields).eq('is_deleted',false).order('published_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+99);if(ticket!==request)return;if(next.error)throw next.error;batch=next.data||[];const fresh=batch.filter(row=>!seen.has(row.id));if(!fresh.length)break;fresh.forEach(row=>seen.add(row.id));result.data.push(...fresh);offset+=batch.length;}}
       liveReady=true;
       rows = (result.data || []).map(normalize);
       newsRows = (announcements.data || []).map(normalize);
@@ -327,6 +339,7 @@
   window.addEventListener("bg3ro:auth", (e) => {
     client = e.detail.client;
     moderator = e.detail.moderator === true;
+    if(!moderator){archiveOpen=false;archiveView.hidden=true;archiveList.replaceChildren();archiveToggle.setAttribute('aria-expanded','false');}
     if(!moderator){rows=rows.filter(row=>row.is_visible&&!row.is_deleted);newsRows=newsRows.filter(row=>row.news_is_visible!==false&&!row.is_deleted);}
     $("#release-editor").hidden = !moderator;
     if (!moderator) $("#release-publish-form").reset();
@@ -334,6 +347,7 @@
     load();
   });
   const publishDetails=$('#release-editor>details'),publishToggle=publishDetails.querySelector('summary'),publishPlus=outlineIcon(['M12 5v14M5 12h14']);publishPlus.setAttribute('stroke-width','1.7');publishToggle.prepend(publishPlus);publishToggle.setAttribute('role','button');publishToggle.setAttribute('aria-expanded',String(publishDetails.open));publishDetails.addEventListener('toggle',()=>publishToggle.setAttribute('aria-expanded',String(publishDetails.open)));
+  const publishContent=el('div','release-publish-content');for(const child of [...publishDetails.children])if(child!==publishToggle)publishContent.append(child);publishDetails.append(publishContent);
   const publishing=$('#release-publish-form'),publishingPlatform=platformField($('#release-kind').closest('.form-grid'),'all');publishingPlatform.id='release-platform';publishingPlatform.previousElementSibling.htmlFor=publishingPlatform.id;$('#release-kind').closest('.form-grid').classList.add('release-publish-platform-row');
   $('#release-kind').closest('.form-grid').insertBefore(publishingPlatform.closest('.field'),$('#release-version').closest('.field'));
   const archiveChoose=filePicker($('#release-archive'));$('#upload-release-file').classList.add('secondary','small-btn');
