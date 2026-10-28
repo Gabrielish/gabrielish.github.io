@@ -188,9 +188,10 @@ if(textarea&&host){
  button('Cod','code',()=>editor.chain().focus().toggleCodeBlock().run(),()=>editor.isActive('codeBlock'));
  button('Linie orizontală','separator',()=>editor.chain().focus().setHorizontalRule().run());
  section('Linkuri');
- const panel=q('#discussion-link-panel'),url=q('#discussion-link-url');url.disabled=true;
+ const panel=q('#discussion-link-panel'),url=q('#discussion-link-url');panel.hidden=true;url.disabled=true;
+ toolbar.after(panel);panel.querySelector('label')?.classList.add('visually-hidden');q('#discussion-link-save').classList.remove('secondary');
  const closeLink=()=>{panel.hidden=true;url.disabled=true;url.setCustomValidity('');};
- const link=button('Adaugă sau modifică linkul','link',()=>{url.disabled=false;url.value=editor.getAttributes('link').href||'';panel.hidden=false;url.focus();},()=>editor.isActive('link'));
+ const link=button('Adaugă sau modifică linkul','link',()=>{const open=panel.hidden;closeImage();closeVideo();closeLink();if(!open)return;url.disabled=false;url.value=editor.getAttributes('link').href||'';panel.hidden=false;url.focus();},()=>editor.isActive('link'));
  q('#discussion-link-save').onclick=()=>{const href=safeURL(url.value.trim());if(!href){url.setCustomValidity('Introdu o adresă http:// sau https:// validă.');url.reportValidity();return;}url.setCustomValidity('');editor.view.focus();editor.chain().focus().extendMarkRange('link').setLink({href}).run();closeLink();};
  url.oninput=()=>url.setCustomValidity('');
  q('#discussion-link-remove').onclick=()=>{editor.view.focus();editor.chain().focus().extendMarkRange('link').unsetLink().run();closeLink();};
@@ -202,12 +203,12 @@ if(textarea&&host){
  const chooseImage=node('button','Încarcă imagine'),imageAddress=node('input'),insertImage=node('button','Inserează'),cancelImage=node('button','Anulează'),imageStatus=node('p');
  chooseImage.type=insertImage.type=cancelImage.type='button';chooseImage.className='btn secondary small-btn';insertImage.className='btn small-btn';cancelImage.className='btn secondary small-btn';imageAddress.type='text';imageAddress.inputMode='url';imageAddress.placeholder='https://…';imageAddress.setAttribute('aria-label','Adresa imaginii');imageAddress.className='discussion-image-url';imageStatus.className='discussion-image-status';imageStatus.setAttribute('role','status');imagePanel.append(chooseImage,imageFile,imageAddress,insertImage,cancelImage,imageStatus);toolbar.after(imagePanel);
  closeImage=()=>{imagePanel.hidden=true;imageAddress.value='';imageStatus.textContent='';};
- const imageButton=button('Adaugă imagine','image',()=>{closeVideo();imagePanel.hidden=!imagePanel.hidden;imagePanel.dataset.mode='upload';chooseImage.hidden=!!form.closest('#conversatii')||(isReport&&form.id!=='report-form');chooseImage.disabled=!(form.id==='report-form'||window.BG3RO_EDITOR_IMAGES?.canUpload(form));if(!imagePanel.hidden)imageAddress.focus();},()=>editor.isActive('image'));
- button('Inserează imagine din URL','imageURL',()=>{closeVideo();if(!imagePanel.hidden&&imagePanel.dataset.mode==='url'){closeImage();return;}imagePanel.dataset.mode='url';imagePanel.hidden=false;chooseImage.hidden=true;imageStatus.textContent='';imageAddress.focus();});
+ const imageButton=button('Adaugă imagine','image',()=>{closeLink();closeVideo();if(!imagePanel.hidden&&imagePanel.dataset.mode==='upload'){closeImage();return;}imagePanel.dataset.mode='upload';imagePanel.hidden=false;imageAddress.hidden=imageAddress.disabled=insertImage.hidden=true;chooseImage.hidden=false;chooseImage.disabled=!!form.closest('#conversatii')||(isReport&&form.id!=='report-form')||!(form.id==='report-form'||window.BG3RO_EDITOR_IMAGES?.canUpload(form));imageStatus.textContent=chooseImage.disabled?'Încărcarea nu este disponibilă aici. Folosește „Imagine din URL”.':'';if(!chooseImage.disabled)chooseImage.focus();},()=>editor.isActive('image'));
+ button('Inserează imagine din URL','imageURL',()=>{closeLink();closeVideo();if(!imagePanel.hidden&&imagePanel.dataset.mode==='url'){closeImage();return;}imagePanel.dataset.mode='url';imagePanel.hidden=false;imageAddress.hidden=imageAddress.disabled=insertImage.hidden=false;chooseImage.hidden=true;imageStatus.textContent='';imageAddress.focus();});
  const videoPanel=node('div');videoPanel.className='discussion-video-panel';videoPanel.hidden=true;
  const videoAddress=node('input'),insertVideo=node('button','Inserează'),cancelVideo=node('button','Anulează'),videoStatus=node('p');videoAddress.type='text';videoAddress.inputMode='url';videoAddress.placeholder='https://www.youtube.com/watch?v=…';videoAddress.setAttribute('aria-label','Adresa videoclipului YouTube');videoAddress.className='discussion-image-url';insertVideo.type=cancelVideo.type='button';insertVideo.className='btn small-btn';cancelVideo.className='btn secondary small-btn';videoStatus.className='discussion-video-status';videoStatus.setAttribute('role','status');videoPanel.append(videoAddress,insertVideo,cancelVideo,videoStatus);toolbar.after(videoPanel);
  closeVideo=()=>{videoPanel.hidden=true;videoAddress.value='';videoStatus.textContent='';};
- const videoButton=button('Inserează videoclip YouTube','video',()=>{const open=videoPanel.hidden;closeImage();closeVideo();videoPanel.hidden=!open;if(open)videoAddress.focus();},()=>editor.isActive('youtube'));
+ const videoButton=button('Inserează videoclip YouTube','video',()=>{const open=videoPanel.hidden;closeLink();closeImage();closeVideo();videoPanel.hidden=!open;if(open)videoAddress.focus();},()=>editor.isActive('youtube'));
  insertVideo.onclick=()=>{const videoId=youtubeID(videoAddress.value.trim());if(!videoId){videoStatus.textContent='Introdu un link YouTube valid.';return;}editor.view.focus();const selection=editor.state.selection,nodes=[{type:'youtube',attrs:{videoId}},{type:'paragraph'}];if(selection.node?.isAtom)editor.commands.insertContentAt(selection.to,nodes);else editor.commands.insertContent(nodes);closeVideo();};cancelVideo.onclick=()=>{closeVideo();videoButton.focus();};
  const putImage=attrs=>{editor.view.focus();const nodes=[{type:'image',attrs},{type:'paragraph'}],selection=editor.state.selection;if(selection.node?.type.name==='image')editor.commands.insertContentAt(selection.to,nodes);else editor.commands.insertContent(nodes);};
  insertImage.onclick=()=>{const src=imageURL(imageAddress.value.trim());if(!src){imageStatus.textContent='Introdu adresa https:// a unei imagini.';return;}putImage({src,alt:'Imagine atașată'});closeImage();};
@@ -225,13 +226,13 @@ if(textarea&&host){
  imageFile.onchange=()=>uploadFiles([...imageFile.files]);
  const guardImages=event=>{if(uploading){event.preventDefault();event.stopImmediatePropagation();}};form.addEventListener('submit',guardImages,true);
  const previousCleanup=cleanupListeners;cleanupListeners=()=>{previousCleanup();form.removeEventListener('submit',guardImages,true);};
- const disposeBadges=mountBadgeTools(editor,toolbar,form),previousBadgeCleanup=cleanupListeners;
- cleanupListeners=()=>{previousBadgeCleanup();disposeBadges();};
  section('Istoric');
  button('Anulează ultima modificare','undo',()=>editor.chain().focus().undo().run());
  button('Refă modificarea','redo',()=>editor.chain().focus().redo().run());
  section('Curățare');
  button('Elimină formatarea','Tx',()=>editor.chain().focus().unsetAllMarks().clearNodes().run());
+ const disposeBadges=mountBadgeTools(editor,toolbar,form,group),previousBadgeCleanup=cleanupListeners;
+ cleanupListeners=()=>{previousBadgeCleanup();disposeBadges();};
  function refresh(){for(const [b,active]of controls)if(active)b.setAttribute('aria-pressed',String(active()));const defaults=getComputedStyle(editor.view.dom),color=editor.getAttributes('textStyle').color||'';for(const option of colorMenu.querySelectorAll('button'))option.setAttribute('aria-checked',String(option.dataset.color===color));colorButton.style.setProperty('--editor-selected-color',color||'currentColor');for(const {caption,menu,attribute}of selects){const fallback=attribute==='fontFamily'?defaults.fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g,''):defaults.fontSize,value=editor.getAttributes('textStyle')[attribute]||'';caption.textContent=value||fallback;menu.firstElementChild.textContent=fallback+' (implicit)';for(const option of menu.querySelectorAll('button'))option.setAttribute('aria-checked',String(option.dataset.value===value));}host.classList.toggle('is-empty',editor.isEmpty);}
  window.addEventListener('resize',refresh);
  const closeMenus=()=>{closeColors();selects.forEach(picker=>picker.close());};
@@ -254,7 +255,7 @@ if(mainForm){
  let contentSequence=0;
  window.BG3RO_MOUNT_CONTENT_EDITOR=(form,textarea,settings={})=>{
   const namespace='update-content-'+(++contentSequence)+'-',body=textarea.value,container=node('div');container.className='update-rich-editor';
-  for(const selector of ['.discussion-editor-shell','.discussion-link-panel','#reply-discussion-editor-error','#reply-discussion-character-count']){
+  for(const selector of ['.discussion-editor-shell','#reply-discussion-editor-error','#reply-discussion-character-count']){
    const copy=replyForm.querySelector(selector).cloneNode(true);container.append(copy);
   }
   for(const el of container.querySelectorAll('[id]'))el.id=namespace+el.id.replace(/^reply-/,'');

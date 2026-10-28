@@ -58,10 +58,10 @@ export const Badge=Node.create({name:'badge',inline:true,group:'inline',atom:tru
  renderHTML({node}){return badgeElement(node.attrs);},renderText({node}){return cleanBadge(node.attrs).label;}
 });
 
-export function mountBadgeTools(editor,toolbar,form){
+export function mountBadgeTools(editor,toolbar,form,targetGroup=null){
  for(const old of form.querySelectorAll('.discussion-badge-panel'))old.remove();
- const group=create('div');group.className='discussion-tool-group';group.hidden=!administrator;group.setAttribute('aria-label','Etichete administrator');
- const trigger=create('button');trigger.type='button';trigger.className='discussion-tool discussion-badge-trigger';trigger.setAttribute('aria-label','Etichetă');trigger.title='Adaugă sau modifică o etichetă';trigger.append(vector('tag'));group.append(trigger);toolbar.append(group);
+ const group=targetGroup||create('div');if(!targetGroup){group.className='discussion-tool-group';group.hidden=!administrator;group.setAttribute('aria-label','Etichete administrator');toolbar.append(group);}
+ const trigger=create('button');trigger.type='button';trigger.hidden=!administrator;trigger.className='discussion-tool discussion-badge-trigger';trigger.setAttribute('aria-label','Etichetă');trigger.title='Adaugă sau modifică o etichetă';trigger.append(vector('tag'));group.append(trigger);
  const panel=create('div');panel.className='discussion-badge-panel';panel.hidden=true;panel.setAttribute('role','group');panel.setAttribute('aria-label','Configurarea etichetei');toolbar.after(panel);
  const fields=create('div');fields.className='badge-fields';const label=create('input');label.type='text';label.maxLength=80;label.placeholder='Versiunea v0.7.96';label.setAttribute('aria-label','Textul etichetei');
  const color=create('input');color.type='color';color.setAttribute('aria-label','Culoarea etichetei');const hex=create('input');hex.type='text';hex.maxLength=7;hex.setAttribute('aria-label','Codul culorii etichetei');hex.placeholder='#22c55e';fields.append(label,color,hex);panel.append(fields);
@@ -81,6 +81,6 @@ export function mountBadgeTools(editor,toolbar,form){
  file.onchange=async()=>{const selectedFile=file.files[0];file.value='';if(!selectedFile)return;if(selectedFile.size>16000){status.textContent='Alege un SVG de maximum 16 KB.';return;}const svg=safeBadgeSVG(await selectedFile.text());if(!administrator)return;if(!svg){status.textContent='SVG-ul nu conține o iconiță vectorială validă.';return;}custom=svg;selected='';emoji.value='';status.textContent='';refresh();};
  insert.onclick=()=>{if(!administrator)return;if(!label.value.trim()||!/^#[\da-f]{6}$/i.test(hex.value)){status.textContent='Completează textul și o culoare de forma #22c55e.';return;}try{const selection=bookmark.resolve(editor.state.doc);editor.view.dispatch(editor.state.tr.setSelection(selection));editor.view.focus();if(editing&&editor.isActive('badge'))editor.commands.updateAttributes('badge',current());else editor.commands.insertContent([{type:'badge',attrs:current()},{type:'text',text:' '}]);close();}catch{status.textContent='Selectează din nou locul unde vrei eticheta.';}};
  cancel.onclick=()=>{close();editor.view.focus();};
- const auth=()=>{group.hidden=!administrator;if(!administrator)close();};addEventListener('bg3ro:auth',auth);
- return()=>{removeEventListener('bg3ro:auth',auth);panel.remove();group.remove();};
+ const auth=()=>{trigger.hidden=!administrator;if(!targetGroup)group.hidden=!administrator;if(!administrator)close();};addEventListener('bg3ro:auth',auth);
+ return()=>{removeEventListener('bg3ro:auth',auth);panel.remove();if(targetGroup)trigger.remove();else group.remove();};
 }
