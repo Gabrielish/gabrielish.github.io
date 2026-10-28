@@ -323,6 +323,7 @@ input.release-archive-input{position:absolute;width:1px;height:1px;min-height:0;
 .release-publish-content>.release-upload-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;margin:0}
 .release-upload-field>label,.release-upload-field>.form-status{grid-column:1/-1;margin:0}
 .release-upload-field>.release-file-picker{grid-column:1;min-width:0}
+.release-file-picker>.release-archive-hint{font-size:12px;line-height:1.5;color:var(--muted);margin:0}
 #release-editor #upload-release-file{grid-column:2;align-self:start;width:auto;white-space:normal}
 .release-file-details{min-width:0}
 #release-editor .release-file-details>summary{font-size:12px;min-height:26px}
