@@ -14,7 +14,7 @@
   if(isAdmin!==true){if(current)current.replaceWith(image);return image;}
   if(current)return current;
   const wrap=document.createElement('span');wrap.className='avatar-with-role';
-  const badge=document.createElement('span');badge.className='avatar-admin-badge';badge.textContent='Administrator';
+  const badge=document.createElement('span');badge.className='avatar-admin-badge';badge.textContent='Admin';
   if(image.parentNode)image.replaceWith(wrap);
   wrap.append(image,badge);return wrap;
  };

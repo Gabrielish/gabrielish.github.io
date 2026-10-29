@@ -20,7 +20,7 @@ const sdk=source.slice(source.indexOf('function syntheticSDK(){'),source.indexOf
   window.__badgeReleases=[{...common,id:'release',kind:'translation',version:'test',file_name:'test.rar',file_bytes:128,download_url:'https://github.com/Gabrielish/bg3ro/releases/download/test/test.rar',description:common.body,published_at:common.created_at,tags:'Windows'}];
  });
  await p.goto('http://127.0.0.1:4173/#discutii',{waitUntil:'networkidle'});
- await p.locator('#post-admin-root').waitFor();assert.equal(await p.locator('#post-admin-root>.avatar-with-role>.avatar-admin-badge').textContent(),'Administrator');
+ await p.locator('#post-admin-root').waitFor();assert.equal(await p.locator('#post-admin-root>.avatar-with-role>.avatar-admin-badge').textContent(),'Admin');
  assert.equal(await p.locator('#post-admin-reply>.avatar-with-role>.avatar-admin-badge').count(),1);
  assert.equal(await p.locator('#post-member .avatar-admin-badge,#post-guest .avatar-admin-badge').count(),0,'Name or guest flags cannot spoof an Admin badge');
  assert.equal(await p.locator('#discussion-avatar').evaluate(n=>n.parentElement.classList.contains('avatar-with-role')),false);
