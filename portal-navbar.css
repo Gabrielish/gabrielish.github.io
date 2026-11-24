@@ -19,11 +19,14 @@
 .nav-support:after{background:#fff;opacity:0;transition:opacity .4s}
 .nav-support:is(:hover,:focus-visible):after{opacity:1}
 .nav-toggle{display:none;align-items:center;justify-content:center;width:44px;height:44px;background:none;border:0;padding:9px;color:#ddc9a7}
-/* Restored from bg3ro-old/controls.css: fixed grid, four shrinking edge dots. */
-.dot-grid{display:grid;grid-template-columns:repeat(3,5px);gap:5px;transform:none}
-.dot-grid i{display:block;width:5px;height:5px;background:#f2e8d6;border-radius:50%;transition:background .2s,transform .2s}
-.nav-toggle:is(:hover,:focus-visible) .dot-grid i,.nav-toggle[aria-expanded=true] .dot-grid i{background:#d6b577}
-.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(2),.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(4),.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(6),.nav-toggle[aria-expanded=true] .dot-grid i:nth-child(8){transform:scale(.35)}
+/* Simple, warm-gold three-line menu icon, inspired by Divinity's mobile header. */
+.menu-icon{display:flex;width:26px;height:20px;flex-direction:column;justify-content:space-between}
+.menu-icon i{display:block;width:100%;height:1.5px;border-radius:2px;background:#d6b577;transform-origin:center;transition:transform .24s ease,opacity .18s ease,width .2s ease,background .2s ease}
+.menu-icon i:nth-child(2){width:72%;align-self:flex-end}
+.nav-toggle:is(:hover,:focus-visible) .menu-icon i{background:#f2d9a7}
+.nav-toggle[aria-expanded=true] .menu-icon i:first-child{transform:translateY(9.25px) rotate(45deg)}
+.nav-toggle[aria-expanded=true] .menu-icon i:nth-child(2){opacity:0;transform:scaleX(.3)}
+.nav-toggle[aria-expanded=true] .menu-icon i:last-child{transform:translateY(-9.25px) rotate(-45deg)}
 .project-banner.hero{height:clamp(600px,100svh,1000px)}
 .project-banner.hero .project-badges{top:145px}
 /* Fade the media itself through a soft, irregular alpha mask. No cropped
@@ -39,21 +42,25 @@
 }
 @media(max-width:1100px){
   .nav-toggle{display:flex;margin-left:auto;flex-shrink:0}
-  .main-navigation{display:none;position:absolute;top:95px;left:16px;right:16px;margin:0;padding:20px 24px 24px;max-height:calc(100svh - 115px);overflow-y:auto;background:#0b0c0ff5;border:1px solid #ddc9a740;border-radius:12px;backdrop-filter:blur(12px);flex-direction:column;align-items:stretch;gap:12px}
-  .topbar.menu-open .main-navigation{display:flex}
-  .main-navigation>a,.main-navigation .nav-login{font-size:19px;min-height:44px;text-align:center;align-self:center}
-  .main-navigation .navbar-actions{width:100%;margin:0;flex-direction:column;align-items:stretch;gap:16px;border:0;padding-top:0}
-  .main-navigation .nav-support{max-width:none;width:100%;min-height:56px;font-size:17px;white-space:nowrap}
-  html:not(.nav-enhanced) .main-navigation{display:flex;position:static;background:#0b0c0f;max-height:none;flex-wrap:wrap;flex-direction:row;gap:15px}
+  .main-navigation{visibility:hidden;opacity:0;pointer-events:none;position:fixed;inset:100px 0 0;margin:0;padding:clamp(26px,7svh,72px) clamp(24px,10vw,120px) 40px;max-height:none;overflow-y:auto;overscroll-behavior:contain;background:radial-gradient(ellipse at 50% 0%,#17222c 0%,#0b0c0f 60%);border:0;border-top:1px solid #ddc9a740;border-radius:0;backdrop-filter:blur(14px);flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;transform:translateY(-8px);transition:opacity .24s ease,transform .24s ease,visibility .24s}
+  .topbar.menu-open .main-navigation{visibility:visible;opacity:1;pointer-events:auto;transform:translateY(0)}
+  .main-navigation>a,.main-navigation .nav-login{font-size:clamp(20px,4vw,28px);min-height:68px;text-align:center;align-self:stretch;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #d6b57735}
+  .main-navigation .nexus-link{border-top:1px solid #d6b57735}
+  .main-navigation .navbar-actions{width:100%;margin:0;flex-direction:column;align-items:stretch;gap:18px;border:0;padding-top:22px}
+  .main-navigation .nav-account-tools{justify-content:center;gap:16px;flex-wrap:wrap}
+  .main-navigation .nav-support{align-self:center;max-width:min(100%,360px);width:100%;min-height:58px;margin-top:8px;font-size:17px;white-space:nowrap}
+  html.nav-menu-open{overflow:hidden}
+  html:not(.nav-enhanced) .main-navigation{visibility:visible;opacity:1;pointer-events:auto;display:flex;position:static;background:#0b0c0f;max-height:none;flex-wrap:wrap;flex-direction:row;gap:15px;transform:none}
   html:not(.nav-enhanced) .topbar{position:relative;background:#0b0c0f}
   html:not(.nav-enhanced) .topbar-inner{flex-wrap:wrap}
 }
 @media(max-width:760px){
-  .topbar .topbar-inner{width:calc(100% - 32px);min-height:72px;gap:12px}
+  .topbar .topbar-inner{position:relative;width:calc(100% - 32px);min-height:72px;gap:12px}
+  .topbar .wordmark{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}
   .navbar-actions{gap:13px;margin-left:auto}
   .nav-login{font-size:14px}.nav-support{min-height:52px;font-size:14px;padding-inline:18px}
   .topbar:before,.topbar:after{height:160px}
-  .main-navigation{top:72px;max-height:calc(100svh - 92px)}
+  .main-navigation{inset:72px 0 0}
   .project-banner.hero{height:clamp(500px,100svh,850px)}
   .project-banner.hero .project-badges{top:115px}
   #continut,#sustinere,#intrebari-frecvente,.tab-panel,.tab-list{scroll-margin-top:100px}
@@ -62,9 +69,10 @@
   .topbar .topbar-inner{gap:8px;width:calc(100% - 24px)}
   .topbar .wordmark{font-size:30px;gap:8px}.topbar .wordmark img{width:32px;height:32px}
   .navbar-actions{gap:8px}.nav-support{font-size:12px;min-height:50px;padding-inline:14px;max-width:106px;white-space:normal;text-align:center}
-  .nav-login{font-size:13px}.nav-toggle{width:44px;padding:9px}
+  .nav-login{font-size:13px}.nav-toggle{width:44px;padding:9px;z-index:1}
+  .menu-icon{width:25px;height:18px}
 }
-@media(prefers-reduced-motion:reduce){.main-navigation a,.main-navigation a:after,.nav-login,.nav-login:after,.nav-support:after,.dot-grid i{transition:none}}
+@media(prefers-reduced-motion:reduce){.main-navigation,.main-navigation a,.main-navigation a:after,.nav-login,.nav-login:after,.nav-support:after,.menu-icon i{transition:none}}
 @media(max-width:360px){
   .topbar .topbar-inner{width:calc(100% - 20px);gap:6px}
   .topbar .wordmark{font-size:27px;gap:7px}.topbar .wordmark img{width:30px;height:30px}
