@@ -43,7 +43,7 @@
 @media(max-width:1100px){
   .nav-toggle{display:flex;margin-left:auto;flex-shrink:0}
   .main-navigation{visibility:hidden;opacity:0;pointer-events:none;position:static;margin:0;padding:0 24px;max-height:0;overflow-y:auto;overscroll-behavior:contain;background:transparent;border:0;border-top:1px solid transparent;border-radius:0;backdrop-filter:none;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;transform:translateY(-6px);transition:opacity .2s ease,transform .2s ease,visibility .2s,max-height .24s ease,padding .24s ease,border-color .2s ease}
-  .topbar.menu-open{position:fixed;top:8px;left:50%;right:auto;width:min(86vw,560px);transform:translateX(-50%);overflow:hidden;border:1px solid #ddc9a740;border-radius:14px;background:#0b0c0f;box-shadow:0 18px 55px #0009}
+  .topbar.menu-open{position:fixed;top:0;left:0;right:0;width:100%;transform:none;overflow:hidden;border:0;border-bottom:1px solid #ddc9a740;border-radius:0;background:#0b0c0f;box-shadow:0 18px 55px #0009}
   .topbar.menu-open:before,.topbar.menu-open:after{display:none}
   .topbar.menu-open .topbar-inner{display:grid;grid-template-columns:1fr auto;grid-template-rows:72px auto;width:calc(100% - 32px);min-height:72px;gap:0}
   .topbar.menu-open .wordmark{grid-column:1/-1;grid-row:1;top:0;height:72px}
@@ -65,7 +65,6 @@
   .navbar-actions{gap:13px;margin-left:auto}
   .nav-login{font-size:14px}.nav-support{min-height:52px;font-size:14px;padding-inline:18px}
   .topbar:before,.topbar:after{height:160px}
-  .topbar.menu-open{width:calc(100% - 36px)}
   .project-banner.hero{height:clamp(500px,100svh,850px)}
   .project-banner.hero .project-badges{top:115px}
   #continut,#sustinere,#intrebari-frecvente,.tab-panel,.tab-list{scroll-margin-top:100px}
