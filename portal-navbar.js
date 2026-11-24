@@ -24,7 +24,6 @@
   document.documentElement.classList.add('nav-enhanced');
   function close(focus = false) {
     header.classList.remove('menu-open');
-    document.documentElement.classList.remove('nav-menu-open');
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', 'Deschide meniul');
     if (focus) toggle.focus();
@@ -32,7 +31,6 @@
   toggle.addEventListener('click', () => {
     const open = !header.classList.contains('menu-open');
     header.classList.toggle('menu-open', open);
-    document.documentElement.classList.toggle('nav-menu-open', open);
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Închide meniul' : 'Deschide meniul');
     if (open) nav.querySelector('a,button:not([hidden])')?.focus({ preventScroll: true });
